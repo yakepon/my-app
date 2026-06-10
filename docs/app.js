@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'feelcycle_gas_url';
 
 const els = {
+  settings: document.getElementById('settings'),
+  toggleSettings: document.getElementById('toggleSettings'),
   gasUrl: document.getElementById('gasUrl'),
   saveUrl: document.getElementById('saveUrl'),
   connStatus: document.getElementById('connStatus'),
@@ -138,8 +140,10 @@ function init() {
   els.gasUrl.value = url;
 
   if (url) {
+    els.settings.hidden = true;
     loadRecords();
   } else {
+    els.settings.hidden = false;
     setStatus('未接続: GAS WebアプリのURLを入力して保存してください。', 'error');
   }
 
@@ -148,7 +152,12 @@ function init() {
     if (!value) return;
     setGasUrl(value);
     setStatus('保存しました。読み込み中...');
+    els.settings.hidden = true;
     loadRecords();
+  });
+
+  els.toggleSettings.addEventListener('click', () => {
+    els.settings.hidden = !els.settings.hidden;
   });
 
   els.form.addEventListener('submit', onSubmit);

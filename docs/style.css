@@ -375,6 +375,26 @@ textarea {
   color: var(--text-muted);
 }
 
+.settings-toggle {
+  display: inline-block;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.settings-toggle:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
 /* ===== Responsive ===== */
 
 @media (max-width: 600px) {
