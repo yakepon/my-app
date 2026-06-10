@@ -188,6 +188,13 @@ main {
   color: var(--text-muted);
 }
 
+/* ===== Charts ===== */
+
+.chart-wrap {
+  position: relative;
+  height: 220px;
+}
+
 /* ===== Form ===== */
 
 .form-grid {
@@ -413,5 +420,9 @@ textarea {
 
   .field-row {
     flex-direction: column;
+  }
+
+  .chart-wrap {
+    height: 180px;
   }
 }

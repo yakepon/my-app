@@ -46,6 +46,20 @@
       </div>
     </section>
 
+    <section class="panel chart-panel">
+      <h2>受講トレンド</h2>
+      <div class="chart-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </section>
+
+    <section class="panel chart-panel">
+      <h2>カテゴリ別 受講回数</h2>
+      <div class="chart-wrap">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </section>
+
     <section class="panel form-panel">
       <h2>記録を追加</h2>
       <form id="recordForm">
@@ -89,6 +103,7 @@
     <button id="toggleSettings" class="settings-toggle">⚙ 接続設定</button>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

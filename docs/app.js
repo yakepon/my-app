@@ -11,7 +11,14 @@ const els = {
   statAvg: document.getElementById('statAvg'),
   form: document.getElementById('recordForm'),
   recordsList: document.getElementById('recordsList'),
+  trendChart: document.getElementById('trendChart'),
+  categoryChart: document.getElementById('categoryChart'),
 };
+
+const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
+
+let trendChart = null;
+let categoryChart = null;
 
 function getGasUrl() {
   return localStorage.getItem(STORAGE_KEY) || '';
@@ -69,6 +76,8 @@ function renderRecords(records) {
   els.statCalories.textContent = totalCal.toLocaleString();
   els.statAvg.textContent = avgCal;
 
+  renderCharts(sorted);
+
   if (count === 0) {
     els.recordsList.innerHTML = '<p class="empty">まだ記録がありません。最初のライドを記録しましょう。</p>';
     return;
@@ -92,6 +101,95 @@ function renderRecords(records) {
       </div>
     </article>
   `).join('');
+}
+
+function chartAxisOptions() {
+  return {
+    x: {
+      ticks: { color: '#8a8aa3', font: { family: 'JetBrains Mono', size: 11 } },
+      grid: { color: '#262638' },
+    },
+    y: {
+      beginAtZero: true,
+      ticks: { color: '#8a8aa3', precision: 0, stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } },
+      grid: { color: '#262638' },
+    },
+  };
+}
+
+function renderCharts(records) {
+  renderTrendChart(records);
+  renderCategoryChart(records);
+}
+
+function renderTrendChart(records) {
+  const counts = {};
+  records.forEach((r) => {
+    const d = new Date(r.datetime);
+    if (isNaN(d.getTime())) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  const labels = Object.keys(counts).sort();
+
+  if (trendChart) trendChart.destroy();
+  if (!labels.length) return;
+
+  trendChart = new Chart(els.trendChart, {
+    type: 'line',
+    data: {
+      labels: labels.map((key) => key.slice(5).replace('-', '/')),
+      datasets: [{
+        label: '受講回数',
+        data: labels.map((key) => counts[key]),
+        borderColor: '#00e5ff',
+        backgroundColor: 'rgba(0, 229, 255, 0.15)',
+        pointBackgroundColor: '#00e5ff',
+        pointBorderColor: '#00e5ff',
+        tension: 0.35,
+        fill: true,
+        pointRadius: 3,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: chartAxisOptions(),
+    },
+  });
+}
+
+function renderCategoryChart(records) {
+  const counts = {};
+  records.forEach((r) => {
+    const cat = (r.category || '').trim() || '未分類';
+    counts[cat] = (counts[cat] || 0) + 1;
+  });
+  const labels = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+  if (categoryChart) categoryChart.destroy();
+  if (!labels.length) return;
+
+  categoryChart = new Chart(els.categoryChart, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '受講回数',
+        data: labels.map((key) => counts[key]),
+        backgroundColor: labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]),
+        borderRadius: 6,
+        maxBarThickness: 40,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: chartAxisOptions(),
+    },
+  });
 }
 
 async function onSubmit(e) {
