@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FEELCYCLE LOG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="app-header">
+    <p class="kicker">RIDE TRACKER</p>
+    <h1 class="logo">FEEL<span>CYCLE</span> LOG</h1>
+  </header>
+
+  <main>
+    <section class="panel settings" id="settings">
+      <h2>接続設定</h2>
+      <p class="hint">
+        Googleスプレッドシートと連携する Google Apps Script Webアプリの URL を入力してください。
+        設定方法は <code>gas/Code.gs</code> と同梱の README を参照してください。
+      </p>
+      <div class="field-row">
+        <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <button id="saveUrl" class="btn">保存</button>
+      </div>
+      <p class="status" id="connStatus">未接続</p>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <span class="stat-value" id="statCount">--</span>
+        <span class="stat-label">TOTAL RIDES</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="statCalories">--</span>
+        <span class="stat-label">TOTAL KCAL</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="statAvg">--</span>
+        <span class="stat-label">AVG KCAL</span>
+      </div>
+    </section>
+
+    <section class="panel form-panel">
+      <h2>記録を追加</h2>
+      <form id="recordForm">
+        <div class="form-grid">
+          <label>日時
+            <input type="datetime-local" name="datetime" required>
+          </label>
+          <label>スタジオ
+            <input type="text" name="studio" placeholder="例: 渋谷">
+          </label>
+          <label>カテゴリ
+            <input type="text" name="category" placeholder="例: BSL / POP / ROC">
+          </label>
+          <label>プログラム名
+            <input type="text" name="program" placeholder="例: BSL45 Pops">
+          </label>
+          <label>インストラクター
+            <input type="text" name="instructor" placeholder="例: Yuki">
+          </label>
+          <label>消費カロリー
+            <input type="number" name="calories" min="0" placeholder="例: 450">
+          </label>
+        </div>
+        <label class="memo-field">メモ
+          <textarea name="memo" rows="2" placeholder="感想やフリーメモ"></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">記録する</button>
+      </form>
+    </section>
+
+    <section class="panel records-panel">
+      <h2>ライド履歴</h2>
+      <div class="records-list" id="recordsList">
+        <p class="empty">接続設定を行うと記録が表示されます。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>FEELCYCLE LOG — powered by Google Sheets</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
