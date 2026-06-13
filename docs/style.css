@@ -54,6 +54,15 @@ body {
   padding: 64px 24px 40px;
 }
 
+.brand-logo {
+  display: block;
+  max-width: 220px;
+  max-height: 96px;
+  width: auto;
+  height: auto;
+  margin: 0 auto 20px;
+}
+
 .kicker {
   font-family: var(--font-mono);
   letter-spacing: 0.4em;
@@ -237,6 +246,15 @@ textarea {
   margin-bottom: 20px;
 }
 
+.form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.form-actions .btn-primary {
+  flex: 1;
+}
+
 /* ===== Buttons ===== */
 
 .btn {
@@ -293,6 +311,41 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px 20px;
+}
+
+.record-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.icon-btn:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.delete-btn:hover {
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
 }
 
 .record-date {
@@ -418,7 +471,16 @@ textarea {
     align-self: flex-end;
   }
 
+  .record-actions {
+    flex-direction: row;
+    align-self: flex-end;
+  }
+
   .field-row {
+    flex-direction: column;
+  }
+
+  .form-actions {
     flex-direction: column;
   }
 

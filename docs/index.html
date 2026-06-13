@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -13,6 +14,7 @@
   <div class="glow" aria-hidden="true"></div>
 
   <header class="app-header">
+    <img class="brand-logo" src="assets/feelcycle-log.jpg" alt="FEELCYCLE" onerror="this.style.display='none'">
     <p class="kicker">RIDE TRACKER</p>
     <h1 class="logo">FEEL<span>CYCLE</span> LOG</h1>
   </header>
@@ -60,24 +62,35 @@
       </div>
     </section>
 
+    <section class="panel chart-panel">
+      <h2>インストラクター別 受講回数</h2>
+      <div class="chart-wrap">
+        <canvas id="instructorChart"></canvas>
+      </div>
+    </section>
+
     <section class="panel form-panel">
-      <h2>記録を追加</h2>
+      <h2 id="formTitle">記録を追加</h2>
       <form id="recordForm">
+        <input type="hidden" name="id">
         <div class="form-grid">
           <label>日時
             <input type="datetime-local" name="datetime" required>
           </label>
           <label>スタジオ
-            <input type="text" name="studio" placeholder="例: 渋谷">
+            <input type="text" name="studio" list="studioList" placeholder="例: 渋谷">
+          </label>
+          <label>自転車No
+            <input type="number" name="bikeNo" list="bikeNoList" min="0" placeholder="例: 12">
           </label>
           <label>カテゴリ
-            <input type="text" name="category" placeholder="例: BSL / POP / ROC">
+            <input type="text" name="category" list="categoryList" placeholder="例: BSL / POP / ROC">
           </label>
           <label>プログラム名
-            <input type="text" name="program" placeholder="例: BSL45 Pops">
+            <input type="text" name="program" list="programList" placeholder="例: BSL45 Pops">
           </label>
           <label>インストラクター
-            <input type="text" name="instructor" placeholder="例: Yuki">
+            <input type="text" name="instructor" list="instructorList" placeholder="例: Yuki">
           </label>
           <label>消費カロリー
             <input type="number" name="calories" min="0" placeholder="例: 450">
@@ -86,7 +99,15 @@
         <label class="memo-field">メモ
           <textarea name="memo" rows="2" placeholder="感想やフリーメモ"></textarea>
         </label>
-        <button type="submit" class="btn btn-primary">記録する</button>
+        <datalist id="studioList"></datalist>
+        <datalist id="bikeNoList"></datalist>
+        <datalist id="categoryList"></datalist>
+        <datalist id="programList"></datalist>
+        <datalist id="instructorList"></datalist>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submitBtn">記録する</button>
+          <button type="button" class="btn" id="cancelEdit" hidden>キャンセル</button>
+        </div>
       </form>
     </section>
 

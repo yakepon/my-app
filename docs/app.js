@@ -10,15 +10,21 @@ const els = {
   statCalories: document.getElementById('statCalories'),
   statAvg: document.getElementById('statAvg'),
   form: document.getElementById('recordForm'),
+  formTitle: document.getElementById('formTitle'),
+  submitBtn: document.getElementById('submitBtn'),
+  cancelEdit: document.getElementById('cancelEdit'),
   recordsList: document.getElementById('recordsList'),
   trendChart: document.getElementById('trendChart'),
   categoryChart: document.getElementById('categoryChart'),
+  instructorChart: document.getElementById('instructorChart'),
 };
 
 const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
 
 let trendChart = null;
 let categoryChart = null;
+let instructorChart = null;
+let currentRecords = [];
 
 function getGasUrl() {
   return localStorage.getItem(STORAGE_KEY) || '';
@@ -47,6 +53,13 @@ function formatDate(value) {
   });
 }
 
+function toDatetimeInputValue(value) {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 async function loadRecords() {
   const url = getGasUrl();
   if (!url) return;
@@ -57,6 +70,7 @@ async function loadRecords() {
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const records = await res.json();
+    currentRecords = records;
     renderRecords(records);
     setStatus(`接続済み（${records.length}件の記録）`, 'ok');
   } catch (err) {
@@ -77,6 +91,7 @@ function renderRecords(records) {
   els.statAvg.textContent = avgCal;
 
   renderCharts(sorted);
+  populateDatalists(sorted);
 
   if (count === 0) {
     els.recordsList.innerHTML = '<p class="empty">まだ記録がありません。最初のライドを記録しましょう。</p>';
@@ -91,6 +106,7 @@ function renderRecords(records) {
         <div class="record-meta">
           ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
           ${r.studio ? `<span class="meta-item">${escapeHtml(r.studio)}</span>` : ''}
+          ${r.bikeNo ? `<span class="meta-item">No.${escapeHtml(r.bikeNo)}</span>` : ''}
           ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
         </div>
         ${r.memo ? `<p class="record-memo">${escapeHtml(r.memo)}</p>` : ''}
@@ -98,6 +114,10 @@ function renderRecords(records) {
       <div class="record-calories">
         <span class="cal-value">${r.calories || '-'}</span>
         <span class="cal-unit">KCAL</span>
+      </div>
+      <div class="record-actions">
+        <button type="button" class="icon-btn edit-btn" data-id="${escapeHtml(r.id)}">編集</button>
+        <button type="button" class="icon-btn delete-btn" data-id="${escapeHtml(r.id)}">削除</button>
       </div>
     </article>
   `).join('');
@@ -120,6 +140,23 @@ function chartAxisOptions() {
 function renderCharts(records) {
   renderTrendChart(records);
   renderCategoryChart(records);
+  renderInstructorChart(records);
+}
+
+const DATALIST_FIELDS = {
+  studioList: 'studio',
+  bikeNoList: 'bikeNo',
+  categoryList: 'category',
+  programList: 'program',
+  instructorList: 'instructor',
+};
+
+function populateDatalists(records) {
+  Object.entries(DATALIST_FIELDS).forEach(([listId, key]) => {
+    const values = [...new Set(records.map((r) => String(r[key] || '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
+    document.getElementById(listId).innerHTML = values.map((v) => `<option value="${escapeHtml(v)}"></option>`).join('');
+  });
 }
 
 function renderTrendChart(records) {
@@ -192,6 +229,91 @@ function renderCategoryChart(records) {
   });
 }
 
+function renderInstructorChart(records) {
+  const counts = {};
+  records.forEach((r) => {
+    const instructor = (r.instructor || '').trim() || '未設定';
+    counts[instructor] = (counts[instructor] || 0) + 1;
+  });
+  const labels = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+  if (instructorChart) instructorChart.destroy();
+  if (!labels.length) return;
+
+  instructorChart = new Chart(els.instructorChart, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '受講回数',
+        data: labels.map((key) => counts[key]),
+        backgroundColor: labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]),
+        borderRadius: 6,
+        maxBarThickness: 40,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: chartAxisOptions(),
+    },
+  });
+}
+
+function enterEditMode(record) {
+  els.form.id.value = record.id;
+  els.form.datetime.value = toDatetimeInputValue(record.datetime);
+  els.form.studio.value = record.studio || '';
+  els.form.bikeNo.value = record.bikeNo || '';
+  els.form.category.value = record.category || '';
+  els.form.program.value = record.program || '';
+  els.form.instructor.value = record.instructor || '';
+  els.form.calories.value = record.calories || '';
+  els.form.memo.value = record.memo || '';
+
+  els.formTitle.textContent = '記録を編集';
+  els.submitBtn.textContent = '更新する';
+  els.cancelEdit.hidden = false;
+  els.form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitEditMode() {
+  els.form.reset();
+  els.form.id.value = '';
+  els.formTitle.textContent = '記録を追加';
+  els.submitBtn.textContent = '記録する';
+  els.cancelEdit.hidden = true;
+}
+
+function onEdit(id) {
+  const record = currentRecords.find((r) => String(r.id) === String(id));
+  if (!record) return;
+  enterEditMode(record);
+}
+
+async function onDelete(id) {
+  const url = getGasUrl();
+  if (!url) {
+    setStatus('先に接続設定を行ってください。', 'error');
+    return;
+  }
+  if (!confirm('この記録を削除しますか？')) return;
+
+  try {
+    // text/plain を使うことで CORS のプリフライトを回避する
+    await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    setStatus('記録を削除しました。', 'ok');
+  } catch (err) {
+    setStatus('通信エラーが発生しましたが、削除されている可能性があります。一覧を確認してください。', 'error');
+  } finally {
+    await loadRecords();
+  }
+}
+
 async function onSubmit(e) {
   e.preventDefault();
 
@@ -202,9 +324,13 @@ async function onSubmit(e) {
   }
 
   const formData = new FormData(els.form);
+  const id = formData.get('id');
   const payload = {
+    action: id ? 'update' : 'add',
+    id,
     datetime: formData.get('datetime'),
     studio: formData.get('studio'),
+    bikeNo: formData.get('bikeNo'),
     category: formData.get('category'),
     program: formData.get('program'),
     instructor: formData.get('instructor'),
@@ -212,9 +338,9 @@ async function onSubmit(e) {
     memo: formData.get('memo'),
   };
 
-  const submitBtn = els.form.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.textContent = '送信中...';
+  els.submitBtn.disabled = true;
+  const submittingLabel = id ? '更新中...' : '送信中...';
+  els.submitBtn.textContent = submittingLabel;
 
   try {
     // text/plain を使うことで CORS のプリフライトを回避する
@@ -222,13 +348,12 @@ async function onSubmit(e) {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    setStatus('記録を保存しました。', 'ok');
+    setStatus(id ? '記録を更新しました。' : '記録を保存しました。', 'ok');
   } catch (err) {
     setStatus('通信エラーが発生しましたが、記録は保存されている可能性があります。一覧を確認してください。', 'error');
   } finally {
-    els.form.reset();
-    submitBtn.disabled = false;
-    submitBtn.textContent = '記録する';
+    exitEditMode();
+    els.submitBtn.disabled = false;
     await loadRecords();
   }
 }
@@ -259,6 +384,19 @@ function init() {
   });
 
   els.form.addEventListener('submit', onSubmit);
+  els.cancelEdit.addEventListener('click', exitEditMode);
+
+  els.recordsList.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.edit-btn');
+    if (editBtn) {
+      onEdit(editBtn.dataset.id);
+      return;
+    }
+    const deleteBtn = e.target.closest('.delete-btn');
+    if (deleteBtn) {
+      onDelete(deleteBtn.dataset.id);
+    }
+  });
 }
 
 init();
