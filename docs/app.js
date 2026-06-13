@@ -7,7 +7,7 @@ const els = {
   saveUrl: document.getElementById('saveUrl'),
   connStatus: document.getElementById('connStatus'),
   statCount: document.getElementById('statCount'),
-  statCalories: document.getElementById('statCalories'),
+  statMonthly: document.getElementById('statMonthly'),
   statAvg: document.getElementById('statAvg'),
   form: document.getElementById('recordForm'),
   formTitle: document.getElementById('formTitle'),
@@ -25,6 +25,9 @@ let trendChart = null;
 let categoryChart = null;
 let instructorChart = null;
 let currentRecords = [];
+
+const RECORDS_PAGE_SIZE = 10;
+let recordsLimit = RECORDS_PAGE_SIZE;
 
 function getGasUrl() {
   return localStorage.getItem(STORAGE_KEY) || '';
@@ -86,8 +89,14 @@ function renderRecords(records) {
   const totalCal = sorted.reduce((sum, r) => sum + (Number(r.calories) || 0), 0);
   const avgCal = count ? Math.round(totalCal / count) : 0;
 
+  const now = new Date();
+  const monthlyCount = sorted.filter((r) => {
+    const d = new Date(r.datetime);
+    return !isNaN(d.getTime()) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+
   els.statCount.textContent = count;
-  els.statCalories.textContent = totalCal.toLocaleString();
+  els.statMonthly.textContent = monthlyCount;
   els.statAvg.textContent = avgCal;
 
   renderCharts(sorted);
@@ -98,7 +107,10 @@ function renderRecords(records) {
     return;
   }
 
-  els.recordsList.innerHTML = sorted.map((r) => `
+  const visible = sorted.slice(0, recordsLimit);
+  const remaining = sorted.length - visible.length;
+
+  els.recordsList.innerHTML = visible.map((r) => `
     <article class="record-card">
       <div class="record-main">
         <span class="record-date">${formatDate(r.datetime)}</span>
@@ -120,7 +132,7 @@ function renderRecords(records) {
         <button type="button" class="icon-btn delete-btn" data-id="${escapeHtml(r.id)}">削除</button>
       </div>
     </article>
-  `).join('');
+  `).join('') + (remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : '');
 }
 
 function chartAxisOptions() {
@@ -164,21 +176,27 @@ function renderTrendChart(records) {
   records.forEach((r) => {
     const d = new Date(r.datetime);
     if (isNaN(d.getTime())) return;
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     counts[key] = (counts[key] || 0) + 1;
   });
-  const labels = Object.keys(counts).sort();
+
+  const now = new Date();
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
 
   if (trendChart) trendChart.destroy();
-  if (!labels.length) return;
+  if (!records.length) return;
 
   trendChart = new Chart(els.trendChart, {
     type: 'line',
     data: {
-      labels: labels.map((key) => key.slice(5).replace('-', '/')),
+      labels: months.map((key) => `${key.slice(2, 4)}/${key.slice(5)}`),
       datasets: [{
         label: '受講回数',
-        data: labels.map((key) => counts[key]),
+        data: months.map((key) => counts[key] || 0),
         borderColor: '#00e5ff',
         backgroundColor: 'rgba(0, 229, 255, 0.15)',
         pointBackgroundColor: '#00e5ff',
@@ -395,6 +413,12 @@ function init() {
     const deleteBtn = e.target.closest('.delete-btn');
     if (deleteBtn) {
       onDelete(deleteBtn.dataset.id);
+      return;
+    }
+    const loadMoreBtn = e.target.closest('#loadMoreBtn');
+    if (loadMoreBtn) {
+      recordsLimit += RECORDS_PAGE_SIZE;
+      renderRecords(currentRecords);
     }
   });
 }

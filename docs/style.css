@@ -54,15 +54,6 @@ body {
   padding: 64px 24px 40px;
 }
 
-.brand-logo {
-  display: block;
-  max-width: 220px;
-  max-height: 96px;
-  width: auto;
-  height: auto;
-  margin: 0 auto 20px;
-}
-
 .kicker {
   font-family: var(--font-mono);
   letter-spacing: 0.4em;
@@ -420,6 +411,11 @@ textarea {
   color: var(--text-muted);
   padding: 24px 0;
   font-size: 14px;
+}
+
+.load-more-btn {
+  width: 100%;
+  margin-top: 4px;
 }
 
 /* ===== Footer ===== */
