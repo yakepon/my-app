@@ -18,6 +18,10 @@ const els = {
   categoryChart: document.getElementById('categoryChart'),
   instructorChart: document.getElementById('instructorChart'),
   heatmap: document.getElementById('heatmap'),
+  searchCategory: document.getElementById('searchCategory'),
+  searchProgram: document.getElementById('searchProgram'),
+  searchBtn: document.getElementById('searchBtn'),
+  searchResult: document.getElementById('searchResult'),
 };
 
 const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
@@ -330,6 +334,76 @@ function renderHeatmap(records) {
   els.heatmap.innerHTML = `<div class="heatmap-grid">${headerCells}${bodyCells}</div>`;
 }
 
+function performSearch() {
+  const category = els.searchCategory.value.trim();
+  const program = els.searchProgram.value.trim();
+
+  if (!category && !program) {
+    els.searchResult.innerHTML = '<p class="empty">カテゴリまたはプログラム名を入力してください。</p>';
+    return;
+  }
+
+  const matches = currentRecords.filter((r) => {
+    const catMatch = !category || String(r.category || '').toLowerCase().includes(category.toLowerCase());
+    const progMatch = !program || String(r.program || '').toLowerCase().includes(program.toLowerCase());
+    return catMatch && progMatch;
+  });
+
+  if (!matches.length) {
+    els.searchResult.innerHTML = '<p class="empty">該当する記録が見つかりませんでした。</p>';
+    return;
+  }
+
+  const instructors = [...new Set(matches.map((r) => String(r.instructor || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
+
+  const memos = matches.map((r) => String(r.memo || '').trim()).filter(Boolean);
+
+  els.searchResult.innerHTML = `
+    <p class="search-count">${matches.length}件の記録が見つかりました</p>
+    <div class="search-block">
+      <h3>対応インストラクター</h3>
+      <div class="search-instructors">
+        ${instructors.length
+          ? instructors.map((name) => `<span class="badge instructor-badge">${escapeHtml(name)}</span>`).join('')
+          : '<p class="empty">インストラクター情報がありません。</p>'}
+      </div>
+    </div>
+    <div class="search-block">
+      <h3>プログラムの特徴（AI要約）</h3>
+      <p class="summary-text" id="summaryText">${memos.length ? '要約中...' : 'メモが記録されていません。'}</p>
+    </div>
+  `;
+
+  if (memos.length) {
+    requestSummary(category, program, memos);
+  }
+}
+
+async function requestSummary(category, program, memos) {
+  const summaryEl = document.getElementById('summaryText');
+  const url = getGasUrl();
+  if (!url) {
+    summaryEl.textContent = '先に接続設定を行ってください。';
+    return;
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'summarize', category, program, memos }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      summaryEl.textContent = '要約に失敗しました: ' + data.error;
+    } else {
+      summaryEl.textContent = data.summary || '要約結果が得られませんでした。';
+    }
+  } catch (err) {
+    summaryEl.textContent = '通信エラーが発生しました: ' + err.message;
+  }
+}
+
 function enterEditMode(record) {
   els.form.id.value = record.id;
   els.form.datetime.value = toDatetimeInputValue(record.datetime);
@@ -454,6 +528,8 @@ function init() {
 
   els.form.addEventListener('submit', onSubmit);
   els.cancelEdit.addEventListener('click', exitEditMode);
+
+  els.searchBtn.addEventListener('click', performSearch);
 
   els.recordsList.addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');

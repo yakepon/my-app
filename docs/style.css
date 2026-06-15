@@ -195,6 +195,67 @@ main {
   height: 220px;
 }
 
+/* ===== Search ===== */
+
+.search-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-row .btn {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.search-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.search-block {
+  margin-bottom: 16px;
+}
+
+.search-block:last-child {
+  margin-bottom: 0;
+}
+
+.search-block h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+.search-instructors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge.instructor-badge {
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--neon-cyan);
+  border-color: rgba(0, 229, 255, 0.4);
+}
+
+.summary-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
 /* ===== Heatmap ===== */
 
 .heatmap-grid {
@@ -506,8 +567,12 @@ textarea {
     align-self: flex-end;
   }
 
-  .field-row {
+  .field-row, .search-row {
     flex-direction: column;
+  }
+
+  .search-row .btn {
+    width: 100%;
   }
 
   .form-actions {

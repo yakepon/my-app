@@ -51,8 +51,13 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  const sheet = getSheet();
   const data = JSON.parse(e.postData.contents);
+
+  if (data.action === 'summarize') {
+    return summarizeMemos(data);
+  }
+
+  const sheet = getSheet();
 
   switch (data.action) {
     case 'update':
@@ -67,6 +72,51 @@ function doPost(e) {
   }
 
   return ContentService.createTextOutput(JSON.stringify({ result: 'ok' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 受講メモをClaude APIに送信し、プログラムの特徴を要約する
+function summarizeMemos(data) {
+  const memos = data.memos || [];
+  const category = data.category || '';
+  const program = data.program || '';
+
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+  if (!apiKey) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: 'スクリプトプロパティに ANTHROPIC_API_KEY が設定されていません。',
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const prompt = `以下は「${category} ${program}」というFEELCYCLEのプログラムを受講した際の感想メモです。`
+    + 'これらの内容を要約し、このプログラムの特徴や雰囲気を3〜5行程度の日本語で説明してください。\n\n'
+    + memos.map((memo, i) => `${i + 1}. ${memo}`).join('\n');
+
+  const response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    payload: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+    muteHttpExceptions: true,
+  });
+
+  const result = JSON.parse(response.getContentText());
+  if (result.error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: result.error.message || 'AI APIの呼び出しに失敗しました。',
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const summary = (result.content && result.content[0] && result.content[0].text) || '';
+
+  return ContentService.createTextOutput(JSON.stringify({ summary }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 

@@ -19,6 +19,16 @@
   </header>
 
   <main>
+    <section class="panel search-panel">
+      <h2>プログラム検索</h2>
+      <div class="search-row">
+        <input type="text" id="searchCategory" list="categoryList" placeholder="カテゴリ (例: BSL)">
+        <input type="text" id="searchProgram" list="programList" placeholder="プログラム名 (例: BSL45 Pops)">
+        <button type="button" id="searchBtn" class="btn btn-primary">検索</button>
+      </div>
+      <div class="search-result" id="searchResult"></div>
+    </section>
+
     <section class="panel settings" id="settings" hidden>
       <h2>接続設定</h2>
       <p class="hint">
