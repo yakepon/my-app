@@ -283,8 +283,10 @@ function renderInstructorChart(records) {
 }
 
 const HEATMAP_DAYS = ['月', '火', '水', '木', '金', '土', '日'];
+const HEATMAP_START_HOUR = 7;
+const HEATMAP_END_HOUR = 22;
 const HEATMAP_BAND_HOURS = 3;
-const HEATMAP_BAND_COUNT = 24 / HEATMAP_BAND_HOURS;
+const HEATMAP_BAND_COUNT = (HEATMAP_END_HOUR - HEATMAP_START_HOUR) / HEATMAP_BAND_HOURS;
 
 function renderHeatmap(records) {
   if (!records.length) {
@@ -297,30 +299,32 @@ function renderHeatmap(records) {
   records.forEach((r) => {
     const d = new Date(r.datetime);
     if (isNaN(d.getTime())) return;
+    const hour = d.getHours();
+    if (hour < HEATMAP_START_HOUR || hour >= HEATMAP_END_HOUR) return;
     const dayIndex = (d.getDay() + 6) % 7; // 0:月 ... 6:日
-    const bandIndex = Math.floor(d.getHours() / HEATMAP_BAND_HOURS);
+    const bandIndex = Math.floor((hour - HEATMAP_START_HOUR) / HEATMAP_BAND_HOURS);
     counts[dayIndex][bandIndex] += 1;
   });
 
   const max = Math.max(1, ...counts.flat());
 
-  const bandLabels = Array.from({ length: HEATMAP_BAND_COUNT }, (_, i) => String(i * HEATMAP_BAND_HOURS).padStart(2, '0'));
+  const bandLabels = Array.from({ length: HEATMAP_BAND_COUNT }, (_, i) => String(HEATMAP_START_HOUR + i * HEATMAP_BAND_HOURS).padStart(2, '0'));
 
   const headerCells = [`<span class="heatmap-cell heatmap-corner"></span>`]
-    .concat(bandLabels.map((label) => `<span class="heatmap-cell heatmap-label">${label}</span>`))
+    .concat(HEATMAP_DAYS.map((day) => `<span class="heatmap-cell heatmap-label">${day}</span>`))
     .join('');
 
-  const bodyCells = HEATMAP_DAYS.map((day, dayIndex) => {
-    const rowCells = counts[dayIndex].map((count, bandIndex) => {
+  const bodyCells = bandLabels.map((rangeStart, bandIndex) => {
+    const rangeEnd = String(HEATMAP_START_HOUR + (bandIndex + 1) * HEATMAP_BAND_HOURS).padStart(2, '0');
+    const rowCells = HEATMAP_DAYS.map((day, dayIndex) => {
+      const count = counts[dayIndex][bandIndex];
       const intensity = count / max;
       const style = count
         ? `style="background: rgba(0, 229, 255, ${(0.15 + intensity * 0.65).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(0, 229, 255, ${(intensity * 0.6).toFixed(2)})"`
         : '';
-      const rangeStart = bandLabels[bandIndex];
-      const rangeEnd = String((bandIndex + 1) * HEATMAP_BAND_HOURS).padStart(2, '0');
       return `<span class="heatmap-cell heatmap-value" ${style} title="${day} ${rangeStart}-${rangeEnd}時: ${count}回">${count || ''}</span>`;
     }).join('');
-    return `<span class="heatmap-cell heatmap-label">${day}</span>${rowCells}`;
+    return `<span class="heatmap-cell heatmap-label">${rangeStart}</span>${rowCells}`;
   }).join('');
 
   els.heatmap.innerHTML = `<div class="heatmap-grid">${headerCells}${bodyCells}</div>`;
