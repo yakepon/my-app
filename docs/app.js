@@ -357,7 +357,9 @@ function performSearch() {
   const instructors = [...new Set(matches.map((r) => String(r.instructor || '').trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
 
-  const memos = matches.map((r) => String(r.memo || '').trim()).filter(Boolean);
+  const memoRecords = [...matches]
+    .filter((r) => String(r.memo || '').trim())
+    .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
   els.searchResult.innerHTML = `
     <p class="search-count">${matches.length}件の記録が見つかりました</p>
@@ -370,38 +372,17 @@ function performSearch() {
       </div>
     </div>
     <div class="search-block">
-      <h3>プログラムの特徴（AI要約）</h3>
-      <p class="summary-text" id="summaryText">${memos.length ? '要約中...' : 'メモが記録されていません。'}</p>
+      <h3>過去のメモ</h3>
+      ${memoRecords.length
+        ? `<ul class="memo-list">${memoRecords.map((r) => `
+          <li class="memo-list-item">
+            <span class="memo-date">${formatDate(r.datetime)}</span>
+            <p class="memo-text">${escapeHtml(r.memo)}</p>
+          </li>
+        `).join('')}</ul>`
+        : '<p class="empty">メモが記録されていません。</p>'}
     </div>
   `;
-
-  if (memos.length) {
-    requestSummary(category, program, memos);
-  }
-}
-
-async function requestSummary(category, program, memos) {
-  const summaryEl = document.getElementById('summaryText');
-  const url = getGasUrl();
-  if (!url) {
-    summaryEl.textContent = '先に接続設定を行ってください。';
-    return;
-  }
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'summarize', category, program, memos }),
-    });
-    const data = await res.json();
-    if (data.error) {
-      summaryEl.textContent = '要約に失敗しました: ' + data.error;
-    } else {
-      summaryEl.textContent = data.summary || '要約結果が得られませんでした。';
-    }
-  } catch (err) {
-    summaryEl.textContent = '通信エラーが発生しました: ' + err.message;
-  }
 }
 
 function enterEditMode(record) {
