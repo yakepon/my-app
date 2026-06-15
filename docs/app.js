@@ -324,7 +324,7 @@ function renderHeatmap(records) {
         : '';
       return `<span class="heatmap-cell heatmap-value" ${style} title="${day} ${rangeStart}-${rangeEnd}時: ${count}回">${count || ''}</span>`;
     }).join('');
-    return `<span class="heatmap-cell heatmap-label">${rangeStart}</span>${rowCells}`;
+    return `<span class="heatmap-cell heatmap-label">${rangeStart}-${rangeEnd}</span>${rowCells}`;
   }).join('');
 
   els.heatmap.innerHTML = `<div class="heatmap-grid">${headerCells}${bodyCells}</div>`;
