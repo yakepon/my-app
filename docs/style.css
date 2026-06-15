@@ -195,6 +195,40 @@ main {
   height: 220px;
 }
 
+/* ===== Heatmap ===== */
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: 28px repeat(8, 1fr);
+  gap: 4px;
+}
+
+.heatmap-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.heatmap-corner {
+  aspect-ratio: 1;
+}
+
+.heatmap-label {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.heatmap-value {
+  aspect-ratio: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
 /* ===== Form ===== */
 
 .form-grid {

@@ -17,6 +17,7 @@ const els = {
   trendChart: document.getElementById('trendChart'),
   categoryChart: document.getElementById('categoryChart'),
   instructorChart: document.getElementById('instructorChart'),
+  heatmap: document.getElementById('heatmap'),
 };
 
 const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
@@ -86,8 +87,9 @@ function renderRecords(records) {
   const sorted = [...records].sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
   const count = sorted.length;
-  const totalCal = sorted.reduce((sum, r) => sum + (Number(r.calories) || 0), 0);
-  const avgCal = count ? Math.round(totalCal / count) : 0;
+  const calRecords = sorted.filter((r) => r.calories !== '' && r.calories != null && !isNaN(Number(r.calories)));
+  const totalCal = calRecords.reduce((sum, r) => sum + Number(r.calories), 0);
+  const avgCal = calRecords.length ? Math.round(totalCal / calRecords.length) : 0;
 
   const now = new Date();
   const monthlyCount = sorted.filter((r) => {
@@ -153,6 +155,7 @@ function renderCharts(records) {
   renderTrendChart(records);
   renderCategoryChart(records);
   renderInstructorChart(records);
+  renderHeatmap(records);
 }
 
 const DATALIST_FIELDS = {
@@ -277,6 +280,50 @@ function renderInstructorChart(records) {
       scales: chartAxisOptions(),
     },
   });
+}
+
+const HEATMAP_DAYS = ['月', '火', '水', '木', '金', '土', '日'];
+const HEATMAP_BAND_HOURS = 3;
+const HEATMAP_BAND_COUNT = 24 / HEATMAP_BAND_HOURS;
+
+function renderHeatmap(records) {
+  if (!records.length) {
+    els.heatmap.innerHTML = '<p class="empty">まだ記録がありません。</p>';
+    return;
+  }
+
+  const counts = Array.from({ length: 7 }, () => Array(HEATMAP_BAND_COUNT).fill(0));
+
+  records.forEach((r) => {
+    const d = new Date(r.datetime);
+    if (isNaN(d.getTime())) return;
+    const dayIndex = (d.getDay() + 6) % 7; // 0:月 ... 6:日
+    const bandIndex = Math.floor(d.getHours() / HEATMAP_BAND_HOURS);
+    counts[dayIndex][bandIndex] += 1;
+  });
+
+  const max = Math.max(1, ...counts.flat());
+
+  const bandLabels = Array.from({ length: HEATMAP_BAND_COUNT }, (_, i) => String(i * HEATMAP_BAND_HOURS).padStart(2, '0'));
+
+  const headerCells = [`<span class="heatmap-cell heatmap-corner"></span>`]
+    .concat(bandLabels.map((label) => `<span class="heatmap-cell heatmap-label">${label}</span>`))
+    .join('');
+
+  const bodyCells = HEATMAP_DAYS.map((day, dayIndex) => {
+    const rowCells = counts[dayIndex].map((count, bandIndex) => {
+      const intensity = count / max;
+      const style = count
+        ? `style="background: rgba(0, 229, 255, ${(0.15 + intensity * 0.65).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(0, 229, 255, ${(intensity * 0.6).toFixed(2)})"`
+        : '';
+      const rangeStart = bandLabels[bandIndex];
+      const rangeEnd = String((bandIndex + 1) * HEATMAP_BAND_HOURS).padStart(2, '0');
+      return `<span class="heatmap-cell heatmap-value" ${style} title="${day} ${rangeStart}-${rangeEnd}時: ${count}回">${count || ''}</span>`;
+    }).join('');
+    return `<span class="heatmap-cell heatmap-label">${day}</span>${rowCells}`;
+  }).join('');
+
+  els.heatmap.innerHTML = `<div class="heatmap-grid">${headerCells}${bodyCells}</div>`;
 }
 
 function enterEditMode(record) {
