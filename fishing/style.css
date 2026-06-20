@@ -255,30 +255,21 @@ main, header, footer, section { position: relative; z-index: 2; }
 @media (min-width: 1000px) { .stats-strip { grid-template-columns: repeat(6, 1fr); } }
 
 .stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--gradient) border-box;
+  border: 2px solid transparent;
   border-radius: var(--radius);
   padding: 1.1rem 0.9rem 0.95rem;
   text-align: left;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s;
-}
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--gradient);
-  opacity: 0;
-  transition: opacity 0.2s;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 .stat-card:hover {
   transform: translateY(-3px);
-  border-color: transparent;
-  box-shadow: 0 16px 36px -18px rgba(108, 63, 224, 0.25);
+  box-shadow: 0 16px 36px -18px rgba(108, 63, 224, 0.35);
 }
-.stat-card:hover::before { opacity: 1; }
 
 .stat-icon {
   display: block;
@@ -1048,7 +1039,16 @@ form > textarea { margin-bottom: 0.6rem; }
 #catchesList .catch-row:last-child { border-bottom: none; }
 
 /* ── Heatmap species filter ─────────────────────────────────── */
-.heatmap-filter { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.9rem; }
+.heatmap-filter,
+.style-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-width: 860px;
+  margin: 0 auto 1rem;
+  padding: 0 1rem;
+}
+.heatmap-filter { padding: 0; margin-bottom: 0.9rem; }
 
 .hm-chip {
   font-family: var(--font-body);
@@ -1065,7 +1065,8 @@ form > textarea { margin-bottom: 0.6rem; }
   white-space: nowrap;
 }
 .hm-chip:hover  { border-color: var(--accent-2); color: var(--accent-2); background: #fff; transform: translateY(-1px); }
-.hm-chip-active { background: var(--gradient); border-color: transparent; color: #fff; }
+.hm-chip.hm-chip-active { background: var(--gradient); border-color: transparent; color: #fff; }
+.hm-chip.hm-chip-active:hover { color: #fff; }
 
 .heatmap-wrap-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
