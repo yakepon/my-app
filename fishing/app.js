@@ -44,6 +44,8 @@ const els = {
   eventsScreen:   document.getElementById('eventsScreen'),
   catchScreen:    document.getElementById('catchScreen'),
   eventBanner:    document.getElementById('eventBanner'),
+  tideChartPanel: document.getElementById('tideChartPanel'),
+  tideChart:      document.getElementById('tideChart'),
   quickCatchForm: document.getElementById('quickCatchForm'),
   speciesGrid:         document.getElementById('speciesGrid'),
   speciesPrompt:       document.getElementById('speciesPrompt'),
@@ -369,6 +371,7 @@ function showCatchScreen(ev) {
   resetQuickForm();
   renderEventBanner();
   renderEventCatches();
+  renderTideChart();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -465,6 +468,7 @@ function renderAll() {
     activeEvent = currentEvents.find(e => e.id === activeEvent.id) || activeEvent;
     renderEventBanner();
     renderEventCatches();
+    renderTideChart();
   }
 }
 
@@ -599,6 +603,100 @@ function renderEventBanner() {
     </div>`;
 
   els.quickCatchForm.hidden = false;
+}
+
+// ── Tide chart ────────────────────────────────────────────────
+let tideCache = { key: null, hours: null };
+
+async function fetchTide(area, dateStr) {
+  if (isMockMode()) return null; // デモモードはGAS経由の外部取得ができないため非対応
+  const url = getGasUrl();
+  if (!url) return null;
+  try {
+    const sep = url.indexOf('?') !== -1 ? '&' : '?';
+    const res = await fetch(`${url}${sep}action=tide&area=${encodeURIComponent(area || '')}&date=${encodeURIComponent(dateStr)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data.hours) ? data.hours : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildTideChartHtml(hours, countByHour) {
+  const points = hours
+    .map((v, h) => ({ h, v }))
+    .filter(p => p.v != null);
+
+  if (!points.length) {
+    return '<p class="empty">この釣行のエリアでは潮汐データを取得できませんでした。</p>';
+  }
+
+  const vals  = points.map(p => p.v);
+  const min   = Math.min(...vals);
+  const max   = Math.max(...vals);
+  const range = Math.max(1, max - min);
+  const toY   = v => 92 - ((v - min) / range) * 80;
+
+  const coords = points.map(p => ({ x: p.h * 10 + 5, y: toY(p.v) }));
+  const pathD = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y.toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L${coords[coords.length - 1].x},100 L${coords[0].x},100 Z`;
+
+  const columns = countByHour.map((n) => {
+    if (!n) return '<div class="tide-col"></div>';
+    const shown = Math.min(n, 5);
+    const icons = Array.from({ length: shown }).map(() =>
+      '<svg class="icon tide-fish"><use href="#icon-fish"/></svg>'
+    ).join('');
+    const extra = n > 5 ? `<span class="tide-fish-extra">+${n - 5}</span>` : '';
+    return `<div class="tide-col" title="${n}匹"><div class="tide-col-icons">${icons}${extra}</div></div>`;
+  }).join('');
+
+  const axisHours = [0, 3, 6, 9, 12, 15, 18, 21];
+  const axis = axisHours.map(h => `<span style="left:${((h * 10 + 5) / 240 * 100).toFixed(2)}%">${h}時</span>`).join('');
+
+  return `
+    <div class="tide-chart-body">
+      <svg class="tide-curve" viewBox="0 0 240 100" preserveAspectRatio="none" aria-hidden="true">
+        <path class="tide-area" d="${areaD}"></path>
+        <path class="tide-line" d="${pathD}"></path>
+      </svg>
+      <div class="tide-columns">${columns}</div>
+    </div>
+    <div class="tide-axis">${axis}</div>
+  `;
+}
+
+async function renderTideChart() {
+  if (!activeEvent) {
+    els.tideChartPanel.hidden = true;
+    return;
+  }
+
+  const dateStr = normDateStr(activeEvent.date);
+  const key = `${activeEvent.area || ''}|${dateStr}`;
+  if (tideCache.key !== key) {
+    tideCache = { key, hours: await fetchTide(activeEvent.area, dateStr) };
+  }
+
+  if (!tideCache.hours) {
+    els.tideChartPanel.hidden = true;
+    return;
+  }
+
+  // activeEventが切り替わっている間にfetchが返ってくる場合があるため再確認
+  if (!activeEvent || `${activeEvent.area || ''}|${normDateStr(activeEvent.date)}` !== key) return;
+
+  const countByHour = Array(24).fill(0);
+  currentCatches
+    .filter(c => c.eventId === activeEvent.id)
+    .forEach(c => {
+      const h = parseHour(c.time);
+      if (!isNaN(h)) countByHour[h] += Number(c.count) || 1;
+    });
+
+  els.tideChartPanel.hidden = false;
+  els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour);
 }
 
 function renderEventCatches() {

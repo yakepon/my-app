@@ -63,7 +63,74 @@ function jsonOutput(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
-function doGet() {
+// 「エリア」欄の文字列に含まれる地名から、気象庁 潮汐推算データの観測地点
+// コードを引く。神奈川県の沿岸地点のみ対応（必要に応じて追加してください）。
+const TIDE_STATIONS = {
+  '横浜': 'QS',
+  '川崎': 'KW',
+  '本牧': 'HM',
+  '横須賀': 'QN',
+  '湘南港': 'D8',
+  '茅ヶ崎': 'D8',
+  '藤沢': 'D8',
+  '江の島': 'D8',
+  '小田原': 'OD',
+};
+
+function resolveTideStation(area) {
+  if (!area) return null;
+  for (const name in TIDE_STATIONS) {
+    if (area.indexOf(name) !== -1) return TIDE_STATIONS[name];
+  }
+  return null;
+}
+
+// 気象庁の潮位表（推算）テキストファイルを取得し、指定日の毎時潮位(cm)を返す。
+// 1行 = 1日。先頭72文字が3桁×24時間分の潮位、続く6文字が年(2)月(2)日(2)、
+// 末尾2文字が地点コード（実データを取得して確認済みのフォーマット）。
+function getTide(area, dateStr) {
+  const station = resolveTideStation(area);
+  if (!station || !dateStr) return { hours: null };
+
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return { hours: null };
+
+  const year  = d.getFullYear();
+  const yy    = String(year % 100).padStart(2, '0');
+  const mm    = String(d.getMonth() + 1).padStart(2, ' ');
+  const dd    = String(d.getDate()).padStart(2, ' ');
+  const url   = `https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/${year}/${station}.txt`;
+
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return { hours: null, station };
+
+    const lines = res.getContentText().split('\n');
+    for (const line of lines) {
+      if (line.length < 80) continue;
+      if (line.substring(72, 74) !== yy) continue;
+      if (line.substring(74, 76) !== mm) continue;
+      if (line.substring(76, 78) !== dd) continue;
+
+      const hours = [];
+      for (let h = 0; h < 24; h++) {
+        const tok = line.substring(h * 3, h * 3 + 3).trim();
+        hours.push(tok === '' ? null : parseInt(tok, 10));
+      }
+      return { hours, station };
+    }
+    return { hours: null, station };
+  } catch (err) {
+    return { hours: null, station, error: String(err) };
+  }
+}
+
+function doGet(e) {
+  const params = (e && e.parameter) || {};
+  if (params.action === 'tide') {
+    return jsonOutput(getTide(params.area, params.date));
+  }
+
   const es = getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS);
   const cs = getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS);
   const ps = getOrCreateSheet(PRICE_SHEET, PRICE_HEADERS);
