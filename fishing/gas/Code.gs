@@ -66,6 +66,7 @@ function jsonOutput(obj) {
 // 「エリア」欄の文字列に含まれる地名から、気象庁 潮汐推算データの観測地点
 // コードを引く。神奈川県の沿岸地点のみ対応（必要に応じて追加してください）。
 const TIDE_STATIONS = {
+  // 神奈川県
   '横浜': 'QS',
   '川崎': 'KW',
   '本牧': 'HM',
@@ -76,6 +77,39 @@ const TIDE_STATIONS = {
   '藤沢': 'D8',
   '江の島': 'D8',
   '小田原': 'OD',
+  // 千葉県
+  '銚子': 'CS',
+  '勝浦': 'ZF',
+  '御宿': 'ZF',
+  '大原': 'ZF',
+  '鴨川': 'TT',
+  '南房総': 'TT', // 館山（最寄り）
+  '館山': 'TT',
+  '富津': 'KZ',
+  '金谷': 'KZ',
+  '保田': 'TT',
+  '鋸南': 'TT',
+  '木更津': 'KZ',
+  '市原': 'CB',
+  '千葉': 'CB',
+  '船橋': 'CB',
+  // 静岡県
+  '熱海': 'Z3',
+  '伊東': 'Z3',
+  '下田': 'D6',
+  '南伊豆': 'QK',
+  '石廊崎': 'G9',
+  '松崎': 'Z4',
+  '土肥': 'Z4',
+  '西伊豆': 'Z4',
+  '沼津': 'UC',
+  '内浦': 'UC',
+  '清水': 'SM',
+  '焼津': 'Z5',
+  '御前崎': 'OM',
+  '浜松': 'MI',
+  '舞阪': 'MI',
+  '浜名湖': 'MI',
 };
 
 function resolveTideStation(area) {
@@ -129,16 +163,52 @@ function getTide(area, dateStr) {
 // 「エリア」欄の地名から、気象庁「過去の気象データ」の観測地点コードを引く。
 // 神奈川県内のみ対応（type: 's1'=主要観測所/daily_s1.php, 'a1'=アメダスのみ/daily_a1.php）。
 const WEATHER_STATIONS = {
-  '横浜':   { code: '47670', type: 's1' },
-  '川崎':   { code: '1006',  type: 'a1' }, // 日吉（最寄り）
-  '本牧':   { code: '47670', type: 's1' }, // 横浜と同じ
-  '横須賀': { code: '0392',  type: 'a1' }, // 三浦（最寄り）
-  '三浦':   { code: '0392',  type: 'a1' },
-  '湘南港': { code: '0391',  type: 'a1' }, // 江ノ島
-  '茅ヶ崎': { code: '1443',  type: 'a1' }, // 辻堂（最寄り）
-  '藤沢':   { code: '1443',  type: 'a1' }, // 辻堂
-  '江の島': { code: '0391',  type: 'a1' },
-  '小田原': { code: '1008',  type: 'a1' },
+  // 神奈川県（観測点はprec_no=46）
+  '横浜':   { prec: '46', code: '47670', type: 's1' },
+  '川崎':   { prec: '46', code: '1006',  type: 'a1' }, // 日吉（最寄り）
+  '本牧':   { prec: '46', code: '47670', type: 's1' }, // 横浜と同じ
+  '横須賀': { prec: '46', code: '0392',  type: 'a1' }, // 三浦（最寄り）
+  '三浦':   { prec: '46', code: '0392',  type: 'a1' },
+  '湘南港': { prec: '46', code: '0391',  type: 'a1' }, // 江ノ島
+  '茅ヶ崎': { prec: '46', code: '1443',  type: 'a1' }, // 辻堂（最寄り）
+  '藤沢':   { prec: '46', code: '1443',  type: 'a1' }, // 辻堂
+  '江の島': { prec: '46', code: '0391',  type: 'a1' },
+  '小田原': { prec: '46', code: '1008',  type: 'a1' },
+  // 千葉県（観測点はprec_no=45）
+  '銚子':   { prec: '45', code: '47648', type: 's1' },
+  '勝浦':   { prec: '45', code: '47674', type: 's1' },
+  '御宿':   { prec: '45', code: '47674', type: 's1' }, // 勝浦と同じ
+  '大原':   { prec: '45', code: '47674', type: 's1' }, // 勝浦と同じ
+  '鴨川':   { prec: '45', code: '0384',  type: 'a1' },
+  '南房総': { prec: '45', code: '47672', type: 's1' }, // 館山と同じ
+  '館山':   { prec: '45', code: '47672', type: 's1' },
+  '富津':   { prec: '45', code: '0382',  type: 'a1' }, // 木更津と同じ
+  '金谷':   { prec: '45', code: '0382',  type: 'a1' }, // 木更津と同じ
+  '保田':   { prec: '45', code: '0383',  type: 'a1' }, // 鋸南
+  '鋸南':   { prec: '45', code: '0383',  type: 'a1' },
+  '木更津': { prec: '45', code: '0382',  type: 'a1' },
+  '市原':   { prec: '45', code: '47682', type: 's1' }, // 千葉と同じ
+  '千葉':   { prec: '45', code: '47682', type: 's1' },
+  '船橋':   { prec: '45', code: '47682', type: 's1' }, // 千葉と同じ
+  // 静岡県（観測点はprec_no=50）
+  '熱海':   { prec: '50', code: '1673',  type: 'a1' }, // 熱海伊豆山
+  '伊東':   { prec: '50', code: '1673',  type: 'a1' }, // 熱海伊豆山（最寄り）
+  '下田':   { prec: '50', code: '47666', type: 's1' }, // 石廊崎（最寄り）
+  '南伊豆': { prec: '50', code: '47666', type: 's1' }, // 石廊崎
+  '石廊崎': { prec: '50', code: '47666', type: 's1' },
+  '松崎':   { prec: '50', code: '0456',  type: 'a1' },
+  '土肥':   { prec: '50', code: '0987',  type: 'a1' },
+  '西伊豆': { prec: '50', code: '0987',  type: 'a1' }, // 土肥
+  '沼津':   { prec: '50', code: '47657', type: 's1' }, // 三島（最寄り）
+  '三島':   { prec: '50', code: '47657', type: 's1' },
+  '内浦':   { prec: '50', code: '47657', type: 's1' }, // 三島
+  '清水':   { prec: '50', code: '47656', type: 's1' }, // 静岡
+  '静岡':   { prec: '50', code: '47656', type: 's1' },
+  '焼津':   { prec: '50', code: '47656', type: 's1' }, // 静岡
+  '御前崎': { prec: '50', code: '47655', type: 's1' },
+  '浜松':   { prec: '50', code: '47654', type: 's1' },
+  '舞阪':   { prec: '50', code: '47654', type: 's1' }, // 浜松
+  '浜名湖': { prec: '50', code: '47654', type: 's1' }, // 浜松
 };
 
 function resolveWeatherStation(area) {
@@ -162,7 +232,7 @@ function getDailyTemp(area, dateStr) {
   const month = d.getMonth() + 1;
   const day   = d.getDate();
   const path  = station.type === 's1' ? 'daily_s1.php' : 'daily_a1.php';
-  const url   = `https://www.data.jma.go.jp/stats/etrn/view/${path}?prec_no=46&block_no=${station.code}&year=${year}&month=${month}&day=&view=p1`;
+  const url   = `https://www.data.jma.go.jp/stats/etrn/view/${path}?prec_no=${station.prec}&block_no=${station.code}&year=${year}&month=${month}&day=&view=p1`;
 
   try {
     const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
