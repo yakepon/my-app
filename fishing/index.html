@@ -158,31 +158,40 @@
     </defs>
   </svg>
 
-  <div class="sea-glow" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
 
   <header class="app-header">
-    <div class="header-fish" aria-hidden="true"><svg class="icon"><use href="#icon-fish-jump"/></svg></div>
-    <p class="kicker"><svg class="icon icon-kicker"><use href="#icon-rod"/></svg> FISHING TRACKER</p>
-    <div class="wordmark">
-      <h1 class="logo">ANGLER <span>LOG</span></h1>
-      <span class="hanko" aria-hidden="true">釣</span>
+    <div class="bubbles" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
     </div>
-    <nav class="app-nav" id="appNav">
-      <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
-      <button type="button" class="nav-link nav-btn nav-btn-register" id="navShowForm"><svg class="icon icon-nav"><use href="#icon-plus"/></svg> 釣行登録</button>
-    </nav>
-  </header>
-  <div class="wave-divider" aria-hidden="true">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 54" preserveAspectRatio="none">
-      <path fill="rgba(247,242,230,0.16)" d="M0,27 C240,54 480,0 720,27 C960,54 1200,0 1440,27 L1440,54 L0,54 Z"/>
-      <path fill="rgba(247,242,230,0.28)" d="M0,40 C360,16 720,54 1080,32 C1260,20 1380,46 1440,40 L1440,54 L0,54 Z"/>
+    <svg class="topo" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M-10,400 C150,360 300,420 460,390 C620,360 760,420 920,390 C1040,370 1140,390 1210,380"/>
+      <path d="M-10,320 C180,280 330,340 500,310 C660,280 800,330 960,305 C1080,288 1160,305 1210,298"/>
+      <path d="M-10,245 C160,215 320,260 480,235 C650,210 800,250 970,228 C1080,212 1160,228 1210,222"/>
+      <path d="M-10,170 C180,145 340,185 510,162 C670,140 820,178 980,158 C1090,144 1160,158 1210,153"/>
+      <path d="M-10,100 C200,80 380,110 540,92 C700,75 850,105 1010,90 C1100,82 1160,90 1210,87"/>
     </svg>
-  </div>
+
+    <div class="hero-inner">
+      <div class="terminal-line"><span class="prompt">$</span> tail -f angler.log<span class="cursor">_</span></div>
+      <h1 class="logo">ANGLER <span>LOG</span></h1>
+      <nav class="app-nav" id="appNav">
+        <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
+        <button type="button" class="nav-link nav-btn nav-btn-register" id="navShowForm"><svg class="icon icon-nav"><use href="#icon-plus"/></svg> 釣行登録</button>
+      </nav>
+    </div>
+  </header>
 
   <main>
 
     <!-- ══ 釣行一覧 Screen ══════════════════════════════════════ -->
     <div id="eventsScreen" class="screen">
+
+      <div class="section-label">
+        <span class="label-num">01</span>
+        <span class="label-text">Overview</span>
+        <span class="label-line"></span>
+      </div>
 
       <!-- Stats -->
       <section class="stats-strip">
@@ -217,6 +226,12 @@
           <span class="stat-label">YEARLY CATCH</span>
         </div>
       </section>
+
+      <div class="section-label">
+        <span class="label-num">02</span>
+        <span class="label-text">Log</span>
+        <span class="label-line"></span>
+      </div>
 
       <!-- Event Form (toggle) -->
       <section id="event-form" class="panel form-panel" hidden>
@@ -293,6 +308,12 @@
         </div>
         <div id="eventsList"><p class="empty">接続設定を行うと記録が表示されます。</p></div>
       </section>
+
+      <div class="section-label">
+        <span class="label-num">03</span>
+        <span class="label-text">Analytics</span>
+        <span class="label-line"></span>
+      </div>
 
       <!-- Charts -->
       <section class="panel chart-panel">

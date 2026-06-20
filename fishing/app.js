@@ -27,7 +27,7 @@ function speciesIconSvg(name, cls) {
   return `<svg class="icon ${cls || ''}"><use href="#icon-${id}"/></svg>`;
 }
 
-const CHART_PALETTE = ['#2f7d78', '#b53d3a', '#ab7d2c', '#7c5a8c', '#3f8f6d', '#3a5a99', '#a85a2a', '#6b6457'];
+const CHART_PALETTE = ['#7e9b86', '#ff8a3d', '#5fb3c9', '#ffd166', '#ff4d3d', '#3a8aa0', '#b08968', '#6b7a8f'];
 
 // ── DOM refs ─────────────────────────────────────────────────
 const els = {
@@ -253,8 +253,8 @@ function formatDateLabel(val) {
 
 function chartAxisOpts() {
   return {
-    x: { ticks: { color: '#6b6f85', font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: 'rgba(33,40,58,0.08)' } },
-    y: { beginAtZero: true, ticks: { color: '#6b6f85', precision: 0, stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: 'rgba(33,40,58,0.08)' } },
+    x: { ticks: { color: '#93a3a0', font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: 'rgba(243,237,227,0.07)' } },
+    y: { beginAtZero: true, ticks: { color: '#93a3a0', precision: 0, stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: 'rgba(243,237,227,0.07)' } },
   };
 }
 
@@ -486,7 +486,7 @@ function renderEventsList(expanded = false) {
       <article class="event-card${isToday ? ' event-card-today' : ''}">
         <div class="event-card-head">
           <div class="ec-date-row">
-            ${isToday ? '<span class="today-badge">本日</span>' : ''}
+            ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
             <span class="ec-date">${formatDateLabel(ev.date)}</span>
           </div>
           <div class="ec-spot">${escapeHtml(ev.spot || '-')}</div>
@@ -661,16 +661,16 @@ function renderCharts() {
         {
           label: `${prevYear}年`,
           data: prevData,
-          backgroundColor: 'rgba(154,150,134,0.35)',
-          borderColor:     'rgba(154,150,134,0.6)',
+          backgroundColor: 'rgba(147,163,160,0.3)',
+          borderColor:     'rgba(147,163,160,0.55)',
           borderWidth: 1,
           borderRadius: 3,
         },
         {
           label: `${curYear}年`,
           data: curData,
-          backgroundColor: 'rgba(47,125,120,0.85)',
-          borderColor:     '#2f7d78',
+          backgroundColor: 'rgba(255,138,61,0.85)',
+          borderColor:     '#ff8a3d',
           borderWidth: 1,
           borderRadius: 4,
         },
@@ -683,7 +683,7 @@ function renderCharts() {
         legend: {
           display: true,
           labels: {
-            color: '#6b6f85',
+            color: '#93a3a0',
             font: { family: 'JetBrains Mono', size: 10 },
             boxWidth: 14,
             boxHeight: 10,
@@ -804,7 +804,7 @@ function renderHeatmap() {
       const n = counts[mi][si];
       const alpha = (0.16 + (n / max) * 0.74).toFixed(2);
       const style = n
-        ? `style="background:rgba(47,125,120,${alpha});color:#f7f2e6"`
+        ? `style="background:rgba(95,179,201,${alpha});color:#0b0f10"`
         : '';
       return `<span class="heatmap-cell heatmap-value" ${style} title="${m} ${label}: ${n}匹">${n || ''}</span>`;
     }).join('');
