@@ -1,7 +1,13 @@
 const EVENT_SHEET  = 'events';
 const CATCH_SHEET  = 'catches';
+const PRICE_SHEET  = 'prices';
 const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
 const CATCH_HEADERS = ['id', 'eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo'];
+const PRICE_HEADERS = ['species', 'price'];
+// "06:12" のような時刻文字列はスプレッドシートに自動で時刻型として認識され、
+// 読み込み時にDateオブジェクトになってしまう（フロント側のHH:MM処理が壊れる原因）。
+// これらの列はプレーンテキスト書式に固定し、読み込み時もHH:MMへ復元する。
+const TIME_FIELDS = ['time', 'startTime', 'endTime'];
 
 function getOrCreateSheet(name, headers) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -16,7 +22,15 @@ function getOrCreateSheet(name, headers) {
       sheet.getRange(1, sheet.getLastColumn() + 1, 1, missing.length).setValues([missing]);
     }
   }
+  ensurePlainTextTimeColumns(sheet, headers);
   return sheet;
+}
+
+function ensurePlainTextTimeColumns(sheet, headers) {
+  headers.forEach((h, i) => {
+    if (TIME_FIELDS.indexOf(h) === -1) return;
+    sheet.getRange(1, i + 1, sheet.getMaxRows(), 1).setNumberFormat('@');
+  });
 }
 
 function getHeaders(sheet) {
@@ -30,22 +44,38 @@ function sheetToRecords(sheet) {
   return sheet.getRange(2, 1, lastRow - 1, headers.length).getValues()
     .map(row => {
       const r = {};
-      headers.forEach((k, i) => { r[k] = row[i] instanceof Date ? row[i].toISOString() : row[i]; });
+      headers.forEach((k, i) => {
+        const v = row[i];
+        if (!(v instanceof Date)) { r[k] = v; return; }
+        r[k] = TIME_FIELDS.indexOf(k) !== -1
+          ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'HH:mm')
+          : v.toISOString();
+      });
       return r;
     })
     .filter(r => r.id !== '' && r.id != null);
 }
 
+function jsonOutput(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
 function doGet() {
   const es = getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS);
   const cs = getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS);
-  return ContentService
-    .createTextOutput(JSON.stringify({ events: sheetToRecords(es), catches: sheetToRecords(cs) }))
-    .setMimeType(ContentService.MimeType.JSON);
+  const ps = getOrCreateSheet(PRICE_SHEET, PRICE_HEADERS);
+  return jsonOutput({ events: sheetToRecords(es), catches: sheetToRecords(cs), prices: sheetToRecords(ps) });
 }
 
 function doPost(e) {
-  const data   = JSON.parse(e.postData.contents);
+  const data = JSON.parse(e.postData.contents);
+
+  if (data.action === 'savePrice') {
+    const sheet = getOrCreateSheet(PRICE_SHEET, PRICE_HEADERS);
+    upsertPrice(sheet, data.species, data.price);
+    return jsonOutput({ result: 'ok' });
+  }
+
   const isEvent = data.action.includes('Event');
   const headers = isEvent ? EVENT_HEADERS : CATCH_HEADERS;
   const sheet   = getOrCreateSheet(isEvent ? EVENT_SHEET : CATCH_SHEET, headers);
@@ -59,8 +89,21 @@ function doPost(e) {
     addRecord(sheet, headers, data);
   }
 
-  return ContentService.createTextOutput(JSON.stringify({ result: 'ok' }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return jsonOutput({ result: 'ok' });
+}
+
+function upsertPrice(sheet, species, price) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow >= 2) {
+    const speciesCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (let i = 0; i < speciesCol.length; i++) {
+      if (speciesCol[i][0] === species) {
+        sheet.getRange(i + 2, 2).setValue(price);
+        return;
+      }
+    }
+  }
+  sheet.appendRow([species, price]);
 }
 
 function makeRow(headers, id, data) {

@@ -3,6 +3,7 @@
 const STORAGE_KEY      = 'angler_gas_url';
 const MOCK_EVENTS_KEY  = 'angler_mock_events';
 const MOCK_CATCHES_KEY = 'angler_mock_catches';
+const MOCK_PRICES_KEY  = 'angler_mock_prices';
 
 const SPECIES_LIST = [
   'アジ', 'サバ', 'イワシ', 'メバル', 'カサゴ', 'タチウオ', 'シーバス', 'マダイ',
@@ -75,11 +76,18 @@ const els = {
   targetList: document.getElementById('targetList'),
   demoNotice: document.getElementById('demoNotice'),
   resetDemo:  document.getElementById('resetDemo'),
+  pricesPanel:  document.getElementById('pricesPanel'),
+  togglePrices: document.getElementById('togglePrices'),
+  priceGrid:    document.getElementById('priceGrid'),
+  savePrices:   document.getElementById('savePrices'),
+  priceStatus:  document.getElementById('priceStatus'),
 };
 
 // ── State ─────────────────────────────────────────────────────
 let currentEvents  = [];
 let currentCatches = [];
+let currentPrices  = [];
+let priceMap       = {}; // species -> 円/匹
 let activeEvent    = null;
 let selectedSpecies = '';
 let selectedCount   = 0;
@@ -100,18 +108,20 @@ function mockLoad() {
   const stored = localStorage.getItem(MOCK_EVENTS_KEY);
   if (stored === null) {
     const sample = buildSampleData();
-    mockSave(sample.events, sample.catches);
+    mockSave(sample.events, sample.catches, sample.prices);
     return sample;
   }
   return {
     events:  JSON.parse(stored),
     catches: JSON.parse(localStorage.getItem(MOCK_CATCHES_KEY) || '[]'),
+    prices:  JSON.parse(localStorage.getItem(MOCK_PRICES_KEY) || '[]'),
   };
 }
 
-function mockSave(events, catches) {
+function mockSave(events, catches, prices) {
   localStorage.setItem(MOCK_EVENTS_KEY, JSON.stringify(events));
   localStorage.setItem(MOCK_CATCHES_KEY, JSON.stringify(catches));
+  localStorage.setItem(MOCK_PRICES_KEY, JSON.stringify(prices || []));
 }
 
 function buildSampleData() {
@@ -162,11 +172,20 @@ function buildSampleData() {
       { id: uid(), eventId: ev8, time: '18:30', species: 'タチウオ', count: '4', size: '110', weight: '', lure: 'テンヤ', point: '',       memo: '指3本以上ばかり' },
       { id: uid(), eventId: ev8, time: '19:15', species: 'タチウオ', count: '3', size: '95',  weight: '', lure: 'テンヤ', point: '',       memo: '' },
     ],
+    prices: [
+      { species: 'アジ',     price: 150 },
+      { species: 'サバ',     price: 200 },
+      { species: 'メバル',   price: 300 },
+      { species: 'カサゴ',   price: 250 },
+      { species: 'カツオ',   price: 400 },
+      { species: 'ブリ',     price: 1200 },
+      { species: 'タチウオ', price: 350 },
+    ],
   };
 }
 
 function mockExec(payload) {
-  const { events, catches } = mockLoad();
+  const { events, catches, prices } = mockLoad();
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
@@ -178,8 +197,12 @@ function mockExec(payload) {
   else if (action === 'addCatch')    { catches.push({ id: payload.id || uid(), ...pick(payload, CF) }); }
   else if (action === 'updateCatch') { const i = catches.findIndex(c => c.id === id); if (i >= 0) catches[i] = { id, ...pick(payload, CF) }; }
   else if (action === 'deleteCatch') { const i = catches.findIndex(c => c.id === id); if (i >= 0) catches.splice(i, 1); }
+  else if (action === 'savePrice')   {
+    const i = prices.findIndex(p => p.species === payload.species);
+    if (i >= 0) prices[i].price = payload.price; else prices.push({ species: payload.species, price: payload.price });
+  }
 
-  mockSave(events, catches);
+  mockSave(events, catches, prices);
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -237,11 +260,37 @@ function catchTotal(catches) {
   return catches.reduce((sum, c) => sum + (Number(c.count) || 1), 0);
 }
 
+function catchValue(c) {
+  return (Number(c.count) || 1) * (priceMap[c.species] || 0);
+}
+
+function catchesValue(catches) {
+  return catches.reduce((sum, c) => sum + catchValue(c), 0);
+}
+
+function parseHour(timeStr) {
+  // 通常は"HH:MM"形式だが、スプレッドシート側の自動型変換等で
+  // ISO日時文字列が混じっても時刻部分だけ抜き出せるようにする
+  if (!timeStr) return NaN;
+  const m = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+  return m ? parseInt(m[1], 10) : NaN;
+}
+
+function formatTime(timeStr) {
+  // 表示用。意図しないDate/ISO文字列が来てもHH:MM部分だけを取り出し、
+  // 人間が読めない値（例: Date型の文字列化）が画面に出ないようにする
+  if (!timeStr) return '';
+  const m = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+  return m ? `${m[1].padStart(2, '0')}:${m[2]}` : '';
+}
+
 function durationHours(start, end) {
   if (!start || !end) return null;
-  const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
-  if ([sh, sm, eh, em].some(n => isNaN(n))) return null;
+  const sm_ = String(start).match(/(\d{1,2}):(\d{2})/);
+  const em_ = String(end).match(/(\d{1,2}):(\d{2})/);
+  if (!sm_ || !em_) return null;
+  const sh = Number(sm_[1]), sm = Number(sm_[2]);
+  const eh = Number(em_[1]), em = Number(em_[2]);
   let mins = (eh * 60 + em) - (sh * 60 + sm);
   if (mins < 0) mins += 24 * 60; // 日付をまたいだ釣行
   return mins / 60;
@@ -306,11 +355,18 @@ function showCatchScreen(ev) {
 }
 
 // ── API ───────────────────────────────────────────────────────
+function applyPriceMap(prices) {
+  currentPrices = prices || [];
+  priceMap = {};
+  currentPrices.forEach(p => { priceMap[p.species] = Number(p.price) || 0; });
+}
+
 async function loadAll() {
   if (isMockMode()) {
-    const { events, catches } = mockLoad();
+    const { events, catches, prices } = mockLoad();
     currentEvents  = events;
     currentCatches = catches;
+    applyPriceMap(prices);
     renderAll();
     setStatus(`デモモード（釣行 ${events.length}件・釣果 ${catchTotal(catches)}匹）`, 'demo');
     return;
@@ -327,6 +383,7 @@ async function loadAll() {
     const data = await res.json();
     currentEvents  = data.events  || [];
     currentCatches = data.catches || [];
+    applyPriceMap(data.prices);
     renderAll();
     setStatus(`接続済み（釣行 ${currentEvents.length}件・釣果 ${catchTotal(currentCatches)}匹）`, 'ok');
   } catch (err) {
@@ -358,6 +415,7 @@ function renderAll() {
   renderCharts();
   renderHeatmap();
   populateDatalists();
+  buildPriceGrid();
   // Refresh catch screen if currently visible
   if (currentScreen === 'catches' && activeEvent) {
     // Sync activeEvent object in case data was reloaded
@@ -387,6 +445,7 @@ function renderEventsList(expanded = false) {
     const catches   = currentCatches.filter(c => c.eventId === ev.id);
     const species   = [...new Set(catches.map(c => c.species).filter(Boolean))];
     const totalCatch = catches.reduce((sum, c) => sum + (Number(c.count) || 1), 0);
+    const totalValue = catchesValue(catches);
     const isToday = normDateStr(ev.date) === today;
 
     const hours = durationHours(ev.startTime, ev.endTime);
@@ -397,7 +456,7 @@ function renderEventsList(expanded = false) {
     const timeRow = `
       <div class="ec-time-row">
         ${ev.startTime
-          ? `<span class="badge badge-outline ec-time-badge"><svg class="icon icon-inline"><use href="#icon-clock"/></svg>${escapeHtml(ev.startTime)}${ev.endTime ? '–' + escapeHtml(ev.endTime) : ' 〜 計測中'}</span>`
+          ? `<span class="badge badge-outline ec-time-badge"><svg class="icon icon-inline"><use href="#icon-clock"/></svg>${formatTime(ev.startTime)}${ev.endTime ? '–' + formatTime(ev.endTime) : ' 〜 計測中'}</span>`
           : `<button type="button" class="btn btn-sm btn-start-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-play"/></svg>開始</button>`}
         ${ev.startTime && !ev.endTime
           ? `<button type="button" class="btn btn-sm btn-end-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-stop"/></svg>終了</button>`
@@ -421,6 +480,7 @@ function renderEventsList(expanded = false) {
             ${ev.target  ? `<span class="ec-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg> ${escapeHtml(ev.target)}</span>` : ''}
             ${ev.cost    ? `<span class="ec-cost">¥${Number(ev.cost).toLocaleString()}</span>` : ''}
             ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
+            ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-coin"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}
             ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
           </div>
           ${timeRow}
@@ -461,6 +521,7 @@ function renderEventBanner() {
 
   const todayCatches = currentCatches.filter(c => c.eventId === activeEvent.id);
   const total   = catchTotal(todayCatches);
+  const value   = catchesValue(todayCatches);
   const sizes   = todayCatches.map(c => Number(c.size)).filter(Boolean);
   const maxSize = sizes.length ? Math.max(...sizes) : null;
 
@@ -484,6 +545,10 @@ function renderEventBanner() {
         ${maxSize ? `<div class="ae-stat">
           <span class="ae-stat-value">${maxSize}</span>
           <span class="ae-stat-label">MAX cm</span>
+        </div>` : ''}
+        ${value > 0 ? `<div class="ae-stat">
+          <span class="ae-stat-value ae-stat-value-gold">¥${value.toLocaleString()}</span>
+          <span class="ae-stat-label">推定金額</span>
         </div>` : ''}
       </div>
     </div>`;
@@ -509,12 +574,14 @@ function renderEventCatches() {
   els.catchesList.innerHTML = catches.map(c => {
     const photo    = getPhoto(c.id);
     const countNum = Number(c.count) || 1;
+    const value    = catchValue(c);
     return `
       <div class="catch-row">
         ${photo ? `<img src="${escapeHtml(photo)}" class="catch-thumb" alt="釣果写真">` : ''}
-        <span class="cr-time">${escapeHtml(c.time || '--:--')}</span>
+        <span class="cr-time">${formatTime(c.time) || '--:--'}</span>
         <span class="cr-species">${escapeHtml(c.species || '-')}</span>
         <span class="cr-count">${countNum}匹</span>
+        ${value > 0 ? `<span class="cr-value">¥${value.toLocaleString()}</span>` : ''}
         ${c.size ? `<span class="cr-size">${escapeHtml(String(c.size))} cm</span>` : ''}
         ${c.lure ? `<span class="cr-lure">${escapeHtml(c.lure)}</span>` : ''}
         ${c.memo ? `<span class="cr-memo">${escapeHtml(c.memo)}</span>` : ''}
@@ -694,7 +761,7 @@ function renderHeatmap() {
   filtered.forEach(c => {
     const ev = currentEvents.find(e => e.id === c.eventId);
     if (!ev) return;
-    const hour = parseInt(c.time.split(':')[0], 10);
+    const hour = parseHour(c.time);
     if (isNaN(hour)) return;
     const d = new Date(normDateStr(ev.date) + 'T00:00:00');
     if (isNaN(d.getTime())) return;
@@ -741,6 +808,45 @@ function buildSpeciesGrid() {
       <span class="sp-name">${escapeHtml(name)}</span>
     </button>`;
   }).join('');
+}
+
+// ── Species unit price grid（単価設定） ─────────────────────────
+function buildPriceGrid() {
+  els.priceGrid.innerHTML = SPECIES_LIST.filter(name => name !== 'その他').map(name => {
+    const price = priceMap[name] || '';
+    return `
+      <label class="price-field">
+        <span class="price-field-name">${speciesIconSvg(name, 'icon-inline')}${escapeHtml(name)}</span>
+        <span class="price-field-input-wrap">
+          <span class="price-yen">¥</span>
+          <input type="number" min="0" step="10" inputmode="numeric" class="price-input"
+                 data-species="${escapeHtml(name)}" value="${price}" placeholder="0">
+          <span class="price-unit">/匹</span>
+        </span>
+      </label>`;
+  }).join('');
+}
+
+async function onSavePrices() {
+  const inputs = document.querySelectorAll('.price-input');
+  els.savePrices.disabled = true;
+  els.savePrices.textContent = '保存中...';
+
+  let changed = 0;
+  for (const input of inputs) {
+    const species = input.dataset.species;
+    const price = Number(input.value) || 0;
+    if (price === (priceMap[species] || 0)) continue;
+    const ok = await sendAction({ action: 'savePrice', species, price });
+    if (ok) changed++;
+  }
+
+  els.priceStatus.textContent = changed ? `${changed}件の単価を保存しました。` : '変更はありませんでした。';
+  els.priceStatus.className = 'status ok';
+  els.savePrices.disabled = false;
+  els.savePrices.textContent = '保存する';
+  await loadAll();
+  buildPriceGrid();
 }
 
 function updateSubmitState() {
@@ -850,8 +956,8 @@ function enterEventEditMode(ev) {
   els.eventForm.elements['tide'].value    = ev.tide    || '';
   els.eventForm.elements['cost'].value    = ev.cost    || '';
   els.eventForm.elements['memo'].value    = ev.memo    || '';
-  els.eventForm.elements['startTime'].value = ev.startTime || '';
-  els.eventForm.elements['endTime'].value   = ev.endTime   || '';
+  els.eventForm.elements['startTime'].value = formatTime(ev.startTime);
+  els.eventForm.elements['endTime'].value   = formatTime(ev.endTime);
   els.eventFormTitle.textContent  = '釣行を編集';
   els.eventSubmitBtn.textContent  = '更新する';
   els.cancelEventEdit.hidden = false;
@@ -906,7 +1012,7 @@ function openCatchModal(c) {
   const f = els.catchEditForm;
   f.elements['id'].value      = c.id;
   f.elements['eventId'].value = c.eventId;
-  f.elements['time'].value    = c.time    || '';
+  f.elements['time'].value    = formatTime(c.time);
   f.elements['species'].value = c.species || '';
   f.elements['count'].value   = c.count   || '';
   f.elements['size'].value    = c.size    || '';
@@ -965,8 +1071,8 @@ async function setEventTime(id, field) {
     tide:    ev.tide,
     cost:    ev.cost,
     memo:    ev.memo,
-    startTime: ev.startTime || '',
-    endTime:   ev.endTime   || '',
+    startTime: formatTime(ev.startTime),
+    endTime:   formatTime(ev.endTime),
     [field]: nowTime(),
   };
   const ok = await sendAction(payload);
@@ -1067,7 +1173,19 @@ function init() {
 
   els.toggleSettings.addEventListener('click', () => {
     els.settings.hidden = !els.settings.hidden;
+    if (!els.settings.hidden) els.pricesPanel.hidden = true;
   });
+
+  els.togglePrices.addEventListener('click', () => {
+    els.pricesPanel.hidden = !els.pricesPanel.hidden;
+    if (!els.pricesPanel.hidden) {
+      els.settings.hidden = true;
+      buildPriceGrid();
+      els.pricesPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  els.savePrices.addEventListener('click', onSavePrices);
 
   // Event list clicks (events screen)
   els.eventsList.addEventListener('click', handleEventsClick);

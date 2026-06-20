@@ -373,9 +373,26 @@
     <p class="status" id="connStatus">未接続</p>
   </section>
 
+  <!-- Species unit prices -->
+  <section class="panel settings" id="pricesPanel" hidden>
+    <h2><svg class="icon icon-h2"><use href="#icon-coin"/></svg>魚種別単価設定</h2>
+    <p class="hint">
+      釣果の推定金額を計算するための、魚種ごとの単価（1匹あたりの円）を設定します。
+      0円・未入力の魚種は金額計算に含まれません。
+    </p>
+    <div id="priceGrid" class="price-grid"></div>
+    <div class="form-actions">
+      <button type="button" id="savePrices" class="btn btn-primary">保存する</button>
+    </div>
+    <p class="status" id="priceStatus"></p>
+  </section>
+
   <footer class="footer">
     <p>ANGLER LOG — powered by Google Sheets</p>
-    <button id="toggleSettings" class="settings-toggle"><svg class="icon icon-inline"><use href="#icon-gear"/></svg> 接続設定</button>
+    <div class="footer-actions">
+      <button id="togglePrices" class="settings-toggle"><svg class="icon icon-inline"><use href="#icon-coin"/></svg> 単価設定</button>
+      <button id="toggleSettings" class="settings-toggle"><svg class="icon icon-inline"><use href="#icon-gear"/></svg> 接続設定</button>
+    </div>
   </footer>
 
   <!-- Catch Edit Modal -->

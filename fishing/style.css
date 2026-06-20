@@ -305,33 +305,43 @@ main, header, footer, section, .wave-divider { position: relative; z-index: 1; }
 
 .heatmap-grid {
   display: grid;
-  grid-template-columns: 44px repeat(12, 1fr);
-  gap: 3px;
-  min-width: 520px;
+  grid-template-columns: 28px repeat(12, 1fr);
+  gap: 2px;
 }
 
 .heatmap-cell {
-  height: 36px;
-  border-radius: 5px;
+  height: 22px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
+  font-size: 0.56rem;
+}
+
+@media (min-width: 600px) {
+  .heatmap-grid {
+    grid-template-columns: 44px repeat(12, 1fr);
+    gap: 3px;
+    min-width: 520px;
+  }
+  .heatmap-cell {
+    height: 36px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+  }
 }
 
 .heatmap-corner { background: transparent; }
 
 .heatmap-label {
   color: var(--text-muted);
-  font-size: 0.68rem;
   letter-spacing: 0.04em;
 }
 
 .heatmap-value {
   background: rgba(255,255,255,0.03);
   color: var(--text);
-  font-size: 0.72rem;
   cursor: default;
   transition: transform 0.15s;
 }
@@ -423,6 +433,8 @@ main, header, footer, section, .wave-divider { position: relative; z-index: 1; }
   color: var(--teal);
   line-height: 1;
 }
+
+.ae-stat-value-gold { color: var(--gold); }
 
 .ae-stat-label {
   display: block;
@@ -939,6 +951,18 @@ form > textarea {
   color: var(--coral);
 }
 
+.ec-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: rgba(255, 200, 68, 0.12);
+  border: 1px solid rgba(255, 200, 68, 0.3);
+  border-radius: 99px;
+  padding: 0.15rem 0.55rem;
+}
+.ec-value .icon { color: var(--gold); }
+
 .ec-memo {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -983,6 +1007,13 @@ form > textarea {
   font-size: 0.8rem;
   color: var(--teal);
   min-width: 48px;
+}
+
+.cr-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold);
 }
 
 .cr-lure {
@@ -1111,6 +1142,64 @@ form > textarea {
 
 .field-row input { flex: 1; }
 
+/* ── Species price grid (単価設定) ────────────────────────────── */
+.price-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 480px) { .price-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 700px) { .price-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.price-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 190, 170, 0.16);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+}
+
+.price-field-name {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.price-field-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.price-yen {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+
+.price-input {
+  width: 5.5rem;
+  padding: 0.35rem 0.5rem;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.price-unit {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .status {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
@@ -1157,6 +1246,12 @@ form > textarea {
   font-size: 0.68rem;
   color: var(--text-muted);
   letter-spacing: 0.06em;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
 .settings-toggle {
