@@ -435,6 +435,8 @@ main, header, footer, section { position: relative; z-index: 2; }
   height: 100%;
 }
 .tide-night { fill: var(--ink); opacity: 0.05; }
+.tide-trip { fill: var(--accent); opacity: 0.1; }
+.tide-trip-line { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 2; opacity: 0.6; vector-effect: non-scaling-stroke; }
 .tide-area { fill: var(--accent-2); opacity: 0.08; }
 .tide-line { fill: none; stroke: var(--accent-2); stroke-width: 1.6; opacity: 0.55; vector-effect: non-scaling-stroke; }
 

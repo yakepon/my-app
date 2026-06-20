@@ -797,7 +797,14 @@ function jstHourFraction(date) {
   return h + m / 60;
 }
 
-function buildTideChartHtml(hours, countByHour, tidePhase, sun) {
+function parseHourFraction(timeStr) {
+  if (!timeStr) return null;
+  const m = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) + parseInt(m[2], 10) / 60;
+}
+
+function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
   const points = hours
     .map((v, h) => ({ h, v }))
     .filter(p => p.v != null);
@@ -865,13 +872,34 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun) {
     </span>`;
   }
 
+  let tripBand = '';
+  let tripHtml = '';
+  if (tripRange) {
+    const segments = tripRange.end >= tripRange.start
+      ? [[tripRange.start, tripRange.end]]
+      : [[tripRange.start, 24], [0, tripRange.end]]; // 日付をまたぐ釣行
+    tripBand = segments.map(([s, e]) => {
+      const x1 = Math.max(0, s * 10);
+      const x2 = Math.min(240, e * 10);
+      return `
+        <rect class="tide-trip" x="${x1.toFixed(1)}" y="0" width="${(x2 - x1).toFixed(1)}" height="100"></rect>
+        <line class="tide-trip-line" x1="${x1.toFixed(1)}" y1="0" x2="${x1.toFixed(1)}" y2="100"></line>
+        <line class="tide-trip-line" x1="${x2.toFixed(1)}" y1="0" x2="${x2.toFixed(1)}" y2="100"></line>
+      `;
+    }).join('');
+    tripHtml = `<span class="badge badge-outline tide-trip-badge">
+      <svg class="icon icon-inline"><use href="#icon-rod"/></svg>釣行時間
+    </span>`;
+  }
+
   return `
-    ${phaseHtml || sunHtml || extremaHtml ? `<div class="tide-chart-meta">${phaseHtml}${sunHtml}${extremaHtml}</div>` : ''}
+    ${phaseHtml || sunHtml || tripHtml || extremaHtml ? `<div class="tide-chart-meta">${phaseHtml}${sunHtml}${tripHtml}${extremaHtml}</div>` : ''}
     <div class="tide-chart-row">
       <div class="tide-yaxis">${yAxis}</div>
       <div class="tide-chart-body">
         <svg class="tide-curve" viewBox="0 0 240 100" preserveAspectRatio="none" aria-hidden="true">
           ${nightRects}
+          ${tripBand}
           <path class="tide-area" d="${areaD}"></path>
           <path class="tide-line" d="${pathD}"></path>
         </svg>
@@ -916,7 +944,15 @@ async function renderTideChart() {
   els.tideChartPanel.hidden = false;
   const coords = resolveAreaCoords(activeEvent.area);
   const sun = coords ? calcSunTimes(coords.lat, coords.lon, dateStr) : null;
-  els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour, activeEvent.tide, sun);
+  let tripRange = null;
+  const startH = parseHourFraction(activeEvent.startTime);
+  if (startH != null) {
+    const endH = parseHourFraction(activeEvent.endTime);
+    const now = new Date();
+    tripRange = { start: startH, end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60) };
+  }
+
+  els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour, activeEvent.tide, sun, tripRange);
 }
 
 function renderEventCatches() {
