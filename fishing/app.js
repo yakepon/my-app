@@ -638,6 +638,11 @@ function renderEventCatches() {
   }).join('');
 }
 
+function statValueHtml(value, unit) {
+  if (value === '--' || value == null) return '--';
+  return `${value}<span class="stat-unit">${unit}</span>`;
+}
+
 function renderStats() {
   const now = new Date();
   const thisYear = String(now.getFullYear());
@@ -655,12 +660,12 @@ function renderStats() {
   const totalTrips = events.length;
   const avgPerTrip = totalTrips > 0 ? totalCatch / totalTrips : null;
 
-  els.statTotalCatch.textContent  = totalCatch;
-  els.statYearlyCatch.textContent = catchTotal(yearlyCatches);
-  els.statTotalCost.textContent   = totalCost ? totalCost.toLocaleString() : '--';
-  els.statFishValue.textContent   = totalValue ? totalValue.toLocaleString() : '--';
-  els.statTotalTrips.textContent  = totalTrips;
-  els.statAvgPerTrip.textContent  = avgPerTrip != null ? avgPerTrip.toFixed(1) : '--';
+  els.statTotalCatch.innerHTML  = statValueHtml(totalCatch, '匹');
+  els.statYearlyCatch.innerHTML = statValueHtml(catchTotal(yearlyCatches), '匹');
+  els.statTotalCost.innerHTML   = statValueHtml(totalCost ? totalCost.toLocaleString() : '--', '円');
+  els.statFishValue.innerHTML   = statValueHtml(totalValue ? totalValue.toLocaleString() : '--', '円');
+  els.statTotalTrips.innerHTML  = statValueHtml(totalTrips, '回');
+  els.statAvgPerTrip.innerHTML  = statValueHtml(avgPerTrip != null ? avgPerTrip.toFixed(1) : '--', '匹');
 }
 
 function renderCharts() {
