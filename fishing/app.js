@@ -608,6 +608,65 @@ function renderEventBanner() {
 // ── Tide chart ────────────────────────────────────────────────
 let tideCache = { key: null, hours: null };
 
+// 「エリア」欄の地名からおおよその緯度経度を引く（日の出/日の入り計算用）。
+// 神奈川県沿岸のみ対応（GAS側のTIDE_STATIONSと同じ地名セット）。
+const AREA_COORDS = {
+  '横浜':   { lat: 35.45, lon: 139.65 },
+  '川崎':   { lat: 35.51, lon: 139.71 },
+  '本牧':   { lat: 35.42, lon: 139.67 },
+  '横須賀': { lat: 35.28, lon: 139.67 },
+  '三浦':   { lat: 35.15, lon: 139.62 },
+  '湘南港': { lat: 35.30, lon: 139.39 },
+  '茅ヶ崎': { lat: 35.33, lon: 139.41 },
+  '藤沢':   { lat: 35.34, lon: 139.49 },
+  '江の島': { lat: 35.30, lon: 139.48 },
+  '小田原': { lat: 35.25, lon: 139.15 },
+};
+
+function resolveAreaCoords(area) {
+  if (!area) return null;
+  for (const name in AREA_COORDS) {
+    if (area.indexOf(name) !== -1) return AREA_COORDS[name];
+  }
+  return null;
+}
+
+// 簡易日の出・日の入り計算（Sunrise equation, NOAA近似式）。
+// 緯度・経度・日付（JSTのカレンダー日）から、その日の日の出・日の入りを返す。
+function calcSunTimes(lat, lon, dateStr) {
+  const midnightUTC = new Date(`${dateStr}T00:00:00Z`);
+  const J2000 = 2451545.0;
+  const JD = midnightUTC.getTime() / 86400000 + 2440587.5 + 0.5; // 0h UTのJD + 0.5日
+
+  const toRad = d => d * Math.PI / 180;
+  const toDeg = r => r * 180 / Math.PI;
+  const mod360 = d => ((d % 360) + 360) % 360;
+
+  const Jstar = (JD - J2000) - lon / 360;
+  const M  = mod360(357.5291 + 0.98560028 * Jstar);
+  const Mr = toRad(M);
+  const C  = 1.9148 * Math.sin(Mr) + 0.0200 * Math.sin(2 * Mr) + 0.0003 * Math.sin(3 * Mr);
+  const lambda  = mod360(M + 102.9372 + C + 180);
+  const lambdaR = toRad(lambda);
+  const Jtransit = J2000 + Jstar + 0.0053 * Math.sin(Mr) - 0.0069 * Math.sin(2 * lambdaR);
+
+  const delta = Math.asin(Math.sin(lambdaR) * Math.sin(toRad(23.4397)));
+  const phi   = toRad(lat);
+  const cosOmega = (Math.sin(toRad(-0.833)) - Math.sin(phi) * Math.sin(delta)) / (Math.cos(phi) * Math.cos(delta));
+  if (cosOmega > 1 || cosOmega < -1) return null; // 極夜・白夜（このアプリの対象地域では発生しない）
+
+  const omega = toDeg(Math.acos(cosOmega));
+  const toDate = J => new Date((J - 2440587.5) * 86400000);
+  return {
+    sunrise: toDate(Jtransit - omega / 360),
+    sunset:  toDate(Jtransit + omega / 360),
+  };
+}
+
+function formatJstTime(date) {
+  return date.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' });
+}
+
 async function fetchTide(area, dateStr) {
   if (isMockMode()) return null; // デモモードはGAS経由の外部取得ができないため非対応
   const url = getGasUrl();
@@ -623,7 +682,32 @@ async function fetchTide(area, dateStr) {
   }
 }
 
-function buildTideChartHtml(hours, countByHour) {
+// 隣接する時間と比較して、潮汐カーブの山（満潮）・谷（干潮）を検出する
+function findTideExtrema(hours) {
+  const valid = hours.map((v, h) => ({ h, v })).filter(p => p.v != null);
+  const extrema = [];
+  for (let i = 0; i < valid.length; i++) {
+    const prev = valid[i - 1];
+    const cur  = valid[i];
+    const next = valid[i + 1];
+    if (prev && next) {
+      if (cur.v >= prev.v && cur.v >= next.v && cur.v > prev.v) extrema.push({ ...cur, type: 'high' });
+      else if (cur.v <= prev.v && cur.v <= next.v && cur.v < prev.v) extrema.push({ ...cur, type: 'low' });
+    }
+  }
+  return extrema;
+}
+
+function jstHourFraction(date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date);
+  const h = Number(parts.find(p => p.type === 'hour').value);
+  const m = Number(parts.find(p => p.type === 'minute').value);
+  return h + m / 60;
+}
+
+function buildTideChartHtml(hours, countByHour, tidePhase, sun) {
   const points = hours
     .map((v, h) => ({ h, v }))
     .filter(p => p.v != null);
@@ -635,6 +719,7 @@ function buildTideChartHtml(hours, countByHour) {
   const vals  = points.map(p => p.v);
   const min   = Math.min(...vals);
   const max   = Math.max(...vals);
+  const mid   = Math.round((min + max) / 2);
   const range = Math.max(1, max - min);
   const toY   = v => 92 - ((v - min) / range) * 80;
 
@@ -655,15 +740,58 @@ function buildTideChartHtml(hours, countByHour) {
   const axisHours = [0, 3, 6, 9, 12, 15, 18, 21];
   const axis = axisHours.map(h => `<span style="left:${((h * 10 + 5) / 240 * 100).toFixed(2)}%">${h}時</span>`).join('');
 
+  const yAxis = `
+    <span style="top:${toY(max).toFixed(1)}%">${max}cm</span>
+    <span style="top:${toY(mid).toFixed(1)}%">${mid}cm</span>
+    <span style="top:${toY(min).toFixed(1)}%">${min}cm</span>
+  `;
+
+  const extrema = findTideExtrema(hours);
+  const extremaHtml = extrema.length
+    ? `<div class="tide-extrema">
+        ${extrema.map(e => `<span class="tide-extrema-item tide-extrema-${e.type}">
+          ${e.type === 'high' ? '満潮' : '干潮'} ${e.h}時（${e.v}cm）
+        </span>`).join('')}
+      </div>`
+    : '';
+
+  const phaseHtml = tidePhase
+    ? `<span class="badge badge-teal tide-phase-badge">${escapeHtml(tidePhase)}</span>`
+    : '';
+
+  let nightRects = '';
+  let sunHtml = '';
+  if (sun) {
+    const sunriseH = jstHourFraction(sun.sunrise);
+    const sunsetH  = jstHourFraction(sun.sunset);
+    const x1 = Math.max(0, sunriseH * 10);
+    const x2 = Math.min(240, sunsetH * 10);
+    nightRects = `
+      <rect class="tide-night" x="0" y="0" width="${x1.toFixed(1)}" height="100"></rect>
+      <rect class="tide-night" x="${x2.toFixed(1)}" y="0" width="${(240 - x2).toFixed(1)}" height="100"></rect>
+    `;
+    sunHtml = `<span class="badge badge-outline tide-sun-badge">
+      <svg class="icon icon-inline"><use href="#icon-clock"/></svg>日の出 ${formatJstTime(sun.sunrise)} ／ 日の入り ${formatJstTime(sun.sunset)}
+    </span>`;
+  }
+
   return `
-    <div class="tide-chart-body">
-      <svg class="tide-curve" viewBox="0 0 240 100" preserveAspectRatio="none" aria-hidden="true">
-        <path class="tide-area" d="${areaD}"></path>
-        <path class="tide-line" d="${pathD}"></path>
-      </svg>
-      <div class="tide-columns">${columns}</div>
+    ${phaseHtml || sunHtml || extremaHtml ? `<div class="tide-chart-meta">${phaseHtml}${sunHtml}${extremaHtml}</div>` : ''}
+    <div class="tide-chart-row">
+      <div class="tide-yaxis">${yAxis}</div>
+      <div class="tide-chart-body">
+        <svg class="tide-curve" viewBox="0 0 240 100" preserveAspectRatio="none" aria-hidden="true">
+          ${nightRects}
+          <path class="tide-area" d="${areaD}"></path>
+          <path class="tide-line" d="${pathD}"></path>
+        </svg>
+        <div class="tide-columns">${columns}</div>
+      </div>
     </div>
-    <div class="tide-axis">${axis}</div>
+    <div class="tide-axis">
+      <span class="tide-axis-spacer"></span>
+      <div class="tide-axis-hours">${axis}</div>
+    </div>
   `;
 }
 
@@ -696,7 +824,9 @@ async function renderTideChart() {
     });
 
   els.tideChartPanel.hidden = false;
-  els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour);
+  const coords = resolveAreaCoords(activeEvent.area);
+  const sun = coords ? calcSunTimes(coords.lat, coords.lon, dateStr) : null;
+  els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour, activeEvent.tide, sun);
 }
 
 function renderEventCatches() {
