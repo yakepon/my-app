@@ -532,6 +532,7 @@ function renderEventsList(expanded = false) {
               ${ev.style   ? `<span class="badge badge-outline">${escapeHtml(ev.style)}</span>` : ''}
               ${ev.weather ? `<span class="badge badge-outline">${escapeHtml(ev.weather)}</span>` : ''}
               ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
+              <span class="ec-weather-slot" data-id="${escapeHtml(ev.id)}"></span>
             </div>
             ${(ev.target || species.length) ? `<div class="ec-meta-row">
               ${ev.target ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(ev.target)}</span>` : ''}
@@ -570,6 +571,8 @@ function renderEventsList(expanded = false) {
       els.eventsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
+
+  visible.forEach(loadEventWeather);
 }
 
 function renderEventBanner() {
@@ -618,6 +621,43 @@ function renderEventBanner() {
 
 // ── Tide chart ────────────────────────────────────────────────
 let tideCache = { key: null, hours: null };
+
+// ── Daily max/min temperature (event list) ─────────────────────
+const weatherCache = {}; // key: `${area}|${date}` -> { max, min } | null
+
+async function fetchDailyTemp(area, dateStr) {
+  if (isMockMode()) return null; // デモモードはGAS経由の外部取得ができないため非対応
+  const url = getGasUrl();
+  if (!url) return null;
+  try {
+    const sep = url.indexOf('?') !== -1 ? '&' : '?';
+    const res = await fetch(`${url}${sep}action=weather&area=${encodeURIComponent(area || '')}&date=${encodeURIComponent(dateStr)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.max != null || data.min != null) ? { max: data.max, min: data.min } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadEventWeather(ev) {
+  const dateStr = normDateStr(ev.date);
+  const key = `${ev.area || ''}|${dateStr}`;
+  if (!(key in weatherCache)) {
+    weatherCache[key] = await fetchDailyTemp(ev.area, dateStr);
+  }
+  const temp = weatherCache[key];
+  if (!temp) return;
+  const slot = document.querySelector(`.ec-weather-slot[data-id="${cssEscape(ev.id)}"]`);
+  if (!slot) return;
+  slot.innerHTML = `<span class="badge badge-outline">
+    <svg class="icon icon-inline"><use href="#icon-temp"/></svg>${temp.max != null ? temp.max + '℃' : '--'} / ${temp.min != null ? temp.min + '℃' : '--'}
+  </span>`;
+}
+
+function cssEscape(value) {
+  return String(value).replace(/["\\]/g, '\\$&');
+}
 
 // 「エリア」欄の地名からおおよその緯度経度を引く（日の出/日の入り計算用）。
 // 神奈川県沿岸のみ対応（GAS側のTIDE_STATIONSと同じ地名セット）。

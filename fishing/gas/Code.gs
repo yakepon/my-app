@@ -126,10 +126,81 @@ function getTide(area, dateStr) {
   }
 }
 
+// 「エリア」欄の地名から、気象庁「過去の気象データ」の観測地点コードを引く。
+// 神奈川県内のみ対応（type: 's1'=主要観測所/daily_s1.php, 'a1'=アメダスのみ/daily_a1.php）。
+const WEATHER_STATIONS = {
+  '横浜':   { code: '47670', type: 's1' },
+  '川崎':   { code: '1006',  type: 'a1' }, // 日吉（最寄り）
+  '本牧':   { code: '47670', type: 's1' }, // 横浜と同じ
+  '横須賀': { code: '0392',  type: 'a1' }, // 三浦（最寄り）
+  '三浦':   { code: '0392',  type: 'a1' },
+  '湘南港': { code: '0391',  type: 'a1' }, // 江ノ島
+  '茅ヶ崎': { code: '1443',  type: 'a1' }, // 辻堂（最寄り）
+  '藤沢':   { code: '1443',  type: 'a1' }, // 辻堂
+  '江の島': { code: '0391',  type: 'a1' },
+  '小田原': { code: '1008',  type: 'a1' },
+};
+
+function resolveWeatherStation(area) {
+  if (!area) return null;
+  for (const name in WEATHER_STATIONS) {
+    if (area.indexOf(name) !== -1) return WEATHER_STATIONS[name];
+  }
+  return null;
+}
+
+// 気象庁「過去の気象データ検索」の日別ページ(HTML)から、指定日の最高・最低気温(℃)を抜き出す。
+// 観測所の種別によって列の並びが異なる（s1=主要観測所は気圧列がある分ずれる）。
+function getDailyTemp(area, dateStr) {
+  const station = resolveWeatherStation(area);
+  if (!station || !dateStr) return { max: null, min: null };
+
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return { max: null, min: null };
+
+  const year  = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day   = d.getDate();
+  const path  = station.type === 's1' ? 'daily_s1.php' : 'daily_a1.php';
+  const url   = `https://www.data.jma.go.jp/stats/etrn/view/${path}?prec_no=46&block_no=${station.code}&year=${year}&month=${month}&day=&view=p1`;
+
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return { max: null, min: null };
+
+    const html = res.getContentText();
+    const rowRe = /<tr class="mtx" style="text-align:right;">([\s\S]*?)<\/tr>/g;
+    let m;
+    while ((m = rowRe.exec(html))) {
+      const row = m[1];
+      const dayMatch = row.match(/day=(\d+)&view[^>]*>(\d+)</);
+      if (!dayMatch || parseInt(dayMatch[2], 10) !== day) continue;
+
+      const cells = [];
+      const cellRe = /<td[^>]*>([\s\S]*?)<\/td>/g;
+      let cm;
+      while ((cm = cellRe.exec(row))) {
+        cells.push(cm[1].replace(/<[^>]+>/g, '').trim());
+      }
+      const maxIdx = station.type === 's1' ? 7 : 5;
+      const minIdx = station.type === 's1' ? 8 : 6;
+      const max = parseFloat(cells[maxIdx]);
+      const min = parseFloat(cells[minIdx]);
+      return { max: isNaN(max) ? null : max, min: isNaN(min) ? null : min };
+    }
+    return { max: null, min: null };
+  } catch (err) {
+    return { max: null, min: null, error: String(err) };
+  }
+}
+
 function doGet(e) {
   const params = (e && e.parameter) || {};
   if (params.action === 'tide') {
     return jsonOutput(getTide(params.area, params.date));
+  }
+  if (params.action === 'weather') {
+    return jsonOutput(getDailyTemp(params.area, params.date));
   }
 
   const es = getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS);
