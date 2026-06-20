@@ -123,11 +123,11 @@ function buildSampleData() {
   return {
     events: [
       // ── 2026年 ──
-      { id: ev1, date: today,        spot: '大黒海釣り公園',      area: '神奈川', style: '堤防', target: 'アジ',     weather: '晴れ', tide: '大潮', cost: '2000',  memo: '早朝アジング予定' },
-      { id: ev2, date: '2026-06-14', spot: '横須賀うみかぜ公園', area: '神奈川', style: '堤防', target: 'メバル',   weather: '曇り', tide: '中潮', cost: '500',   memo: 'テトラ周りが熱かった' },
+      { id: ev1, date: today,        spot: '大黒海釣り公園',      area: '神奈川', style: '堤防', target: 'アジ',     weather: '晴れ', tide: '大潮', cost: '2000',  memo: '早朝アジング予定', startTime: '06:00', endTime: '' },
+      { id: ev2, date: '2026-06-14', spot: '横須賀うみかぜ公園', area: '神奈川', style: '堤防', target: 'メバル',   weather: '曇り', tide: '中潮', cost: '500',   memo: 'テトラ周りが熱かった', startTime: '18:45', endTime: '20:15' },
       { id: ev3, date: '2026-06-07', spot: '茅ヶ崎港',           area: '神奈川', style: '船',   target: 'カツオ',   weather: '晴れ', tide: '大潮', cost: '15000', memo: '' },
       // ── 2025年 ──
-      { id: ev4, date: '2025-04-12', spot: '大黒海釣り公園',      area: '神奈川', style: '堤防', target: 'アジ',     weather: '晴れ', tide: '中潮', cost: '1800',  memo: '春アジ開幕' },
+      { id: ev4, date: '2025-04-12', spot: '大黒海釣り公園',      area: '神奈川', style: '堤防', target: 'アジ',     weather: '晴れ', tide: '中潮', cost: '1800',  memo: '春アジ開幕', startTime: '05:30', endTime: '07:00' },
       { id: ev5, date: '2025-05-03', spot: '江の島片瀬漁港',      area: '神奈川', style: '堤防', target: 'クロダイ', weather: '曇り', tide: '大潮', cost: '3200',  memo: 'GW釣行' },
       { id: ev6, date: '2025-05-24', spot: '横須賀うみかぜ公園', area: '神奈川', style: '堤防', target: 'メバル',   weather: '晴れ', tide: '小潮', cost: '',      memo: '' },
       { id: ev7, date: '2025-07-19', spot: '茅ヶ崎港',           area: '神奈川', style: '船',   target: 'カツオ',   weather: '晴れ', tide: '大潮', cost: '18000', memo: '夏の遠征' },
@@ -169,7 +169,7 @@ function mockExec(payload) {
   const { events, catches } = mockLoad();
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
-  const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo'];
+  const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
@@ -235,6 +235,25 @@ function chartAxisOpts() {
 
 function catchTotal(catches) {
   return catches.reduce((sum, c) => sum + (Number(c.count) || 1), 0);
+}
+
+function durationHours(start, end) {
+  if (!start || !end) return null;
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  if ([sh, sm, eh, em].some(n => isNaN(n))) return null;
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins < 0) mins += 24 * 60; // 日付をまたいだ釣行
+  return mins / 60;
+}
+
+function formatDuration(hours) {
+  const totalMin = Math.round(hours * 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h && m) return `${h}時間${m}分`;
+  if (h) return `${h}時間`;
+  return `${m}分`;
 }
 
 // ── Photo helpers ─────────────────────────────────────────────
@@ -370,6 +389,23 @@ function renderEventsList(expanded = false) {
     const totalCatch = catches.reduce((sum, c) => sum + (Number(c.count) || 1), 0);
     const isToday = normDateStr(ev.date) === today;
 
+    const hours = durationHours(ev.startTime, ev.endTime);
+    // 極端に短い計測（誤タップ等）では時間あたり釣果が非現実的な値になるため、
+    // 一定時間（10分）未満は釣果率を表示しない
+    const rate  = (hours && hours >= (10 / 60) && totalCatch > 0) ? totalCatch / hours : null;
+
+    const timeRow = `
+      <div class="ec-time-row">
+        ${ev.startTime
+          ? `<span class="badge badge-outline ec-time-badge"><svg class="icon icon-inline"><use href="#icon-clock"/></svg>${escapeHtml(ev.startTime)}${ev.endTime ? '–' + escapeHtml(ev.endTime) : ' 〜 計測中'}</span>`
+          : `<button type="button" class="btn btn-sm btn-start-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-play"/></svg>開始</button>`}
+        ${ev.startTime && !ev.endTime
+          ? `<button type="button" class="btn btn-sm btn-end-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-stop"/></svg>終了</button>`
+          : ''}
+        ${hours ? `<span class="badge badge-outline">${formatDuration(hours)}</span>` : ''}
+        ${rate != null ? `<span class="ec-rate">${rate.toFixed(1)}匹/時間</span>` : ''}
+      </div>`;
+
     return `
       <article class="event-card${isToday ? ' event-card-today' : ''}">
         <div class="event-card-head">
@@ -387,6 +423,7 @@ function renderEventsList(expanded = false) {
             ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
             ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
           </div>
+          ${timeRow}
         </div>
         ${ev.memo ? `<p class="ec-memo">${escapeHtml(ev.memo)}</p>` : ''}
         <div class="event-card-actions">
@@ -436,7 +473,7 @@ function renderEventBanner() {
           ${activeEvent.style   ? `<span class="badge badge-teal">${escapeHtml(activeEvent.style)}</span>` : ''}
           ${activeEvent.weather ? `<span class="badge badge-outline">${escapeHtml(activeEvent.weather)}</span>` : ''}
           ${activeEvent.tide    ? `<span class="badge badge-outline">${escapeHtml(activeEvent.tide)}</span>` : ''}
-          ${activeEvent.target  ? `<span class="badge badge-outline"><svg class="icon icon-inline"><use href="#icon-target"/></svg> ${escapeHtml(activeEvent.target)}</span>` : ''}
+          ${activeEvent.target  ? `<span class="badge badge-outline badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg> ${escapeHtml(activeEvent.target)}</span>` : ''}
         </div>
       </div>
       <div class="ae-stats">
@@ -813,6 +850,8 @@ function enterEventEditMode(ev) {
   els.eventForm.elements['tide'].value    = ev.tide    || '';
   els.eventForm.elements['cost'].value    = ev.cost    || '';
   els.eventForm.elements['memo'].value    = ev.memo    || '';
+  els.eventForm.elements['startTime'].value = ev.startTime || '';
+  els.eventForm.elements['endTime'].value   = ev.endTime   || '';
   els.eventFormTitle.textContent  = '釣行を編集';
   els.eventSubmitBtn.textContent  = '更新する';
   els.cancelEventEdit.hidden = false;
@@ -843,6 +882,8 @@ async function onEventSubmit(e) {
     tide:    fd.get('tide'),
     cost:    fd.get('cost'),
     memo:    fd.get('memo'),
+    startTime: fd.get('startTime') || '',
+    endTime:   fd.get('endTime')   || '',
   };
 
   els.eventSubmitBtn.disabled = true;
@@ -908,6 +949,33 @@ async function onCatchEditSubmit(e) {
   }
 }
 
+// ── Trip start/end time ────────────────────────────────────────
+async function setEventTime(id, field) {
+  const ev = currentEvents.find(e => e.id === id);
+  if (!ev) return;
+  const payload = {
+    action:  'updateEvent',
+    id,
+    date:    ev.date,
+    spot:    ev.spot,
+    area:    ev.area,
+    style:   ev.style,
+    target:  ev.target,
+    weather: ev.weather,
+    tide:    ev.tide,
+    cost:    ev.cost,
+    memo:    ev.memo,
+    startTime: ev.startTime || '',
+    endTime:   ev.endTime   || '',
+    [field]: nowTime(),
+  };
+  const ok = await sendAction(payload);
+  if (ok) {
+    setStatus(field === 'startTime' ? `釣行を開始しました (${payload.startTime})` : `釣行を終了しました (${payload.endTime})`, 'ok');
+    await loadAll();
+  }
+}
+
 // ── Event delegation ──────────────────────────────────────────
 async function handleEventsClick(e) {
   const btn = e.target.closest('[data-id]');
@@ -917,6 +985,16 @@ async function handleEventsClick(e) {
   if (btn.classList.contains('enter-catches-btn')) {
     const ev = currentEvents.find(e => e.id === id);
     if (ev) showCatchScreen(ev);
+    return;
+  }
+
+  if (btn.classList.contains('btn-start-trip')) {
+    await setEventTime(id, 'startTime');
+    return;
+  }
+
+  if (btn.classList.contains('btn-end-trip')) {
+    await setEventTime(id, 'endTime');
     return;
   }
 

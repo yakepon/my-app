@@ -142,6 +142,19 @@
       <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 5v14M5 12h14"/>
       </symbol>
+
+      <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M7 4.3c0-.9 1-1.4 1.7-.9l11 7.7c.6.4.6 1.4 0 1.8l-11 7.7c-.7.5-1.7 0-1.7-.9Z"/>
+      </symbol>
+
+      <symbol id="icon-stop" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/>
+      </symbol>
+
+      <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7.3v5l3.4 2"/>
+      </symbol>
     </defs>
   </svg>
 
@@ -197,6 +210,8 @@
         <h2 id="eventFormTitle">釣行を登録</h2>
         <form id="eventForm">
           <input type="hidden" name="id">
+          <input type="hidden" name="startTime">
+          <input type="hidden" name="endTime">
           <div class="form-grid">
             <label>日付
               <input type="date" name="date" required>

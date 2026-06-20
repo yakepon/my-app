@@ -1,6 +1,6 @@
 const EVENT_SHEET  = 'events';
 const CATCH_SHEET  = 'catches';
-const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo'];
+const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
 const CATCH_HEADERS = ['id', 'eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo'];
 
 function getOrCreateSheet(name, headers) {
