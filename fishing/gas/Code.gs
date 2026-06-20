@@ -53,7 +53,10 @@ function sheetToRecords(sheet) {
       });
       return r;
     })
-    .filter(r => r.id !== '' && r.id != null);
+    // 完全に空の行（シート末尾の余白など）だけを除外する。
+    // "id"列の有無に依存しない判定にしないと、idを持たないprices等のシートで
+    // 全行が除外されてしまう。
+    .filter(r => Object.values(r).some(v => v !== '' && v != null));
 }
 
 function jsonOutput(obj) {

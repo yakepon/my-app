@@ -58,7 +58,7 @@ const els = {
   statTotalCatch:   document.getElementById('statTotalCatch'),
   statYearlyCatch:  document.getElementById('statYearlyCatch'),
   statTotalCost:    document.getElementById('statTotalCost'),
-  statMarketValue:  document.getElementById('statMarketValue'),
+  statFishValue:    document.getElementById('statFishValue'),
   statTotalTrips:   document.getElementById('statTotalTrips'),
   statAvgPerTrip:   document.getElementById('statAvgPerTrip'),
   trendChart:   document.getElementById('trendChart'),
@@ -613,7 +613,7 @@ function renderStats() {
   els.statTotalCatch.textContent  = totalCatch;
   els.statYearlyCatch.textContent = catchTotal(yearlyCatches);
   els.statTotalCost.textContent   = totalCost ? totalCost.toLocaleString() : '--';
-  els.statMarketValue.textContent = totalValue ? totalValue.toLocaleString() : '--';
+  els.statFishValue.textContent   = totalValue ? totalValue.toLocaleString() : '--';
   els.statTotalTrips.textContent  = totalTrips;
   els.statAvgPerTrip.textContent  = avgPerTrip != null ? avgPerTrip.toFixed(1) : '--';
 }
