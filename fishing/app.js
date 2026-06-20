@@ -402,7 +402,22 @@ async function sendAction(payload) {
   const url = getGasUrl();
   if (!url) { setStatus('先に接続設定を行ってください。', 'error'); return false; }
   try {
-    await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+    const res = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+    if (!res.ok) {
+      setStatus(`保存に失敗しました（HTTP ${res.status}）。GAS URLや公開設定（アクセスできるユーザー: 全員）を確認してください。`, 'error');
+      return false;
+    }
+    let body;
+    try {
+      body = await res.json();
+    } catch {
+      setStatus('保存に失敗しました（想定外の応答）。Apps Scriptのデプロイ設定やコードを確認してください。', 'error');
+      return false;
+    }
+    if (!body || body.result !== 'ok') {
+      setStatus('保存に失敗しました。Apps Script側でエラーが発生している可能性があります。', 'error');
+      return false;
+    }
     return true;
   } catch (err) {
     setStatus('通信エラー: ' + err.message, 'error');
