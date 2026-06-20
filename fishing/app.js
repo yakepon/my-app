@@ -598,6 +598,7 @@ function renderEventBanner() {
           ${activeEvent.weather ? `<span class="badge badge-outline">${escapeHtml(activeEvent.weather)}</span>` : ''}
           ${activeEvent.tide    ? `<span class="badge badge-outline">${escapeHtml(activeEvent.tide)}</span>` : ''}
           ${activeEvent.target  ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(activeEvent.target)}</span>` : ''}
+          <span class="ec-weather-slot" data-id="${escapeHtml(activeEvent.id)}"></span>
         </div>
       </div>
       <div class="ae-stats">
@@ -617,6 +618,7 @@ function renderEventBanner() {
     </div>`;
 
   els.quickCatchForm.hidden = false;
+  loadEventWeather(activeEvent);
 }
 
 // ── Tide chart ────────────────────────────────────────────────
@@ -648,11 +650,12 @@ async function loadEventWeather(ev) {
   }
   const temp = weatherCache[key];
   if (!temp) return;
-  const slot = document.querySelector(`.ec-weather-slot[data-id="${cssEscape(ev.id)}"]`);
-  if (!slot) return;
-  slot.innerHTML = `<span class="badge badge-outline">
-    <svg class="icon icon-inline"><use href="#icon-temp"/></svg>${temp.max != null ? temp.max + '℃' : '--'} / ${temp.min != null ? temp.min + '℃' : '--'}
-  </span>`;
+  const slots = document.querySelectorAll(`.ec-weather-slot[data-id="${cssEscape(ev.id)}"]`);
+  slots.forEach(slot => {
+    slot.innerHTML = `<span class="badge badge-outline">
+      <svg class="icon icon-inline"><use href="#icon-temp"/></svg>${temp.max != null ? temp.max + '℃' : '--'} / ${temp.min != null ? temp.min + '℃' : '--'}
+    </span>`;
+  });
 }
 
 function cssEscape(value) {
