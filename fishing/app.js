@@ -528,14 +528,20 @@ function renderEventsList(expanded = false) {
           </div>
           <div class="ec-spot">${escapeHtml(ev.spot || '-')}</div>
           <div class="ec-meta">
-            ${ev.style   ? `<span class="badge badge-teal">${escapeHtml(ev.style)}</span>` : ''}
-            ${ev.weather ? `<span class="badge badge-outline">${escapeHtml(ev.weather)}</span>` : ''}
-            ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
-            ${ev.target  ? `<span class="ec-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg> ${escapeHtml(ev.target)}</span>` : ''}
-            ${ev.cost    ? `<span class="ec-cost">¥${Number(ev.cost).toLocaleString()}</span>` : ''}
-            ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
-            ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-coin"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}
-            ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
+            <div class="ec-meta-row">
+              ${ev.style   ? `<span class="badge badge-outline">${escapeHtml(ev.style)}</span>` : ''}
+              ${ev.weather ? `<span class="badge badge-outline">${escapeHtml(ev.weather)}</span>` : ''}
+              ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
+            </div>
+            ${(ev.target || species.length) ? `<div class="ec-meta-row">
+              ${ev.target ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(ev.target)}</span>` : ''}
+              ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
+            </div>` : ''}
+            ${(ev.cost || totalCatch > 0 || totalValue > 0) ? `<div class="ec-meta-row">
+              ${ev.cost    ? `<span class="ec-cost">¥${Number(ev.cost).toLocaleString()}</span>` : ''}
+              ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
+              ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-coin"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}
+            </div>` : ''}
           </div>
           ${timeRow}
         </div>
@@ -585,10 +591,10 @@ function renderEventBanner() {
         <span class="ae-date">${formatDateLabel(activeEvent.date)}</span>
         <span class="ae-spot">${escapeHtml(activeEvent.spot || '-')}</span>
         <div class="ae-meta">
-          ${activeEvent.style   ? `<span class="badge badge-teal">${escapeHtml(activeEvent.style)}</span>` : ''}
+          ${activeEvent.style   ? `<span class="badge badge-outline">${escapeHtml(activeEvent.style)}</span>` : ''}
           ${activeEvent.weather ? `<span class="badge badge-outline">${escapeHtml(activeEvent.weather)}</span>` : ''}
           ${activeEvent.tide    ? `<span class="badge badge-outline">${escapeHtml(activeEvent.tide)}</span>` : ''}
-          ${activeEvent.target  ? `<span class="badge badge-outline badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg> ${escapeHtml(activeEvent.target)}</span>` : ''}
+          ${activeEvent.target  ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(activeEvent.target)}</span>` : ''}
         </div>
       </div>
       <div class="ae-stats">
