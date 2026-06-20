@@ -86,6 +86,9 @@ const els = {
   priceGrid:    document.getElementById('priceGrid'),
   savePrices:   document.getElementById('savePrices'),
   priceStatus:  document.getElementById('priceStatus'),
+  newSpeciesName:  document.getElementById('newSpeciesName'),
+  newSpeciesPrice: document.getElementById('newSpeciesPrice'),
+  addSpeciesBtn:   document.getElementById('addSpeciesBtn'),
 };
 
 // ── State ─────────────────────────────────────────────────────
@@ -455,6 +458,7 @@ function renderAll() {
   renderHeatmap();
   populateDatalists();
   buildPriceGrid();
+  buildSpeciesGrid();
   // Refresh catch screen if currently visible
   if (currentScreen === 'catches' && activeEvent) {
     // Sync activeEvent object in case data was reloaded
@@ -852,8 +856,17 @@ function populateDatalists() {
 }
 
 // ── Species grid ──────────────────────────────────────────────
+// 組み込みの魚種リストに、単価設定で追加されたカスタム魚種を合わせたもの。
+// その他は常に末尾に固定する。
+function allSpeciesNames() {
+  const builtIn = SPECIES_LIST.filter(s => s !== 'その他');
+  const custom = new Set(currentPrices.map(p => p.species).filter(Boolean));
+  builtIn.forEach(s => custom.delete(s));
+  return [...builtIn, ...custom, 'その他'];
+}
+
 function buildSpeciesGrid() {
-  els.speciesGrid.innerHTML = SPECIES_LIST.map(name => {
+  els.speciesGrid.innerHTML = allSpeciesNames().map(name => {
     return `<button type="button" class="species-btn" data-species="${escapeHtml(name)}">
       <span class="sp-emoji">${speciesIconSvg(name)}</span>
       <span class="sp-name">${escapeHtml(name)}</span>
@@ -863,7 +876,7 @@ function buildSpeciesGrid() {
 
 // ── Species unit price grid（単価設定） ─────────────────────────
 function buildPriceGrid() {
-  els.priceGrid.innerHTML = SPECIES_LIST.filter(name => name !== 'その他').map(name => {
+  els.priceGrid.innerHTML = allSpeciesNames().filter(name => name !== 'その他').map(name => {
     const price = priceMap[name] || '';
     return `
       <label class="price-field">
@@ -898,6 +911,32 @@ async function onSavePrices() {
   els.savePrices.textContent = '保存する';
   await loadAll();
   buildPriceGrid();
+}
+
+async function onAddSpecies() {
+  const name = els.newSpeciesName.value.trim();
+  if (!name) {
+    els.priceStatus.textContent = '魚種名を入力してください。';
+    els.priceStatus.className = 'status error';
+    return;
+  }
+  const price = Number(els.newSpeciesPrice.value) || 0;
+
+  els.addSpeciesBtn.disabled = true;
+  els.addSpeciesBtn.textContent = '追加中...';
+
+  const ok = await sendAction({ action: 'savePrice', species: name, price });
+
+  if (ok) {
+    els.priceStatus.textContent = `「${name}」を追加しました。`;
+    els.priceStatus.className = 'status ok';
+    els.newSpeciesName.value = '';
+    els.newSpeciesPrice.value = '';
+    await loadAll();
+  }
+
+  els.addSpeciesBtn.disabled = false;
+  els.addSpeciesBtn.innerHTML = '<svg class="icon icon-inline"><use href="#icon-plus"/></svg>魚種を追加';
 }
 
 function updateSubmitState() {
@@ -1237,6 +1276,7 @@ function init() {
   });
 
   els.savePrices.addEventListener('click', onSavePrices);
+  els.addSpeciesBtn.addEventListener('click', onAddSpecies);
 
   // Event list clicks (events screen)
   els.eventsList.addEventListener('click', handleEventsClick);

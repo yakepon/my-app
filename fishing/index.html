@@ -412,6 +412,14 @@
       <button type="button" id="savePrices" class="btn btn-primary">保存する</button>
     </div>
     <p class="status" id="priceStatus"></p>
+
+    <div class="add-species-row">
+      <input type="text" id="newSpeciesName" placeholder="新しい魚種名（例: クロダイ）">
+      <input type="number" id="newSpeciesPrice" min="0" step="10" inputmode="numeric" placeholder="単価（円）">
+      <button type="button" id="addSpeciesBtn" class="btn btn-outline">
+        <svg class="icon icon-inline"><use href="#icon-plus"/></svg>魚種を追加
+      </button>
+    </div>
   </section>
 
   <footer class="footer">
