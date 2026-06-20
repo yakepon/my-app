@@ -138,8 +138,16 @@ function doGet(e) {
   return jsonOutput({ events: sheetToRecords(es), catches: sheetToRecords(cs), prices: sheetToRecords(ps) });
 }
 
+// パスワードは絶対にコードに直接書かない。Apps Scriptエディタの
+// 「プロジェクトの設定」→「スクリプト プロパティ」で APP_PASSWORD を設定する。
 function doPost(e) {
   const data = JSON.parse(e.postData.contents);
+
+  if (data.action === 'login') {
+    const expected = PropertiesService.getScriptProperties().getProperty('APP_PASSWORD');
+    if (!expected) return jsonOutput({ ok: false, configured: false });
+    return jsonOutput({ ok: data.password === expected, configured: true });
+  }
 
   if (data.action === 'savePrice') {
     const sheet = getOrCreateSheet(PRICE_SHEET, PRICE_HEADERS);

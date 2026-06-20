@@ -158,6 +158,21 @@
     </defs>
   </svg>
 
+  <!-- Login gate -->
+  <div class="login-gate" id="loginGate" hidden>
+    <div class="login-card">
+      <p class="login-kicker">FISHING RECORD</p>
+      <h1 class="login-logo">ANGLER <span>LOG</span></h1>
+      <form id="loginForm">
+        <label>パスワード
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="btn btn-primary" id="loginSubmitBtn">ログイン</button>
+      </form>
+      <p class="login-error" id="loginError" hidden>パスワードが違います。</p>
+    </div>
+  </div>
+
   <header class="app-header">
     <span class="ghost-word" aria-hidden="true">LOG</span>
     <div class="hero-inner">

@@ -34,6 +34,11 @@ const CHART_PALETTE = ['#6C3FE0', '#9b3fd6', '#c83fc0', '#ff2d95', '#2a2a2a', '#
 // ── DOM refs ─────────────────────────────────────────────────
 const els = {
   settings:       document.getElementById('settings'),
+  loginGate:      document.getElementById('loginGate'),
+  loginForm:      document.getElementById('loginForm'),
+  loginPassword:  document.getElementById('loginPassword'),
+  loginSubmitBtn: document.getElementById('loginSubmitBtn'),
+  loginError:     document.getElementById('loginError'),
   toggleSettings: document.getElementById('toggleSettings'),
   gasUrl:         document.getElementById('gasUrl'),
   saveUrl:        document.getElementById('saveUrl'),
@@ -1465,12 +1470,9 @@ async function handleCatchesClick(e) {
 }
 
 // ── Init ──────────────────────────────────────────────────────
-function init() {
-  buildSpeciesGrid();
+const AUTH_KEY = 'angler_authed';
 
-  const url = getGasUrl();
-  els.gasUrl.value = url;
-
+function bootstrapApp(url) {
   if (url) {
     els.settings.hidden = true;
     loadAll();
@@ -1478,6 +1480,58 @@ function init() {
     els.settings.hidden = false;
     els.demoNotice.hidden = false;
     loadAll();
+  }
+}
+
+async function checkLoginPassword(password) {
+  const url = getGasUrl();
+  if (!url) return { ok: false, configured: false };
+  try {
+    const res = await fetch(url, { method: 'POST', body: JSON.stringify({ action: 'login', password }) });
+    if (!res.ok) return { ok: false, configured: true };
+    return await res.json();
+  } catch {
+    return { ok: false, configured: true };
+  }
+}
+
+async function onLoginSubmit(e) {
+  e.preventDefault();
+  els.loginSubmitBtn.disabled = true;
+  els.loginSubmitBtn.textContent = '確認中...';
+  els.loginError.hidden = true;
+
+  const result = await checkLoginPassword(els.loginPassword.value);
+
+  if (result.ok) {
+    localStorage.setItem(AUTH_KEY, 'ok');
+    els.loginGate.hidden = true;
+    bootstrapApp(getGasUrl());
+  } else {
+    els.loginError.textContent = result.configured === false
+      ? 'パスワードが未設定です。Apps Script側でAPP_PASSWORDを設定してください。'
+      : 'パスワードが違います。';
+    els.loginError.hidden = false;
+    els.loginPassword.value = '';
+    els.loginPassword.focus();
+  }
+
+  els.loginSubmitBtn.disabled = false;
+  els.loginSubmitBtn.textContent = 'ログイン';
+}
+
+function init() {
+  buildSpeciesGrid();
+
+  const url = getGasUrl();
+  els.gasUrl.value = url;
+
+  const needsLogin = !!url && localStorage.getItem(AUTH_KEY) !== 'ok';
+  els.loginGate.hidden = !needsLogin;
+  els.loginForm.addEventListener('submit', onLoginSubmit);
+
+  if (!needsLogin) {
+    bootstrapApp(url);
   }
 
   // Nav
@@ -1489,8 +1543,13 @@ function init() {
     const val = els.gasUrl.value.trim();
     if (!val) return;
     setGasUrl(val);
-    setStatus('保存しました。読み込み中...');
     els.settings.hidden = true;
+    if (localStorage.getItem(AUTH_KEY) !== 'ok') {
+      localStorage.removeItem(AUTH_KEY);
+      els.loginGate.hidden = false;
+      return;
+    }
+    setStatus('保存しました。読み込み中...');
     loadAll();
   });
 
