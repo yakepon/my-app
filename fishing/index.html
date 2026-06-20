@@ -6,7 +6,7 @@
   <title>ANGLER LOG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -158,22 +158,10 @@
     </defs>
   </svg>
 
-  <div class="grain" aria-hidden="true"></div>
-
   <header class="app-header">
-    <div class="bubbles" aria-hidden="true">
-      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-    </div>
-    <svg class="topo" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M-10,400 C150,360 300,420 460,390 C620,360 760,420 920,390 C1040,370 1140,390 1210,380"/>
-      <path d="M-10,320 C180,280 330,340 500,310 C660,280 800,330 960,305 C1080,288 1160,305 1210,298"/>
-      <path d="M-10,245 C160,215 320,260 480,235 C650,210 800,250 970,228 C1080,212 1160,228 1210,222"/>
-      <path d="M-10,170 C180,145 340,185 510,162 C670,140 820,178 980,158 C1090,144 1160,158 1210,153"/>
-      <path d="M-10,100 C200,80 380,110 540,92 C700,75 850,105 1010,90 C1100,82 1160,90 1210,87"/>
-    </svg>
-
+    <span class="ghost-word" aria-hidden="true">LOG</span>
     <div class="hero-inner">
-      <div class="terminal-line"><span class="prompt">$</span> tail -f angler.log<span class="cursor">_</span></div>
+      <p class="kicker">FISHING RECORD</p>
       <h1 class="logo">ANGLER <span>LOG</span></h1>
       <nav class="app-nav" id="appNav">
         <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
@@ -188,9 +176,8 @@
     <div id="eventsScreen" class="screen">
 
       <div class="section-label">
-        <span class="label-num">01</span>
-        <span class="label-text">Overview</span>
-        <span class="label-line"></span>
+        <span class="ghost-label" aria-hidden="true">OVERVIEW</span>
+        <span class="label-text">釣果サマリー</span>
       </div>
 
       <!-- Stats -->
@@ -228,9 +215,8 @@
       </section>
 
       <div class="section-label">
-        <span class="label-num">02</span>
-        <span class="label-text">Log</span>
-        <span class="label-line"></span>
+        <span class="ghost-label" aria-hidden="true">LOG</span>
+        <span class="label-text">釣行一覧</span>
       </div>
 
       <!-- Event Form (toggle) -->
@@ -310,9 +296,8 @@
       </section>
 
       <div class="section-label">
-        <span class="label-num">03</span>
-        <span class="label-text">Analytics</span>
-        <span class="label-line"></span>
+        <span class="ghost-label" aria-hidden="true">ANALYTICS</span>
+        <span class="label-text">分析</span>
       </div>
 
       <!-- Charts -->

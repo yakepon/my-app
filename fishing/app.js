@@ -27,7 +27,7 @@ function speciesIconSvg(name, cls) {
   return `<svg class="icon ${cls || ''}"><use href="#icon-${id}"/></svg>`;
 }
 
-const CHART_PALETTE = ['#7e9b86', '#ff8a3d', '#5fb3c9', '#ffd166', '#ff4d3d', '#3a8aa0', '#b08968', '#6b7a8f'];
+const CHART_PALETTE = ['#6C3FE0', '#9b3fd6', '#c83fc0', '#ff2d95', '#2a2a2a', '#8b8b8b', '#c2c2c2', '#4b2e9e'];
 
 // ── DOM refs ─────────────────────────────────────────────────
 const els = {
@@ -253,8 +253,8 @@ function formatDateLabel(val) {
 
 function chartAxisOpts() {
   return {
-    x: { ticks: { color: '#93a3a0', font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: 'rgba(243,237,227,0.07)' } },
-    y: { beginAtZero: true, ticks: { color: '#93a3a0', precision: 0, stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: 'rgba(243,237,227,0.07)' } },
+    x: { ticks: { color: '#8b8b8b', font: { family: 'Lato', size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+    y: { beginAtZero: true, ticks: { color: '#8b8b8b', precision: 0, stepSize: 1, font: { family: 'Lato', size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
   };
 }
 
@@ -661,16 +661,16 @@ function renderCharts() {
         {
           label: `${prevYear}年`,
           data: prevData,
-          backgroundColor: 'rgba(147,163,160,0.3)',
-          borderColor:     'rgba(147,163,160,0.55)',
+          backgroundColor: 'rgba(0,0,0,0.1)',
+          borderColor:     'rgba(0,0,0,0.18)',
           borderWidth: 1,
           borderRadius: 3,
         },
         {
           label: `${curYear}年`,
           data: curData,
-          backgroundColor: 'rgba(255,138,61,0.85)',
-          borderColor:     '#ff8a3d',
+          backgroundColor: 'rgba(255,45,149,0.85)',
+          borderColor:     '#ff2d95',
           borderWidth: 1,
           borderRadius: 4,
         },
@@ -683,8 +683,8 @@ function renderCharts() {
         legend: {
           display: true,
           labels: {
-            color: '#93a3a0',
-            font: { family: 'JetBrains Mono', size: 10 },
+            color: '#8b8b8b',
+            font: { family: 'Lato', size: 10 },
             boxWidth: 14,
             boxHeight: 10,
             padding: 12,
@@ -804,7 +804,7 @@ function renderHeatmap() {
       const n = counts[mi][si];
       const alpha = (0.16 + (n / max) * 0.74).toFixed(2);
       const style = n
-        ? `style="background:rgba(95,179,201,${alpha});color:#0b0f10"`
+        ? `style="background:rgba(255,45,149,${alpha});color:#fff"`
         : '';
       return `<span class="heatmap-cell heatmap-value" ${style} title="${m} ${label}: ${n}匹">${n || ''}</span>`;
     }).join('');
