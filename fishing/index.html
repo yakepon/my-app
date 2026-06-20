@@ -190,18 +190,28 @@
         </div>
         <div class="stat-card stat-card-monthly">
           <span class="stat-icon"><svg class="icon"><use href="#icon-calendar"/></svg></span>
-          <span class="stat-value" id="statMonthlyCatch">--</span>
-          <span class="stat-label">MONTHLY CATCH</span>
+          <span class="stat-value" id="statYearlyCatch">--</span>
+          <span class="stat-label">YEARLY CATCH</span>
         </div>
         <div class="stat-card stat-card-cost">
           <span class="stat-icon"><svg class="icon"><use href="#icon-coin"/></svg></span>
           <span class="stat-value" id="statTotalCost">--</span>
           <span class="stat-label">TOTAL COST (¥)</span>
         </div>
+        <div class="stat-card stat-card-value">
+          <span class="stat-icon"><svg class="icon"><use href="#icon-coin"/></svg></span>
+          <span class="stat-value" id="statMarketValue">--</span>
+          <span class="stat-label">MARKET VALUE (¥)</span>
+        </div>
         <div class="stat-card stat-card-trips">
           <span class="stat-icon"><svg class="icon"><use href="#icon-rod"/></svg></span>
           <span class="stat-value" id="statTotalTrips">--</span>
           <span class="stat-label">TOTAL TRIPS</span>
+        </div>
+        <div class="stat-card stat-card-avg">
+          <span class="stat-icon"><svg class="icon"><use href="#icon-fish-multi"/></svg></span>
+          <span class="stat-value" id="statAvgPerTrip">--</span>
+          <span class="stat-label">AVG CATCH / TRIP</span>
         </div>
       </section>
 
@@ -210,11 +220,15 @@
         <h2 id="eventFormTitle">釣行を登録</h2>
         <form id="eventForm">
           <input type="hidden" name="id">
-          <input type="hidden" name="startTime">
-          <input type="hidden" name="endTime">
           <div class="form-grid">
             <label>日付
               <input type="date" name="date" required>
+            </label>
+            <label>開始時刻
+              <input type="time" name="startTime">
+            </label>
+            <label>終了時刻
+              <input type="time" name="endTime">
             </label>
             <label>釣り場名
               <input type="text" name="spot" list="spotList" placeholder="例: 大黒海釣り公園" required>

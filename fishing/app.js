@@ -56,9 +56,11 @@ const els = {
   catchSubmitBtn: document.getElementById('catchSubmitBtn'),
   catchesList:    document.getElementById('catchesList'),
   statTotalCatch:   document.getElementById('statTotalCatch'),
-  statMonthlyCatch: document.getElementById('statMonthlyCatch'),
+  statYearlyCatch:  document.getElementById('statYearlyCatch'),
   statTotalCost:    document.getElementById('statTotalCost'),
+  statMarketValue:  document.getElementById('statMarketValue'),
   statTotalTrips:   document.getElementById('statTotalTrips'),
+  statAvgPerTrip:   document.getElementById('statAvgPerTrip'),
   trendChart:   document.getElementById('trendChart'),
   speciesChart: document.getElementById('speciesChart'),
   spotChart:    document.getElementById('spotChart'),
@@ -595,19 +597,25 @@ function renderEventCatches() {
 
 function renderStats() {
   const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const thisYear = String(now.getFullYear());
 
-  const monthlyCatches = currentCatches.filter(c => {
+  const yearlyCatches = currentCatches.filter(c => {
     const ev = currentEvents.find(e => e.id === c.eventId);
-    return ev && normDateStr(ev.date).startsWith(thisMonth);
+    return ev && normDateStr(ev.date).startsWith(thisYear);
   });
 
-  const totalCost = currentEvents.reduce((sum, ev) => sum + (Number(ev.cost) || 0), 0);
+  const totalCost  = currentEvents.reduce((sum, ev) => sum + (Number(ev.cost) || 0), 0);
+  const totalValue = catchesValue(currentCatches);
+  const totalCatch = catchTotal(currentCatches);
+  const totalTrips = currentEvents.length;
+  const avgPerTrip = totalTrips > 0 ? totalCatch / totalTrips : null;
 
-  els.statTotalCatch.textContent   = catchTotal(currentCatches);
-  els.statMonthlyCatch.textContent = catchTotal(monthlyCatches);
-  els.statTotalCost.textContent    = totalCost ? totalCost.toLocaleString() : '--';
-  els.statTotalTrips.textContent   = currentEvents.length;
+  els.statTotalCatch.textContent  = totalCatch;
+  els.statYearlyCatch.textContent = catchTotal(yearlyCatches);
+  els.statTotalCost.textContent   = totalCost ? totalCost.toLocaleString() : '--';
+  els.statMarketValue.textContent = totalValue ? totalValue.toLocaleString() : '--';
+  els.statTotalTrips.textContent  = totalTrips;
+  els.statAvgPerTrip.textContent  = avgPerTrip != null ? avgPerTrip.toFixed(1) : '--';
 }
 
 function renderCharts() {

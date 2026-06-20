@@ -13,6 +13,8 @@
   --gold-dim:    rgba(255, 224, 102, 0.12);
   --purple:      #a78bfa;
   --purple-dim:  rgba(167, 139, 250, 0.14);
+  --blue:        #38bdf8;
+  --blue-dim:    rgba(56, 189, 248, 0.14);
   --text:        #d8eeff;
   --text-muted:  #6899cc;
   --danger:      #ff4d6a;
@@ -234,7 +236,8 @@ main, header, footer, section, .wave-divider { position: relative; z-index: 1; }
   padding: 0 1rem;
 }
 
-@media (min-width: 480px) { .stats-strip { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 480px)  { .stats-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1000px) { .stats-strip { grid-template-columns: repeat(6, 1fr); } }
 
 .stat-card {
   background: var(--panel);
@@ -255,7 +258,9 @@ main, header, footer, section, .wave-divider { position: relative; z-index: 1; }
 .stat-card-catch   { border-top-color: var(--teal); }
 .stat-card-monthly { border-top-color: var(--coral); }
 .stat-card-cost    { border-top-color: var(--gold); }
+.stat-card-value   { border-top-color: var(--success); }
 .stat-card-trips   { border-top-color: var(--purple); }
+.stat-card-avg     { border-top-color: var(--blue); }
 
 .stat-icon {
   display: block;
@@ -274,12 +279,16 @@ main, header, footer, section, .wave-divider { position: relative; z-index: 1; }
 .stat-card-catch   .stat-value { color: var(--teal); }
 .stat-card-monthly .stat-value { color: var(--coral); }
 .stat-card-cost    .stat-value { color: var(--gold); }
+.stat-card-value   .stat-value { color: var(--success); }
 .stat-card-trips   .stat-value { color: var(--purple); }
+.stat-card-avg     .stat-value { color: var(--blue); }
 
 .stat-card-catch   .stat-icon { color: var(--teal); }
 .stat-card-monthly .stat-icon { color: var(--coral); }
 .stat-card-cost    .stat-icon { color: var(--gold); }
+.stat-card-value   .stat-icon { color: var(--success); }
 .stat-card-trips   .stat-icon { color: var(--purple); }
+.stat-card-avg     .stat-icon { color: var(--blue); }
 
 .stat-label {
   display: block;
