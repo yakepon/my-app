@@ -750,6 +750,21 @@ main, header, footer, section { position: relative; z-index: 2; }
 }
 .remove-photo-btn:hover { background: var(--danger); transform: scale(1.08); }
 
+/* ── 釣行フォームの写真スロット（最大3枚） ───────────────────── */
+.photo-slots { display: flex; gap: 0.6rem; margin-bottom: 0.7rem; }
+.photo-slots:empty { margin-bottom: 0; }
+.photo-slot {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 8px;
+  overflow: visible;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.photo-slot .photo-thumb-preview { width: 100%; height: 100%; max-height: none; border-radius: 8px; }
+.photo-slot .remove-photo-btn { top: -8px; right: -8px; width: 24px; height: 24px; }
+
 /* ── Catch photo thumbnail in history ───────────────────────── */
 .catch-thumb {
   width: 44px;
@@ -915,7 +930,9 @@ form > textarea { margin-bottom: 0.6rem; }
 
 .event-card-head { padding: 1.05rem 1.15rem 0.85rem; border-bottom: 1px solid var(--border); }
 .ec-date { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; color: var(--ink-muted); display: block; margin-bottom: 0.25rem; }
-.ec-spot { font-size: 1.08rem; font-weight: 900; color: var(--ink); margin-bottom: 0.55rem; }
+.ec-spot-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.55rem; }
+.ec-spot { font-size: 1.08rem; font-weight: 900; color: var(--ink); flex: 1; min-width: 0; }
+.ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; }
 .ec-meta { display: flex; flex-direction: column; gap: 0.4rem; }
 .ec-meta-row { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
 
@@ -1025,11 +1042,11 @@ form > textarea { margin-bottom: 0.6rem; }
 }
 .ec-memo-toggle:hover { background: var(--ink); color: #fff; }
 
-.ec-head-row { display: flex; gap: 0.85rem; align-items: flex-start; }
+.ec-head-row { display: flex; }
 .ec-head-main { flex: 1; min-width: 0; }
 .ec-thumb {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--border);

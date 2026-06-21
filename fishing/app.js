@@ -66,10 +66,9 @@ const els = {
   editPhotoPreview: document.getElementById('editPhotoPreview'),
   editPhotoThumb:   document.getElementById('editPhotoThumb'),
   editRemovePhoto:  document.getElementById('editRemovePhoto'),
-  eventPhotoInput:   document.getElementById('eventPhotoInput'),
-  eventPhotoPreview: document.getElementById('eventPhotoPreview'),
-  eventPhotoThumb:   document.getElementById('eventPhotoThumb'),
-  eventRemovePhoto:  document.getElementById('eventRemovePhoto'),
+  eventPhotoInput:    document.getElementById('eventPhotoInput'),
+  eventPhotoSlots:    document.getElementById('eventPhotoSlots'),
+  eventPhotoAddLabel: document.getElementById('eventPhotoAddLabel'),
   catchSubmitBtn: document.getElementById('catchSubmitBtn'),
   catchesList:    document.getElementById('catchesList'),
   statTotalCatch:   document.getElementById('statTotalCatch'),
@@ -226,7 +225,7 @@ function mockExec(payload) {
   const { events, catches, prices } = mockLoad();
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
-  const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId'];
+  const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
@@ -386,7 +385,23 @@ async function uploadPhotoToDrive(dataUrl, catchId) {
 
 async function deleteDrivePhoto(photoId, ids = {}) {
   if (isMockMode() || !photoId) return;
-  await sendAction({ action: 'deletePhoto', photoId, catchId: ids.catchId || '', eventId: ids.eventId || '' });
+  await sendAction({ action: 'deletePhoto', photoId, catchId: ids.catchId || '', eventId: ids.eventId || '', photoField: ids.photoField || 'photo' });
+}
+
+// 釣行は写真を最大3枚（photo/photoId, photo2/photoId2, photo3/photoId3）まで持てる。
+const EVENT_PHOTO_SUFFIXES = ['', '2', '3'];
+
+function eventPhotoFieldNames(suffix) {
+  return { field: 'photo' + suffix, idField: 'photoId' + suffix };
+}
+
+function eventPhotoSlots(ev) {
+  return EVENT_PHOTO_SUFFIXES
+    .map(suffix => {
+      const { field, idField } = eventPhotoFieldNames(suffix);
+      return { field, idField, url: ev[field], id: ev[idField] };
+    })
+    .filter(p => p.url);
 }
 
 // ── Screen navigation ─────────────────────────────────────────
@@ -535,6 +550,7 @@ function renderEventsList(expanded = false) {
     const totalCatch = catches.reduce((sum, c) => sum + (Number(c.count) || 1), 0);
     const totalValue = catchesValue(catches);
     const isToday = normDateStr(ev.date) === today;
+    const photos = eventPhotoSlots(ev);
 
     const hours = durationHours(ev.startTime, ev.endTime);
     // 極端に短い計測（誤タップ等）では時間あたり釣果が非現実的な値になるため、
@@ -557,13 +573,15 @@ function renderEventsList(expanded = false) {
       <article class="event-card${isToday ? ' event-card-today' : ''}">
         <div class="event-card-head">
           <div class="ec-head-row">
-            ${ev.photo ? `<img src="${escapeHtml(ev.photo)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" alt="釣行写真">` : ''}
             <div class="ec-head-main">
               <div class="ec-date-row">
                 ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
                 <span class="ec-date">${formatDateLabel(ev.date)}</span>
               </div>
-              <div class="ec-spot">${escapeHtml(ev.spot || '-')}</div>
+              <div class="ec-spot-row">
+                <div class="ec-spot">${escapeHtml(ev.spot || '-')}</div>
+                ${photos.length ? `<div class="ec-photos">${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
+              </div>
               <div class="ec-meta">
                 <div class="ec-meta-row">
                   ${ev.style   ? `<span class="badge badge-outline">${escapeHtml(ev.style)}</span>` : ''}
@@ -1453,21 +1471,38 @@ function toggleEventForm(show) {
   }
 }
 
-let eventPendingPhotoDataUrl = null;
-let eventPhotoRemoved = false;
+// 編集中の写真スロット（最大3枚）。各要素: { field, idField, url, id, pendingDataUrl, removed }
+let eventPhotoState = [];
+
+function makeEmptyEventPhotoState() {
+  return EVENT_PHOTO_SUFFIXES.map(suffix => {
+    const { field, idField } = eventPhotoFieldNames(suffix);
+    return { field, idField, url: '', id: '', pendingDataUrl: null, removed: false };
+  });
+}
+
+function renderEventPhotoSlots() {
+  const filled = eventPhotoState
+    .map((slot, index) => ({ slot, index }))
+    .filter(({ slot }) => !slot.removed && (slot.url || slot.pendingDataUrl));
+
+  els.eventPhotoSlots.innerHTML = filled.map(({ slot, index }) => `
+    <div class="photo-slot">
+      <img class="photo-thumb-preview" src="${escapeHtml(slot.pendingDataUrl || slot.url)}" alt="プレビュー">
+      <button type="button" class="remove-photo-btn" data-slot="${index}"><svg class="icon"><use href="#icon-close"/></svg></button>
+    </div>`).join('');
+
+  els.eventPhotoAddLabel.hidden = filled.length >= eventPhotoState.length;
+}
 
 function resetEventPhotoState() {
-  eventPendingPhotoDataUrl = null;
-  eventPhotoRemoved = false;
+  eventPhotoState = makeEmptyEventPhotoState();
   els.eventPhotoInput.value = '';
-  els.eventPhotoPreview.hidden = true;
-  els.eventPhotoThumb.src = '';
+  renderEventPhotoSlots();
 }
 
 function enterEventEditMode(ev) {
   els.eventForm.elements['id'].value      = ev.id;
-  els.eventForm.elements['photo'].value   = ev.photo   || '';
-  els.eventForm.elements['photoId'].value = ev.photoId || '';
   els.eventForm.elements['date'].value    = normDateStr(ev.date);
   els.eventForm.elements['spot'].value    = ev.spot    || '';
   els.eventForm.elements['area'].value    = ev.area    || '';
@@ -1482,11 +1517,13 @@ function enterEventEditMode(ev) {
   els.eventFormTitle.textContent  = '釣行を編集';
   els.eventSubmitBtn.textContent  = '更新する';
 
-  resetEventPhotoState();
-  if (ev.photo) {
-    els.eventPhotoThumb.src = ev.photo;
-    els.eventPhotoPreview.hidden = false;
-  }
+  eventPhotoState = makeEmptyEventPhotoState();
+  eventPhotoState.forEach(slot => {
+    slot.url = ev[slot.field]   || '';
+    slot.id  = ev[slot.idField] || '';
+  });
+  els.eventPhotoInput.value = '';
+  renderEventPhotoSlots();
 
   toggleEventForm(true);
 }
@@ -1494,8 +1531,6 @@ function enterEventEditMode(ev) {
 function exitEventEditMode() {
   els.eventForm.reset();
   els.eventForm.elements['id'].value      = '';
-  els.eventForm.elements['photo'].value   = '';
-  els.eventForm.elements['photoId'].value = '';
   els.eventFormTitle.textContent  = '釣行を登録';
   els.eventSubmitBtn.textContent  = '登録する';
   resetEventPhotoState();
@@ -1505,7 +1540,6 @@ async function onEventSubmit(e) {
   e.preventDefault();
   const fd = new FormData(els.eventForm);
   const id = fd.get('id') || uid();
-  const originalPhotoId = fd.get('photoId');
   const payload = {
     action:  fd.get('id') ? 'updateEvent' : 'addEvent',
     id,
@@ -1520,39 +1554,44 @@ async function onEventSubmit(e) {
     memo:    fd.get('memo'),
     startTime: fd.get('startTime') || '',
     endTime:   fd.get('endTime')   || '',
-    photo:   fd.get('photo'),
-    photoId: fd.get('photoId'),
   };
 
   els.eventSubmitBtn.disabled = true;
   els.eventSubmitBtn.textContent = fd.get('id') ? '更新中...' : '登録中...';
 
-  let oldPhotoIdToDelete = null;
+  const oldPhotoIdsToDelete = [];
 
-  if (eventPhotoRemoved) {
-    payload.photo   = '';
-    payload.photoId = '';
-    if (originalPhotoId) oldPhotoIdToDelete = originalPhotoId;
-  } else if (eventPendingPhotoDataUrl) {
-    if (isMockMode()) {
-      payload.photo   = eventPendingPhotoDataUrl;
-      payload.photoId = '';
-    } else {
-      els.eventSubmitBtn.textContent = '写真をアップロード中...';
-      const uploaded = await uploadPhotoToDrive(eventPendingPhotoDataUrl, id);
-      if (uploaded) {
-        payload.photo   = uploaded.photo;
-        payload.photoId = uploaded.photoId;
-        if (originalPhotoId) oldPhotoIdToDelete = originalPhotoId;
+  for (const slot of eventPhotoState) {
+    if (slot.removed) {
+      payload[slot.field]   = '';
+      payload[slot.idField] = '';
+      if (slot.id) oldPhotoIdsToDelete.push(slot.id);
+    } else if (slot.pendingDataUrl) {
+      if (isMockMode()) {
+        payload[slot.field]   = slot.pendingDataUrl;
+        payload[slot.idField] = '';
       } else {
-        setStatus('写真のアップロードに失敗しました。写真以外の内容のみ保存します。', 'error');
+        els.eventSubmitBtn.textContent = '写真をアップロード中...';
+        const uploaded = await uploadPhotoToDrive(slot.pendingDataUrl, id);
+        if (uploaded) {
+          payload[slot.field]   = uploaded.photo;
+          payload[slot.idField] = uploaded.photoId;
+          if (slot.id) oldPhotoIdsToDelete.push(slot.id);
+        } else {
+          setStatus('写真のアップロードに失敗しました。その写真以外の内容のみ保存します。', 'error');
+          payload[slot.field]   = slot.url;
+          payload[slot.idField] = slot.id;
+        }
       }
+    } else {
+      payload[slot.field]   = slot.url;
+      payload[slot.idField] = slot.id;
     }
   }
 
   const ok = await sendAction(payload);
   if (ok) {
-    if (oldPhotoIdToDelete) await deleteDrivePhoto(oldPhotoIdToDelete);
+    for (const photoId of oldPhotoIdsToDelete) await deleteDrivePhoto(photoId);
     setStatus(fd.get('id') ? '釣行を更新しました。' : '釣行を登録しました。', 'ok');
     exitEventEditMode();
     toggleEventForm(false);
@@ -1607,10 +1646,10 @@ function closeCatchModal() {
   resetEditPhotoState();
 }
 
-let lightboxTarget = null; // { type: 'catch' | 'event', id }
+let lightboxTarget = null; // { type: 'catch' | 'event', id, photoField }
 
-function openPhotoLightbox(src, type, id) {
-  lightboxTarget = { type, id };
+function openPhotoLightbox(src, type, id, photoField = 'photo') {
+  lightboxTarget = { type, id, photoField };
   els.photoLightboxImg.src = src;
   els.photoLightbox.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -1625,17 +1664,18 @@ function closePhotoLightbox() {
 
 async function deleteLightboxPhoto() {
   if (!lightboxTarget) return;
-  const { type, id } = lightboxTarget;
+  const { type, id, photoField } = lightboxTarget;
   const list = type === 'event' ? currentEvents : currentCatches;
   const record = list.find(r => r.id === id);
   if (!record || !confirm('この写真を削除しますか？')) return;
+  const photoIdField = photoField.replace('photo', 'photoId');
 
   if (isMockMode()) {
-    await sendAction({ ...record, action: type === 'event' ? 'updateEvent' : 'updateCatch', photo: '', photoId: '' });
+    await sendAction({ ...record, action: type === 'event' ? 'updateEvent' : 'updateCatch', [photoField]: '', [photoIdField]: '' });
   } else if (type === 'event') {
-    await deleteDrivePhoto(record.photoId, { eventId: record.id });
+    await deleteDrivePhoto(record[photoIdField], { eventId: record.id, photoField });
   } else {
-    await deleteDrivePhoto(record.photoId, { catchId: record.id });
+    await deleteDrivePhoto(record[photoIdField], { catchId: record.id });
   }
   closePhotoLightbox();
   await loadAll();
@@ -1761,7 +1801,7 @@ async function handleEventsClick(e) {
   if (btn.classList.contains('delete-event-btn')) {
     if (!confirm('この釣行とその釣果をすべて削除しますか？')) return;
     const ev = currentEvents.find(e => e.id === id);
-    await deleteDrivePhoto(ev && ev.photoId);
+    if (ev) for (const p of eventPhotoSlots(ev)) await deleteDrivePhoto(p.id);
     const related = currentCatches.filter(c => c.eventId === id);
     for (const c of related) {
       await deleteDrivePhoto(c.photoId);
@@ -1974,27 +2014,28 @@ function init() {
     els.editPhotoThumb.src = '';
   });
 
-  // Photo capture (event form)
+  // Photo capture (event form, 最大3枚)
   els.eventPhotoInput.addEventListener('change', async () => {
     const file = els.eventPhotoInput.files[0];
+    els.eventPhotoInput.value = '';
     if (!file) return;
+    const emptyIndex = eventPhotoState.findIndex(s => !s.removed && !s.url && !s.pendingDataUrl);
+    if (emptyIndex === -1) return;
     try {
       const dataUrl = await compressImage(file);
-      eventPendingPhotoDataUrl = dataUrl;
-      eventPhotoRemoved = false;
-      els.eventPhotoThumb.src = dataUrl;
-      els.eventPhotoPreview.hidden = false;
-    } catch {
-      eventPendingPhotoDataUrl = null;
-    }
+      eventPhotoState[emptyIndex].pendingDataUrl = dataUrl;
+      renderEventPhotoSlots();
+    } catch { /* 読み込み失敗時はそのスロットを空のままにする */ }
   });
 
-  els.eventRemovePhoto.addEventListener('click', () => {
-    eventPendingPhotoDataUrl = null;
-    eventPhotoRemoved = true;
-    els.eventPhotoInput.value = '';
-    els.eventPhotoPreview.hidden = true;
-    els.eventPhotoThumb.src = '';
+  els.eventPhotoSlots.addEventListener('click', e => {
+    const btn = e.target.closest('.remove-photo-btn');
+    if (!btn) return;
+    const slot = eventPhotoState[Number(btn.dataset.slot)];
+    if (!slot) return;
+    if (slot.url) slot.removed = true;
+    slot.pendingDataUrl = null;
+    renderEventPhotoSlots();
   });
 
   // Forms
@@ -2014,7 +2055,7 @@ function init() {
   });
   els.eventsList.addEventListener('click', e => {
     const thumb = e.target.closest('.ec-thumb');
-    if (thumb) openPhotoLightbox(thumb.src, 'event', thumb.dataset.eventId);
+    if (thumb) openPhotoLightbox(thumb.src, 'event', thumb.dataset.eventId, thumb.dataset.photoField);
   });
   els.photoLightboxClose.addEventListener('click', closePhotoLightbox);
   els.photoLightboxBackdrop.addEventListener('click', closePhotoLightbox);
