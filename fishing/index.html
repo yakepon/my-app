@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260621b">
+  <link rel="stylesheet" href="style.css?v=20260621c">
 </head>
 <body>
   <!-- ══ Icon sprite (all custom line icons live here, referenced via <use>) ══ -->
@@ -207,8 +207,9 @@
       <nav class="app-nav" id="appNav">
         <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
         <button type="button" class="nav-link nav-btn nav-btn-register" id="navShowForm"><svg class="icon icon-nav"><use href="#icon-plus"/></svg> 釣行登録</button>
-        <button type="button" class="nav-link nav-btn" id="navShowRodForm"><svg class="icon icon-nav"><use href="#icon-rod"/></svg> 竿を登録</button>
-        <button type="button" class="nav-link nav-btn" id="navShowReelForm"><svg class="icon icon-nav"><use href="#icon-reel"/></svg> リールを登録</button>
+        <button type="button" class="nav-link nav-btn" id="navShowGear"><svg class="icon icon-nav"><use href="#icon-rod"/></svg> タックル管理</button>
+        <button type="button" class="nav-link nav-btn" id="navShowRodForm" hidden><svg class="icon icon-nav"><use href="#icon-rod"/></svg> 竿を登録</button>
+        <button type="button" class="nav-link nav-btn" id="navShowReelForm" hidden><svg class="icon icon-nav"><use href="#icon-reel"/></svg> リールを登録</button>
       </nav>
     </div>
   </header>
@@ -349,6 +350,99 @@
         <div id="eventsList"><p class="empty">接続設定を行うと記録が表示されます。</p></div>
       </section>
 
+      <div class="section-label">
+        <span class="ghost-label" aria-hidden="true">ANALYTICS</span>
+        <span class="label-text">分析</span>
+      </div>
+
+      <!-- Charts -->
+      <section class="panel chart-panel">
+        <h2><svg class="icon icon-h2"><use href="#icon-chart-trend"/></svg> 釣行トレンド（前年比）</h2>
+        <div class="chart-wrap chart-wrap-tall"><canvas id="trendChart"></canvas></div>
+      </section>
+
+      <section class="panel chart-panel">
+        <h2><svg class="icon icon-h2"><use href="#icon-fish"/></svg> 魚種別 釣果</h2>
+        <div class="chart-wrap"><canvas id="speciesChart"></canvas></div>
+      </section>
+
+      <section class="panel chart-panel">
+        <h2><svg class="icon icon-h2"><use href="#icon-map-pin"/></svg> 釣り場別 釣果</h2>
+        <div class="chart-wrap"><canvas id="spotChart"></canvas></div>
+      </section>
+
+      <section class="panel chart-panel">
+        <h2><svg class="icon icon-h2"><use href="#icon-heatmap"/></svg> 月別・時間帯別 ヒートマップ（釣果数）</h2>
+        <div class="heatmap-wrap" id="heatmap"></div>
+      </section>
+
+    </div><!-- /eventsScreen -->
+
+    <!-- ══ 釣果入力 Screen ══════════════════════════════════════ -->
+    <div id="catchScreen" class="screen" hidden>
+
+      <!-- Event banner -->
+      <div id="eventBanner" class="event-banner"></div>
+
+      <!-- Quick catch -->
+      <section id="catch" class="panel catch-panel">
+        <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 釣果入力</h2>
+
+        <form id="quickCatchForm" hidden>
+          <p class="species-prompt" id="speciesPrompt">魚種を選択</p>
+          <div class="species-grid" id="speciesGrid"></div>
+          <input type="text" id="customSpeciesInput" class="custom-species-input"
+                 placeholder="魚種を入力..." hidden autocomplete="off">
+          <input type="hidden" name="species" id="speciesInput">
+
+          <div class="count-row">
+            <span class="count-label">数<span class="count-required"> *</span></span>
+            <div class="count-btns" id="countBtns">
+              <button type="button" class="count-btn" data-count="1">1</button>
+              <button type="button" class="count-btn" data-count="2">2</button>
+              <button type="button" class="count-btn" data-count="3">3</button>
+              <button type="button" class="count-btn" data-count="4">4</button>
+              <button type="button" class="count-btn" data-count="5">5</button>
+            </div>
+            <input type="number" name="count" id="countInput" class="count-input"
+                   min="1" max="99" inputmode="numeric" placeholder="匹" required>
+          </div>
+
+          <label class="photo-label">
+            <input type="file" id="photoInput" accept="image/*" class="photo-file-input">
+            <span class="photo-trigger" id="photoTrigger"><svg class="icon icon-inline"><use href="#icon-camera"/></svg> 写真を撮る / 選択（任意）</span>
+          </label>
+          <div id="photoPreview" class="photo-preview" hidden>
+            <img id="photoThumb" class="photo-thumb-preview" src="" alt="プレビュー">
+            <button type="button" id="removePhoto" class="remove-photo-btn"><svg class="icon"><use href="#icon-close"/></svg></button>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-catch" id="catchSubmitBtn" disabled>記録する</button>
+        </form>
+      </section>
+
+      <!-- Tide chart for this trip -->
+      <section class="panel" id="tideChartPanel" hidden>
+        <h2><svg class="icon icon-h2"><use href="#icon-chart-trend"/></svg>潮汐と釣果（時間帯別）</h2>
+        <div id="tideChart" class="tide-chart"></div>
+      </section>
+
+      <!-- Catches for this trip -->
+      <section class="panel records-panel">
+        <h2 class="catches-section-title"><svg class="icon icon-h2"><use href="#icon-fish-multi"/></svg> この釣行の釣果</h2>
+        <div id="catchesList"></div>
+      </section>
+
+    </div><!-- /catchScreen -->
+
+    <!-- ══ タックル管理 Screen ══════════════════════════════════════ -->
+    <div id="gearScreen" class="screen" hidden>
+
+      <div class="section-label">
+        <span class="ghost-label" aria-hidden="true">TACKLE</span>
+        <span class="label-text">タックル管理</span>
+      </div>
+
       <!-- Gear form (竿・リール登録) -->
       <section id="gear-form" class="panel form-panel" hidden>
         <h2 id="gearFormTitle">竿を登録</h2>
@@ -460,90 +554,7 @@
         <div id="reelList"><p class="empty">登録されたリールはありません。</p></div>
       </section>
 
-      <div class="section-label">
-        <span class="ghost-label" aria-hidden="true">ANALYTICS</span>
-        <span class="label-text">分析</span>
-      </div>
-
-      <!-- Charts -->
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-chart-trend"/></svg> 釣行トレンド（前年比）</h2>
-        <div class="chart-wrap chart-wrap-tall"><canvas id="trendChart"></canvas></div>
-      </section>
-
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-fish"/></svg> 魚種別 釣果</h2>
-        <div class="chart-wrap"><canvas id="speciesChart"></canvas></div>
-      </section>
-
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-map-pin"/></svg> 釣り場別 釣果</h2>
-        <div class="chart-wrap"><canvas id="spotChart"></canvas></div>
-      </section>
-
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-heatmap"/></svg> 月別・時間帯別 ヒートマップ（釣果数）</h2>
-        <div class="heatmap-wrap" id="heatmap"></div>
-      </section>
-
-    </div><!-- /eventsScreen -->
-
-    <!-- ══ 釣果入力 Screen ══════════════════════════════════════ -->
-    <div id="catchScreen" class="screen" hidden>
-
-      <!-- Event banner -->
-      <div id="eventBanner" class="event-banner"></div>
-
-      <!-- Quick catch -->
-      <section id="catch" class="panel catch-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 釣果入力</h2>
-
-        <form id="quickCatchForm" hidden>
-          <p class="species-prompt" id="speciesPrompt">魚種を選択</p>
-          <div class="species-grid" id="speciesGrid"></div>
-          <input type="text" id="customSpeciesInput" class="custom-species-input"
-                 placeholder="魚種を入力..." hidden autocomplete="off">
-          <input type="hidden" name="species" id="speciesInput">
-
-          <div class="count-row">
-            <span class="count-label">数<span class="count-required"> *</span></span>
-            <div class="count-btns" id="countBtns">
-              <button type="button" class="count-btn" data-count="1">1</button>
-              <button type="button" class="count-btn" data-count="2">2</button>
-              <button type="button" class="count-btn" data-count="3">3</button>
-              <button type="button" class="count-btn" data-count="4">4</button>
-              <button type="button" class="count-btn" data-count="5">5</button>
-            </div>
-            <input type="number" name="count" id="countInput" class="count-input"
-                   min="1" max="99" inputmode="numeric" placeholder="匹" required>
-          </div>
-
-          <label class="photo-label">
-            <input type="file" id="photoInput" accept="image/*" class="photo-file-input">
-            <span class="photo-trigger" id="photoTrigger"><svg class="icon icon-inline"><use href="#icon-camera"/></svg> 写真を撮る / 選択（任意）</span>
-          </label>
-          <div id="photoPreview" class="photo-preview" hidden>
-            <img id="photoThumb" class="photo-thumb-preview" src="" alt="プレビュー">
-            <button type="button" id="removePhoto" class="remove-photo-btn"><svg class="icon"><use href="#icon-close"/></svg></button>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-catch" id="catchSubmitBtn" disabled>記録する</button>
-        </form>
-      </section>
-
-      <!-- Tide chart for this trip -->
-      <section class="panel" id="tideChartPanel" hidden>
-        <h2><svg class="icon icon-h2"><use href="#icon-chart-trend"/></svg>潮汐と釣果（時間帯別）</h2>
-        <div id="tideChart" class="tide-chart"></div>
-      </section>
-
-      <!-- Catches for this trip -->
-      <section class="panel records-panel">
-        <h2 class="catches-section-title"><svg class="icon icon-h2"><use href="#icon-fish-multi"/></svg> この釣行の釣果</h2>
-        <div id="catchesList"></div>
-      </section>
-
-    </div><!-- /catchScreen -->
+    </div><!-- /gearScreen -->
 
   </main>
 
@@ -662,6 +673,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=20260621b"></script>
+  <script src="app.js?v=20260621c"></script>
 </body>
 </html>

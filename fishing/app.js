@@ -47,10 +47,12 @@ const els = {
   appNav:         document.getElementById('appNav'),
   navBack:        document.getElementById('navBack'),
   navShowForm:    document.getElementById('navShowForm'),
+  navShowGear:     document.getElementById('navShowGear'),
   navShowRodForm:  document.getElementById('navShowRodForm'),
   navShowReelForm: document.getElementById('navShowReelForm'),
   eventsScreen:   document.getElementById('eventsScreen'),
   catchScreen:    document.getElementById('catchScreen'),
+  gearScreen:     document.getElementById('gearScreen'),
   eventBanner:    document.getElementById('eventBanner'),
   tideChartPanel: document.getElementById('tideChartPanel'),
   tideChart:      document.getElementById('tideChart'),
@@ -136,7 +138,7 @@ let selectedSpecies = '';
 let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
 let pendingGearPhotoDataUrl = null;
-let currentScreen  = 'events'; // 'events' | 'catches'
+let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let styleFilter = ''; // '' = すべての釣り方
 
@@ -440,10 +442,12 @@ function showEventsScreen() {
   currentScreen = 'events';
   els.eventsScreen.hidden = false;
   els.catchScreen.hidden  = true;
+  els.gearScreen.hidden   = true;
   els.navBack.hidden      = true;
   els.navShowForm.hidden  = false;
-  els.navShowRodForm.hidden  = false;
-  els.navShowReelForm.hidden = false;
+  els.navShowGear.hidden  = false;
+  els.navShowRodForm.hidden  = true;
+  els.navShowReelForm.hidden = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -452,14 +456,29 @@ function showCatchScreen(ev) {
   currentScreen = 'catches';
   els.eventsScreen.hidden = true;
   els.catchScreen.hidden  = false;
+  els.gearScreen.hidden   = true;
   els.navBack.hidden      = false;
   els.navShowForm.hidden  = true;
+  els.navShowGear.hidden  = true;
   els.navShowRodForm.hidden  = true;
   els.navShowReelForm.hidden = true;
   resetQuickForm();
   renderEventBanner();
   renderEventCatches();
   renderTideChart();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showGearScreen() {
+  currentScreen = 'gear';
+  els.eventsScreen.hidden = true;
+  els.catchScreen.hidden  = true;
+  els.gearScreen.hidden   = false;
+  els.navBack.hidden      = false;
+  els.navShowForm.hidden  = true;
+  els.navShowGear.hidden  = true;
+  els.navShowRodForm.hidden  = false;
+  els.navShowReelForm.hidden = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1707,7 +1726,7 @@ function enterGearEditMode(g) {
   els.gearForm.elements['maker'].value  = g.maker || '';
   els.gearForm.elements['memo'].value   = g.memo  || '';
   els.gearForm.elements['selfWeight'].value     = g.selfWeight     || '';
-  els.gearForm.elements['purchaseDate'].value   = g.purchaseDate   || '';
+  els.gearForm.elements['purchaseDate'].value   = normDateStr(g.purchaseDate);
   els.gearForm.elements['purchasePrice'].value  = g.purchasePrice  || '';
   els.gearForm.elements['rodLength'].value      = g.rodLength      || '';
   els.gearForm.elements['sinkerWeight'].value   = g.sinkerWeight   || '';
@@ -1718,7 +1737,7 @@ function enterGearEditMode(g) {
   els.gearForm.elements['maxDrag'].value            = g.maxDrag            || '';
   els.gearForm.elements['lineType'].value           = g.lineType           || '';
   els.gearForm.elements['lineSize'].value           = g.lineSize           || '';
-  els.gearForm.elements['lastLineChangeDate'].value = g.lastLineChangeDate || '';
+  els.gearForm.elements['lastLineChangeDate'].value = normDateStr(g.lastLineChangeDate);
   els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : '竿') + 'を編集';
   els.gearSubmitBtn.textContent = '更新する';
   els.rodOnlyFields.hidden  = g.type !== 'rod';
@@ -1814,11 +1833,11 @@ function gearSpecHtml(g) {
   if (g.type === 'reel' && (g.lineType || g.lineSize || g.lastLineChangeDate)) {
     const type   = escapeHtml(g.lineType || '');
     const size   = escapeHtml(g.lineSize || '');
-    const date   = g.lastLineChangeDate ? `(${escapeHtml(g.lastLineChangeDate)}交換)` : '';
+    const date   = g.lastLineChangeDate ? `(${escapeHtml(normDateStr(g.lastLineChangeDate))}交換)` : '';
     specs.push(['現在ライン', [type, size].filter(Boolean).join(' '), date].filter(Boolean).join(' '));
   }
   if (g.purchaseDate || g.purchasePrice) {
-    const date  = g.purchaseDate  ? escapeHtml(g.purchaseDate) : '';
+    const date  = g.purchaseDate  ? escapeHtml(normDateStr(g.purchaseDate)) : '';
     const price = g.purchasePrice ? `¥${Number(g.purchasePrice).toLocaleString()}` : '';
     specs.push(['購入', date, price].filter(Boolean).join(' '));
   }
@@ -2172,6 +2191,7 @@ function init() {
   // Nav
   els.navBack.addEventListener('click', showEventsScreen);
   els.navShowForm.addEventListener('click', () => toggleEventForm());
+  els.navShowGear.addEventListener('click', showGearScreen);
   els.navShowRodForm.addEventListener('click', () => openGearForm('rod'));
   els.navShowReelForm.addEventListener('click', () => openGearForm('reel'));
 

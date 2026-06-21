@@ -11,6 +11,11 @@ const PRICE_HEADERS = ['species', 'price'];
 // 読み込み時にDateオブジェクトになってしまう（フロント側のHH:MM処理が壊れる原因）。
 // これらの列はプレーンテキスト書式に固定し、読み込み時もHH:MMへ復元する。
 const TIME_FIELDS = ['time', 'startTime', 'endTime'];
+// "2024-03-10" のような日付文字列も同様にスプレッドシートに自動で日付型として
+// 認識され、読み込み時にDateオブジェクト（タイムゾーンずれ込みのISO文字列）に
+// なってしまう（<input type="date">に値が入らない原因）。これらの列もプレーン
+// テキスト書式に固定し、読み込み時もYYYY-MM-DDへ復元する。
+const DATE_FIELDS = ['purchaseDate', 'lastLineChangeDate'];
 
 function getOrCreateSheet(name, headers) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -25,13 +30,13 @@ function getOrCreateSheet(name, headers) {
       sheet.getRange(1, sheet.getLastColumn() + 1, 1, missing.length).setValues([missing]);
     }
   }
-  ensurePlainTextTimeColumns(sheet, headers);
+  ensurePlainTextColumns(sheet, headers);
   return sheet;
 }
 
-function ensurePlainTextTimeColumns(sheet, headers) {
+function ensurePlainTextColumns(sheet, headers) {
   headers.forEach((h, i) => {
-    if (TIME_FIELDS.indexOf(h) === -1) return;
+    if (TIME_FIELDS.indexOf(h) === -1 && DATE_FIELDS.indexOf(h) === -1) return;
     sheet.getRange(1, i + 1, sheet.getMaxRows(), 1).setNumberFormat('@');
   });
 }
@@ -50,9 +55,13 @@ function sheetToRecords(sheet) {
       headers.forEach((k, i) => {
         const v = row[i];
         if (!(v instanceof Date)) { r[k] = v; return; }
-        r[k] = TIME_FIELDS.indexOf(k) !== -1
-          ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'HH:mm')
-          : v.toISOString();
+        if (TIME_FIELDS.indexOf(k) !== -1) {
+          r[k] = Utilities.formatDate(v, Session.getScriptTimeZone(), 'HH:mm');
+        } else if (DATE_FIELDS.indexOf(k) !== -1) {
+          r[k] = Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        } else {
+          r[k] = v.toISOString();
+        }
       });
       return r;
     })
