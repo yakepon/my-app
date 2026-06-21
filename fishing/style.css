@@ -1120,6 +1120,47 @@ form > textarea { margin-bottom: 0.6rem; }
 .gear-memo  { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
 .gear-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
+/* ── Rod length ruler (全長比較) ─────────────────────────────── */
+.rod-ruler-row {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr 3.2rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0;
+}
+.rod-ruler-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rod-ruler-len {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  text-align: right;
+}
+.rod-ruler-scale-row { padding-bottom: 0.5rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--border); }
+.rod-ruler-scale { position: relative; height: 0.9rem; }
+.rod-ruler-tick {
+  position: absolute;
+  top: 0;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+}
+.rod-ruler-unit { font-family: var(--font-body); font-size: 0.65rem; color: var(--ink-faint); text-align: right; }
+.rod-ruler-track { position: relative; height: 1.5rem; background: var(--surface-2); border-radius: 2px; }
+.rod-ruler-bar {
+  height: 100%;
+  min-width: 1rem;
+  background: var(--gradient);
+  clip-path: polygon(0 0, 0 100%, 100% 62%, 100% 38%);
+  transition: width 0.4s var(--ease);
+}
+
 .icon-btn {
   font-size: 0.7rem;
   font-weight: 700;

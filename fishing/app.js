@@ -117,12 +117,12 @@ const els = {
   gearFormTitle:   document.getElementById('gearFormTitle'),
   gearSubmitBtn:   document.getElementById('gearSubmitBtn'),
   cancelGearEdit:  document.getElementById('cancelGearEdit'),
-  gearPhotoInput:   document.getElementById('gearPhotoInput'),
-  gearPhotoPreview: document.getElementById('gearPhotoPreview'),
-  gearPhotoThumb:   document.getElementById('gearPhotoThumb'),
-  removeGearPhoto:  document.getElementById('removeGearPhoto'),
+  gearPhotoInput:    document.getElementById('gearPhotoInput'),
+  gearPhotoSlots:    document.getElementById('gearPhotoSlots'),
+  gearPhotoAddLabel: document.getElementById('gearPhotoAddLabel'),
   rodList:  document.getElementById('rodList'),
   reelList: document.getElementById('reelList'),
+  rodLengthRuler: document.getElementById('rodLengthRuler'),
   rodOnlyFields:  document.getElementById('rodOnlyFields'),
   reelOnlyFields: document.getElementById('reelOnlyFields'),
 };
@@ -137,7 +137,6 @@ let activeEvent    = null;
 let selectedSpecies = '';
 let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
-let pendingGearPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let styleFilter = ''; // '' = すべての釣り方
@@ -256,7 +255,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -433,6 +432,22 @@ function eventPhotoSlots(ev) {
     .map(suffix => {
       const { field, idField } = eventPhotoFieldNames(suffix);
       return { field, idField, url: ev[field], id: ev[idField] };
+    })
+    .filter(p => p.url);
+}
+
+// タックル（竿・リール）も写真を最大3枚（photo/photoId, photo2/photoId2, photo3/photoId3）まで持てる。
+const GEAR_PHOTO_SUFFIXES = ['', '2', '3'];
+
+function gearPhotoFieldNames(suffix) {
+  return { field: 'photo' + suffix, idField: 'photoId' + suffix };
+}
+
+function gearPhotoSlots(g) {
+  return GEAR_PHOTO_SUFFIXES
+    .map(suffix => {
+      const { field, idField } = gearPhotoFieldNames(suffix);
+      return { field, idField, url: g[field], id: g[idField] };
     })
     .filter(p => p.url);
 }
@@ -1689,11 +1704,34 @@ async function onEventSubmit(e) {
 }
 
 // ── Gear (竿・リール) ────────────────────────────────────────────
-function clearGearPhotoInput() {
-  pendingGearPhotoDataUrl = null;
+// 編集中の写真スロット（最大3枚）。各要素: { field, idField, url, id, pendingDataUrl, removed }
+let gearPhotoState = [];
+
+function makeEmptyGearPhotoState() {
+  return GEAR_PHOTO_SUFFIXES.map(suffix => {
+    const { field, idField } = gearPhotoFieldNames(suffix);
+    return { field, idField, url: '', id: '', pendingDataUrl: null, removed: false };
+  });
+}
+
+function renderGearPhotoSlots() {
+  const filled = gearPhotoState
+    .map((slot, index) => ({ slot, index }))
+    .filter(({ slot }) => !slot.removed && (slot.url || slot.pendingDataUrl));
+
+  els.gearPhotoSlots.innerHTML = filled.map(({ slot, index }) => `
+    <div class="photo-slot">
+      <img class="photo-thumb-preview" src="${escapeHtml(slot.pendingDataUrl || slot.url)}" alt="プレビュー">
+      <button type="button" class="remove-photo-btn" data-slot="${index}"><svg class="icon"><use href="#icon-close"/></svg></button>
+    </div>`).join('');
+
+  els.gearPhotoAddLabel.hidden = filled.length >= gearPhotoState.length;
+}
+
+function resetGearPhotoState() {
+  gearPhotoState = makeEmptyGearPhotoState();
   els.gearPhotoInput.value = '';
-  els.gearPhotoPreview.hidden = true;
-  els.gearPhotoThumb.src = '';
+  renderGearPhotoSlots();
 }
 
 function resetGearForm(type) {
@@ -1704,7 +1742,7 @@ function resetGearForm(type) {
   els.gearSubmitBtn.textContent  = '登録する';
   els.rodOnlyFields.hidden  = type !== 'rod';
   els.reelOnlyFields.hidden = type !== 'reel';
-  clearGearPhotoInput();
+  resetGearPhotoState();
 }
 
 function openGearForm(type) {
@@ -1743,11 +1781,13 @@ function enterGearEditMode(g) {
   els.rodOnlyFields.hidden  = g.type !== 'rod';
   els.reelOnlyFields.hidden = g.type !== 'reel';
 
-  clearGearPhotoInput();
-  if (g.photo) {
-    els.gearPhotoThumb.src = g.photo;
-    els.gearPhotoPreview.hidden = false;
-  }
+  gearPhotoState = makeEmptyGearPhotoState();
+  gearPhotoState.forEach(slot => {
+    slot.url = g[slot.field]   || '';
+    slot.id  = g[slot.idField] || '';
+  });
+  els.gearPhotoInput.value = '';
+  renderGearPhotoSlots();
 
   const section = document.getElementById('gear-form');
   section.hidden = false;
@@ -1759,7 +1799,6 @@ async function onGearSubmit(e) {
   const fd = new FormData(els.gearForm);
   const id   = fd.get('id') || uid();
   const type = fd.get('type');
-  const existing = currentGears.find(g => g.id === id);
 
   const payload = {
     action: fd.get('id') ? 'updateGear' : 'addGear',
@@ -1782,34 +1821,44 @@ async function onGearSubmit(e) {
     lineType:           type === 'reel' ? fd.get('lineType')           : '',
     lineSize:           type === 'reel' ? fd.get('lineSize')           : '',
     lastLineChangeDate: type === 'reel' ? fd.get('lastLineChangeDate') : '',
-    photo:   existing ? (existing.photo   || '') : '',
-    photoId: existing ? (existing.photoId || '') : '',
   };
 
   els.gearSubmitBtn.disabled = true;
   els.gearSubmitBtn.textContent = fd.get('id') ? '更新中...' : '登録中...';
 
-  let oldPhotoIdToDelete = null;
+  const oldPhotoIdsToDelete = [];
 
-  if (pendingGearPhotoDataUrl) {
-    if (isMockMode()) {
-      payload.photo = pendingGearPhotoDataUrl;
-    } else {
-      els.gearSubmitBtn.textContent = '写真をアップロード中...';
-      const uploaded = await uploadPhotoToDrive(pendingGearPhotoDataUrl, id);
-      if (uploaded) {
-        payload.photo   = uploaded.photo;
-        payload.photoId = uploaded.photoId;
-        if (existing && existing.photoId) oldPhotoIdToDelete = existing.photoId;
+  for (const slot of gearPhotoState) {
+    if (slot.removed) {
+      payload[slot.field]   = '';
+      payload[slot.idField] = '';
+      if (slot.id) oldPhotoIdsToDelete.push(slot.id);
+    } else if (slot.pendingDataUrl) {
+      if (isMockMode()) {
+        payload[slot.field]   = slot.pendingDataUrl;
+        payload[slot.idField] = '';
       } else {
-        setStatus('写真のアップロードに失敗しました。写真以外の内容のみ保存します。', 'error');
+        els.gearSubmitBtn.textContent = '写真をアップロード中...';
+        const uploaded = await uploadPhotoToDrive(slot.pendingDataUrl, id);
+        if (uploaded) {
+          payload[slot.field]   = uploaded.photo;
+          payload[slot.idField] = uploaded.photoId;
+          if (slot.id) oldPhotoIdsToDelete.push(slot.id);
+        } else {
+          setStatus('写真のアップロードに失敗しました。その写真以外の内容のみ保存します。', 'error');
+          payload[slot.field]   = slot.url;
+          payload[slot.idField] = slot.id;
+        }
       }
+    } else {
+      payload[slot.field]   = slot.url;
+      payload[slot.idField] = slot.id;
     }
   }
 
   const ok = await sendAction(payload);
   if (ok) {
-    if (oldPhotoIdToDelete) await deleteDrivePhoto(oldPhotoIdToDelete);
+    for (const photoId of oldPhotoIdsToDelete) await deleteDrivePhoto(photoId);
     setStatus(fd.get('id') ? 'タックルを更新しました。' : 'タックルを登録しました。', 'ok');
     closeGearForm();
     await loadAll();
@@ -1845,6 +1894,7 @@ function gearSpecHtml(g) {
 }
 
 function gearRowHtml(g) {
+  const photos = gearPhotoSlots(g);
   return `
     <div class="gear-row">
       <span class="gear-name">${escapeHtml(g.name || '-')}</span>
@@ -1852,7 +1902,7 @@ function gearRowHtml(g) {
       ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
       ${gearSpecHtml(g)}
       ${g.memo  ? `<span class="gear-memo">${escapeHtml(g.memo)}</span>`  : ''}
-      ${g.photo ? `<img src="${escapeHtml(g.photo)}" class="gear-thumb" data-gear-id="${escapeHtml(g.id)}" alt="${escapeHtml(g.name || '')}">` : ''}
+      ${photos.length ? photos.map(p => `<img src="${escapeHtml(p.url)}" class="gear-thumb" data-gear-id="${escapeHtml(g.id)}" data-photo-field="${p.field}" alt="${escapeHtml(g.name || '')}">`).join('') : ''}
       <div class="gear-actions">
         <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
         <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
@@ -1865,11 +1915,49 @@ function renderGearLists() {
   const reels = currentGears.filter(g => g.type === 'reel');
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録された竿はありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
+  renderRodLengthRuler(rods);
+}
+
+// 竿の全長を、実際に並べたような先細りシルエットのバーで比較する。
+function renderRodLengthRuler(rods) {
+  const withLength = rods
+    .filter(g => g.rodLength && !isNaN(Number(g.rodLength)))
+    .sort((a, b) => Number(b.rodLength) - Number(a.rodLength));
+
+  if (withLength.length === 0) {
+    els.rodLengthRuler.innerHTML = '<p class="empty">全長を入力した竿を登録すると比較できます。</p>';
+    return;
+  }
+
+  const maxLength = Math.max(...withLength.map(g => Number(g.rodLength)));
+  const niceMax = Math.ceil(maxLength / 50) * 50;
+  const ticks = [];
+  for (let t = 0; t <= niceMax; t += 50) ticks.push(t);
+
+  const scaleRow = `
+    <div class="rod-ruler-row rod-ruler-scale-row">
+      <span></span>
+      <div class="rod-ruler-scale">
+        ${ticks.map(t => `<span class="rod-ruler-tick" style="left:${(t / niceMax * 100).toFixed(1)}%">${t}</span>`).join('')}
+      </div>
+      <span class="rod-ruler-unit">cm</span>
+    </div>`;
+
+  const rows = withLength.map(g => `
+    <div class="rod-ruler-row">
+      <span class="rod-ruler-name">${escapeHtml(g.name || '-')}</span>
+      <div class="rod-ruler-track">
+        <div class="rod-ruler-bar" style="width:${(Number(g.rodLength) / niceMax * 100).toFixed(1)}%"></div>
+      </div>
+      <span class="rod-ruler-len">${escapeHtml(g.rodLength)}cm</span>
+    </div>`).join('');
+
+  els.rodLengthRuler.innerHTML = scaleRow + rows;
 }
 
 async function handleGearListClick(e) {
   const thumb = e.target.closest('.gear-thumb');
-  if (thumb) { openPhotoLightbox(thumb.src, 'gear', thumb.dataset.gearId); return; }
+  if (thumb) { openPhotoLightbox(thumb.src, 'gear', thumb.dataset.gearId, thumb.dataset.photoField); return; }
 
   const btn = e.target.closest('[data-id]');
   if (!btn) return;
@@ -1885,7 +1973,7 @@ async function handleGearListClick(e) {
     const g = currentGears.find(g => g.id === id);
     if (!g || !confirm(`「${g.name}」を削除しますか？`)) return;
     await sendAction({ action: 'deleteGear', id });
-    if (g.photoId) await deleteDrivePhoto(g.photoId);
+    for (const p of gearPhotoSlots(g)) await deleteDrivePhoto(p.id);
     await loadAll();
   }
 }
@@ -1964,7 +2052,7 @@ async function deleteLightboxPhoto() {
   } else if (type === 'event') {
     await deleteDrivePhoto(record[photoIdField], { eventId: record.id, photoField });
   } else if (type === 'gear') {
-    await deleteDrivePhoto(record[photoIdField], { gearId: record.id });
+    await deleteDrivePhoto(record[photoIdField], { gearId: record.id, photoField });
   } else {
     await deleteDrivePhoto(record[photoIdField], { catchId: record.id });
   }
@@ -2335,18 +2423,26 @@ function init() {
   // Photo capture (gear form)
   els.gearPhotoInput.addEventListener('change', async () => {
     const file = els.gearPhotoInput.files[0];
+    els.gearPhotoInput.value = '';
     if (!file) return;
+    const emptyIndex = gearPhotoState.findIndex(s => !s.removed && !s.url && !s.pendingDataUrl);
+    if (emptyIndex === -1) return;
     try {
       const dataUrl = await compressImage(file);
-      pendingGearPhotoDataUrl = dataUrl;
-      els.gearPhotoThumb.src = dataUrl;
-      els.gearPhotoPreview.hidden = false;
-    } catch {
-      pendingGearPhotoDataUrl = null;
-    }
+      gearPhotoState[emptyIndex].pendingDataUrl = dataUrl;
+      renderGearPhotoSlots();
+    } catch { /* 読み込み失敗時はそのスロットを空のままにする */ }
   });
 
-  els.removeGearPhoto.addEventListener('click', clearGearPhotoInput);
+  els.gearPhotoSlots.addEventListener('click', e => {
+    const btn = e.target.closest('.remove-photo-btn');
+    if (!btn) return;
+    const slot = gearPhotoState[Number(btn.dataset.slot)];
+    if (!slot) return;
+    if (slot.url) slot.removed = true;
+    slot.pendingDataUrl = null;
+    renderGearPhotoSlots();
+  });
 
   // Forms
   els.quickCatchForm.addEventListener('submit', onQuickCatchSubmit);
