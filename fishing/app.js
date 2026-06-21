@@ -1968,16 +1968,24 @@ function parseMaxNumber(str) {
 
 const GRAM_PER_GO = 3.75; // 1号 = 3.75g（オモリ号数の標準的な換算）
 
-// 錘負荷の上限値を「号」の尺度に揃えて返す。"g"表記（号の指定がない）は
-// 1号=3.75gとしてグラムから号に換算し、"号"表記はそのまま使う。
+// 錘負荷の上限値を「号」の尺度に揃えて返す。数値の直後に付く単位（号 / g）を
+// 個別に読み取り、それぞれ号に変換してから最大値を採用する。
+// "50号 (200g)" のように同じ値を号とgの両方で書いているケースでも、単純に
+// 文字列内の数値の最大値（200）をそのまま使うと号換算が効かず4倍近くに
+// 太さが膨張してしまうため、数値ごとに単位を見て変換する。
 // アジング/エギングロッドはg表記、船・サーフロッドは号表記が一般的なため、
 // 混在していても太さの比較が公平になるようにする。
 function sinkerWeightToGo(str) {
   const s = String(str || '');
-  const max = parseMaxNumber(s);
-  if (max == null) return null;
-  const isGram = /g/i.test(s) && !s.includes('号');
-  return isGram ? max / GRAM_PER_GO : max;
+  const pairs = [...s.matchAll(/(\d+(?:\.\d+)?)\s*(号|g)/gi)];
+  if (pairs.length) {
+    return Math.max(...pairs.map(([, num, unit]) => {
+      const n = Number(num);
+      return /g/i.test(unit) ? n / GRAM_PER_GO : n;
+    }));
+  }
+  // 数値に単位が直接付いていない場合は、号数とみなして数値の最大値を使う。
+  return parseMaxNumber(s);
 }
 
 // 最新ライン交換日からの経過日数（未入力なら null）。
