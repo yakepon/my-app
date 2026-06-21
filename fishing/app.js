@@ -1066,7 +1066,6 @@ function renderEventCatches() {
     const value    = catchValue(c);
     return `
       <div class="catch-row">
-        ${photo ? `<img src="${escapeHtml(photo)}" class="catch-thumb" data-catch-id="${escapeHtml(c.id)}" alt="釣果写真">` : ''}
         <span class="cr-time">${formatTime(c.time) || '--:--'}</span>
         <span class="cr-species">${escapeHtml(c.species || '-')}</span>
         <span class="cr-count">${countNum}匹</span>
@@ -1074,6 +1073,7 @@ function renderEventCatches() {
         ${c.size ? `<span class="cr-size">${escapeHtml(String(c.size))} cm</span>` : ''}
         ${c.lure ? `<span class="cr-lure">${escapeHtml(c.lure)}</span>` : ''}
         ${c.memo ? `<span class="cr-memo">${escapeHtml(c.memo)}</span>` : ''}
+        ${photo ? `<img src="${escapeHtml(photo)}" class="catch-thumb" data-catch-id="${escapeHtml(c.id)}" alt="釣果写真">` : ''}
         <div class="cr-actions">
           <button type="button" class="icon-btn edit-catch-btn" data-id="${escapeHtml(c.id)}">編集</button>
           <button type="button" class="icon-btn delete-catch-btn" data-id="${escapeHtml(c.id)}">削除</button>
