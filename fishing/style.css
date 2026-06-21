@@ -1205,7 +1205,7 @@ form > textarea { margin-bottom: 0.6rem; }
   color: #fff;
   font-weight: 700;
 }
-.nav-btn-register:hover { color: #fff; box-shadow: 0 8px 18px -8px rgba(255,45,149,0.45); }
+.nav-btn-register:hover { color: #fff; background: var(--gradient); border-color: transparent; box-shadow: 0 8px 18px -8px rgba(255,45,149,0.45); }
 
 /* ── Screen containers ──────────────────────────────────────── */
 .screen { padding-top: 0.4rem; }
