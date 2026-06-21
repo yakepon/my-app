@@ -789,7 +789,8 @@ main, header, footer, section { position: relative; z-index: 2; }
 .photo-slot .remove-photo-btn { top: -8px; right: -8px; width: 24px; height: 24px; }
 
 /* ── Catch photo thumbnail in history ───────────────────────── */
-.catch-thumb {
+.catch-thumb,
+.gear-thumb {
   width: 44px;
   height: 44px;
   object-fit: cover;
@@ -1099,6 +1100,25 @@ form > textarea { margin-bottom: 0.6rem; }
 .cr-lure { font-size: 0.75rem; color: var(--ink-muted); flex: 1; }
 .cr-memo { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
 .cr-actions { display: flex; gap: 0.3rem; margin-left: auto; }
+
+/* ── Gear (竿・リール) list ───────────────────────────────────── */
+.gear-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  transition: background 0.15s;
+}
+.gear-row:hover { background: var(--surface-2); }
+.gear-row:last-child { border-bottom: none; }
+
+.gear-name  { font-size: 0.86rem; font-weight: 700; color: var(--ink); }
+.gear-maker { font-family: var(--font-body); font-size: 0.75rem; color: var(--ink-muted); }
+.gear-spec  { font-family: var(--font-body); font-size: 0.72rem; color: var(--ink-muted); }
+.gear-memo  { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
+.gear-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
 .icon-btn {
   font-size: 0.7rem;

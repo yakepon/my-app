@@ -1,8 +1,10 @@
 const EVENT_SHEET  = 'events';
 const CATCH_SHEET  = 'catches';
 const PRICE_SHEET  = 'prices';
+const GEAR_SHEET   = 'gears';
 const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
 const CATCH_HEADERS = ['id', 'eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
+const GEAR_HEADERS  = ['id', 'type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
 const PHOTO_FOLDER_NAME = 'AnglerLog Photos';
 const PRICE_HEADERS = ['species', 'price'];
 // "06:12" のような時刻文字列はスプレッドシートに自動で時刻型として認識され、
@@ -323,7 +325,8 @@ function doGet(e) {
   const es = getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS);
   const cs = getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS);
   const ps = getOrCreateSheet(PRICE_SHEET, PRICE_HEADERS);
-  return jsonOutput({ events: sheetToRecords(es), catches: sheetToRecords(cs), prices: sheetToRecords(ps) });
+  const gs = getOrCreateSheet(GEAR_SHEET, GEAR_HEADERS);
+  return jsonOutput({ events: sheetToRecords(es), catches: sheetToRecords(cs), prices: sheetToRecords(ps), gears: sheetToRecords(gs) });
 }
 
 // パスワードは絶対にコードに直接書かない。Apps Scriptエディタの
@@ -354,13 +357,15 @@ function doPost(e) {
     const photoIdField = 'photoId' + photoField.replace('photo', ''); // photo→photoId, photo2→photoId2 等
     if (data.catchId) clearPhotoCell(getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS), data.catchId, photoField, photoIdField);
     if (data.eventId) clearPhotoCell(getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS), data.eventId, photoField, photoIdField);
+    if (data.gearId)  clearPhotoCell(getOrCreateSheet(GEAR_SHEET, GEAR_HEADERS), data.gearId, photoField, photoIdField);
     return jsonOutput({ result: 'ok' });
   }
 
   const isEvent = data.action.includes('Event');
-  const headers = isEvent ? EVENT_HEADERS : CATCH_HEADERS;
-  const sheet   = getOrCreateSheet(isEvent ? EVENT_SHEET : CATCH_SHEET, headers);
-  const verb    = data.action.replace(/Event$|Catch$/, ''); // 'add' | 'update' | 'delete'
+  const isGear  = data.action.includes('Gear');
+  const headers = isEvent ? EVENT_HEADERS : isGear ? GEAR_HEADERS : CATCH_HEADERS;
+  const sheet   = getOrCreateSheet(isEvent ? EVENT_SHEET : isGear ? GEAR_SHEET : CATCH_SHEET, headers);
+  const verb    = data.action.replace(/Event$|Catch$|Gear$/, ''); // 'add' | 'update' | 'delete'
 
   if (verb === 'delete') {
     deleteRecord(sheet, String(data.id));

@@ -4,6 +4,7 @@ const STORAGE_KEY      = 'angler_gas_url';
 const MOCK_EVENTS_KEY  = 'angler_mock_events';
 const MOCK_CATCHES_KEY = 'angler_mock_catches';
 const MOCK_PRICES_KEY  = 'angler_mock_prices';
+const MOCK_GEARS_KEY   = 'angler_mock_gears';
 
 const SPECIES_LIST = [
   'アジ', 'サバ', 'イワシ', 'メバル', 'カサゴ', 'タチウオ', 'シーバス', 'マダイ',
@@ -46,6 +47,8 @@ const els = {
   appNav:         document.getElementById('appNav'),
   navBack:        document.getElementById('navBack'),
   navShowForm:    document.getElementById('navShowForm'),
+  navShowRodForm:  document.getElementById('navShowRodForm'),
+  navShowReelForm: document.getElementById('navShowReelForm'),
   eventsScreen:   document.getElementById('eventsScreen'),
   catchScreen:    document.getElementById('catchScreen'),
   eventBanner:    document.getElementById('eventBanner'),
@@ -108,17 +111,31 @@ const els = {
   newSpeciesName:  document.getElementById('newSpeciesName'),
   newSpeciesPrice: document.getElementById('newSpeciesPrice'),
   addSpeciesBtn:   document.getElementById('addSpeciesBtn'),
+  gearForm:        document.getElementById('gearForm'),
+  gearFormTitle:   document.getElementById('gearFormTitle'),
+  gearSubmitBtn:   document.getElementById('gearSubmitBtn'),
+  cancelGearEdit:  document.getElementById('cancelGearEdit'),
+  gearPhotoInput:   document.getElementById('gearPhotoInput'),
+  gearPhotoPreview: document.getElementById('gearPhotoPreview'),
+  gearPhotoThumb:   document.getElementById('gearPhotoThumb'),
+  removeGearPhoto:  document.getElementById('removeGearPhoto'),
+  rodList:  document.getElementById('rodList'),
+  reelList: document.getElementById('reelList'),
+  rodOnlyFields:  document.getElementById('rodOnlyFields'),
+  reelOnlyFields: document.getElementById('reelOnlyFields'),
 };
 
 // ── State ─────────────────────────────────────────────────────
 let currentEvents  = [];
 let currentCatches = [];
 let currentPrices  = [];
+let currentGears   = [];
 let priceMap       = {}; // species -> 円/匹
 let activeEvent    = null;
 let selectedSpecies = '';
 let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
+let pendingGearPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let styleFilter = ''; // '' = すべての釣り方
@@ -145,20 +162,22 @@ function mockLoad() {
   const stored = localStorage.getItem(MOCK_EVENTS_KEY);
   if (stored === null) {
     const sample = buildSampleData();
-    mockSave(sample.events, sample.catches, sample.prices);
+    mockSave(sample.events, sample.catches, sample.prices, sample.gears);
     return sample;
   }
   return {
     events:  JSON.parse(stored),
     catches: JSON.parse(localStorage.getItem(MOCK_CATCHES_KEY) || '[]'),
     prices:  JSON.parse(localStorage.getItem(MOCK_PRICES_KEY) || '[]'),
+    gears:   JSON.parse(localStorage.getItem(MOCK_GEARS_KEY) || '[]'),
   };
 }
 
-function mockSave(events, catches, prices) {
+function mockSave(events, catches, prices, gears) {
   localStorage.setItem(MOCK_EVENTS_KEY, JSON.stringify(events));
   localStorage.setItem(MOCK_CATCHES_KEY, JSON.stringify(catches));
   localStorage.setItem(MOCK_PRICES_KEY, JSON.stringify(prices || []));
+  localStorage.setItem(MOCK_GEARS_KEY, JSON.stringify(gears || []));
 }
 
 function buildSampleData() {
@@ -218,15 +237,24 @@ function buildSampleData() {
       { species: 'ブリ',     price: 1200 },
       { species: 'タチウオ', price: 350 },
     ],
+    gears: [
+      { id: uid(), type: 'rod',  name: '月下美人 AGS 76L-SMT', style: 'アジング', maker: 'ダイワ', memo: 'お気に入りの軽量ロッド', photo: '', photoId: '', rodLength: '231', selfWeight: '68', sinkerWeight: '0.5-7g',  purchaseDate: '2024-03-10', purchasePrice: '28000' },
+      { id: uid(), type: 'rod',  name: 'セフィア BB S706ML',   style: 'エギング', maker: 'シマノ', memo: '',           photo: '', photoId: '', rodLength: '213', selfWeight: '102', sinkerWeight: '3-21g',  purchaseDate: '2023-09-02', purchasePrice: '19800' },
+      { id: uid(), type: 'reel', name: '22ソルティガ 4000',    style: '青物', maker: 'ダイワ', memo: '',               photo: '', photoId: '', selfWeight: '600', purchaseDate: '2023-05-20', purchasePrice: '78000',
+        retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
+      { id: uid(), type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'ライトゲーム', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
+        retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
+    ],
   };
 }
 
 function mockExec(payload) {
-  const { events, catches, prices } = mockLoad();
+  const { events, catches, prices, gears } = mockLoad();
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -234,12 +262,15 @@ function mockExec(payload) {
   else if (action === 'addCatch')    { catches.push({ id: payload.id || uid(), ...pick(payload, CF) }); }
   else if (action === 'updateCatch') { const i = catches.findIndex(c => c.id === id); if (i >= 0) catches[i] = { id, ...pick(payload, CF) }; }
   else if (action === 'deleteCatch') { const i = catches.findIndex(c => c.id === id); if (i >= 0) catches.splice(i, 1); }
+  else if (action === 'addGear')     { gears.push({ id: payload.id || uid(), ...pick(payload, GF) }); }
+  else if (action === 'updateGear')  { const i = gears.findIndex(g => g.id === id);   if (i >= 0) gears[i]   = { id, ...pick(payload, GF) }; }
+  else if (action === 'deleteGear')  { const i = gears.findIndex(g => g.id === id);   if (i >= 0) gears.splice(i, 1); }
   else if (action === 'savePrice')   {
     const i = prices.findIndex(p => p.species === payload.species);
     if (i >= 0) prices[i].price = payload.price; else prices.push({ species: payload.species, price: payload.price });
   }
 
-  mockSave(events, catches, prices);
+  mockSave(events, catches, prices, gears);
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -385,7 +416,7 @@ async function uploadPhotoToDrive(dataUrl, catchId) {
 
 async function deleteDrivePhoto(photoId, ids = {}) {
   if (isMockMode() || !photoId) return;
-  await sendAction({ action: 'deletePhoto', photoId, catchId: ids.catchId || '', eventId: ids.eventId || '', photoField: ids.photoField || 'photo' });
+  await sendAction({ action: 'deletePhoto', photoId, catchId: ids.catchId || '', eventId: ids.eventId || '', gearId: ids.gearId || '', photoField: ids.photoField || 'photo' });
 }
 
 // 釣行は写真を最大3枚（photo/photoId, photo2/photoId2, photo3/photoId3）まで持てる。
@@ -411,6 +442,8 @@ function showEventsScreen() {
   els.catchScreen.hidden  = true;
   els.navBack.hidden      = true;
   els.navShowForm.hidden  = false;
+  els.navShowRodForm.hidden  = false;
+  els.navShowReelForm.hidden = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -421,6 +454,8 @@ function showCatchScreen(ev) {
   els.catchScreen.hidden  = false;
   els.navBack.hidden      = false;
   els.navShowForm.hidden  = true;
+  els.navShowRodForm.hidden  = true;
+  els.navShowReelForm.hidden = true;
   resetQuickForm();
   renderEventBanner();
   renderEventCatches();
@@ -437,9 +472,10 @@ function applyPriceMap(prices) {
 
 async function loadAll() {
   if (isMockMode()) {
-    const { events, catches, prices } = mockLoad();
+    const { events, catches, prices, gears } = mockLoad();
     currentEvents  = events;
     currentCatches = catches;
+    currentGears   = gears;
     applyPriceMap(prices);
     renderAll();
     setStatus(`デモモード（釣行 ${events.length}件・釣果 ${catchTotal(catches)}匹）`, 'demo');
@@ -457,6 +493,7 @@ async function loadAll() {
     const data = await res.json();
     currentEvents  = data.events  || [];
     currentCatches = data.catches || [];
+    currentGears   = data.gears   || [];
     applyPriceMap(data.prices);
     renderAll();
     setStatus(`接続済み（釣行 ${currentEvents.length}件・釣果 ${catchTotal(currentCatches)}匹）`, 'ok');
@@ -515,6 +552,7 @@ function renderAll() {
   populateDatalists();
   buildPriceGrid();
   buildSpeciesGrid();
+  renderGearLists();
   // Refresh catch screen if currently visible
   if (currentScreen === 'catches' && activeEvent) {
     // Sync activeEvent object in case data was reloaded
@@ -1631,6 +1669,208 @@ async function onEventSubmit(e) {
   els.eventSubmitBtn.textContent = fd.get('id') ? '更新する' : '登録する';
 }
 
+// ── Gear (竿・リール) ────────────────────────────────────────────
+function clearGearPhotoInput() {
+  pendingGearPhotoDataUrl = null;
+  els.gearPhotoInput.value = '';
+  els.gearPhotoPreview.hidden = true;
+  els.gearPhotoThumb.src = '';
+}
+
+function resetGearForm(type) {
+  els.gearForm.reset();
+  els.gearForm.elements['id'].value   = '';
+  els.gearForm.elements['type'].value = type;
+  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : '竿を登録';
+  els.gearSubmitBtn.textContent  = '登録する';
+  els.rodOnlyFields.hidden  = type !== 'rod';
+  els.reelOnlyFields.hidden = type !== 'reel';
+  clearGearPhotoInput();
+}
+
+function openGearForm(type) {
+  resetGearForm(type);
+  const section = document.getElementById('gear-form');
+  section.hidden = false;
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeGearForm() {
+  document.getElementById('gear-form').hidden = true;
+}
+
+function enterGearEditMode(g) {
+  els.gearForm.elements['id'].value     = g.id;
+  els.gearForm.elements['type'].value   = g.type;
+  els.gearForm.elements['name'].value   = g.name  || '';
+  els.gearForm.elements['style'].value  = g.style || '';
+  els.gearForm.elements['maker'].value  = g.maker || '';
+  els.gearForm.elements['memo'].value   = g.memo  || '';
+  els.gearForm.elements['selfWeight'].value     = g.selfWeight     || '';
+  els.gearForm.elements['purchaseDate'].value   = g.purchaseDate   || '';
+  els.gearForm.elements['purchasePrice'].value  = g.purchasePrice  || '';
+  els.gearForm.elements['rodLength'].value      = g.rodLength      || '';
+  els.gearForm.elements['sinkerWeight'].value   = g.sinkerWeight   || '';
+  els.gearForm.elements['retrieveLength'].value     = g.retrieveLength     || '';
+  els.gearForm.elements['gearRatio'].value          = g.gearRatio          || '';
+  els.gearForm.elements['nylonCapacity'].value      = g.nylonCapacity      || '';
+  els.gearForm.elements['peCapacity'].value         = g.peCapacity         || '';
+  els.gearForm.elements['maxDrag'].value            = g.maxDrag            || '';
+  els.gearForm.elements['lineType'].value           = g.lineType           || '';
+  els.gearForm.elements['lineSize'].value           = g.lineSize           || '';
+  els.gearForm.elements['lastLineChangeDate'].value = g.lastLineChangeDate || '';
+  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : '竿') + 'を編集';
+  els.gearSubmitBtn.textContent = '更新する';
+  els.rodOnlyFields.hidden  = g.type !== 'rod';
+  els.reelOnlyFields.hidden = g.type !== 'reel';
+
+  clearGearPhotoInput();
+  if (g.photo) {
+    els.gearPhotoThumb.src = g.photo;
+    els.gearPhotoPreview.hidden = false;
+  }
+
+  const section = document.getElementById('gear-form');
+  section.hidden = false;
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function onGearSubmit(e) {
+  e.preventDefault();
+  const fd = new FormData(els.gearForm);
+  const id   = fd.get('id') || uid();
+  const type = fd.get('type');
+  const existing = currentGears.find(g => g.id === id);
+
+  const payload = {
+    action: fd.get('id') ? 'updateGear' : 'addGear',
+    id,
+    type,
+    name:  fd.get('name'),
+    style: fd.get('style'),
+    maker: fd.get('maker'),
+    memo:  fd.get('memo'),
+    selfWeight:    fd.get('selfWeight'),
+    purchaseDate:  fd.get('purchaseDate'),
+    purchasePrice: fd.get('purchasePrice'),
+    rodLength:     type === 'rod' ? fd.get('rodLength')     : '',
+    sinkerWeight:  type === 'rod' ? fd.get('sinkerWeight')  : '',
+    retrieveLength:     type === 'reel' ? fd.get('retrieveLength')     : '',
+    gearRatio:          type === 'reel' ? fd.get('gearRatio')          : '',
+    nylonCapacity:      type === 'reel' ? fd.get('nylonCapacity')      : '',
+    peCapacity:         type === 'reel' ? fd.get('peCapacity')         : '',
+    maxDrag:            type === 'reel' ? fd.get('maxDrag')            : '',
+    lineType:           type === 'reel' ? fd.get('lineType')           : '',
+    lineSize:           type === 'reel' ? fd.get('lineSize')           : '',
+    lastLineChangeDate: type === 'reel' ? fd.get('lastLineChangeDate') : '',
+    photo:   existing ? (existing.photo   || '') : '',
+    photoId: existing ? (existing.photoId || '') : '',
+  };
+
+  els.gearSubmitBtn.disabled = true;
+  els.gearSubmitBtn.textContent = fd.get('id') ? '更新中...' : '登録中...';
+
+  let oldPhotoIdToDelete = null;
+
+  if (pendingGearPhotoDataUrl) {
+    if (isMockMode()) {
+      payload.photo = pendingGearPhotoDataUrl;
+    } else {
+      els.gearSubmitBtn.textContent = '写真をアップロード中...';
+      const uploaded = await uploadPhotoToDrive(pendingGearPhotoDataUrl, id);
+      if (uploaded) {
+        payload.photo   = uploaded.photo;
+        payload.photoId = uploaded.photoId;
+        if (existing && existing.photoId) oldPhotoIdToDelete = existing.photoId;
+      } else {
+        setStatus('写真のアップロードに失敗しました。写真以外の内容のみ保存します。', 'error');
+      }
+    }
+  }
+
+  const ok = await sendAction(payload);
+  if (ok) {
+    if (oldPhotoIdToDelete) await deleteDrivePhoto(oldPhotoIdToDelete);
+    setStatus(fd.get('id') ? 'タックルを更新しました。' : 'タックルを登録しました。', 'ok');
+    closeGearForm();
+    await loadAll();
+  }
+
+  els.gearSubmitBtn.disabled = false;
+  els.gearSubmitBtn.textContent = fd.get('id') ? '更新する' : '登録する';
+}
+
+function gearSpecHtml(g) {
+  const specs = [];
+  if (g.type === 'rod' && g.rodLength)    specs.push(`全長${escapeHtml(g.rodLength)}cm`);
+  if (g.selfWeight)                       specs.push(`自重${escapeHtml(g.selfWeight)}g`);
+  if (g.type === 'rod' && g.sinkerWeight) specs.push(`錘負荷${escapeHtml(g.sinkerWeight)}`);
+  if (g.type === 'reel' && g.retrieveLength) specs.push(`巻取${escapeHtml(g.retrieveLength)}cm`);
+  if (g.type === 'reel' && g.gearRatio)      specs.push(`ギア比${escapeHtml(g.gearRatio)}`);
+  if (g.type === 'reel' && g.maxDrag)        specs.push(`ドラグ${escapeHtml(g.maxDrag)}kg`);
+  if (g.type === 'reel' && (g.nylonCapacity || g.peCapacity)) {
+    specs.push(['糸巻量', escapeHtml(g.nylonCapacity || ''), escapeHtml(g.peCapacity || '')].filter(Boolean).join(' '));
+  }
+  if (g.type === 'reel' && (g.lineType || g.lineSize || g.lastLineChangeDate)) {
+    const type   = escapeHtml(g.lineType || '');
+    const size   = escapeHtml(g.lineSize || '');
+    const date   = g.lastLineChangeDate ? `(${escapeHtml(g.lastLineChangeDate)}交換)` : '';
+    specs.push(['現在ライン', [type, size].filter(Boolean).join(' '), date].filter(Boolean).join(' '));
+  }
+  if (g.purchaseDate || g.purchasePrice) {
+    const date  = g.purchaseDate  ? escapeHtml(g.purchaseDate) : '';
+    const price = g.purchasePrice ? `¥${Number(g.purchasePrice).toLocaleString()}` : '';
+    specs.push(['購入', date, price].filter(Boolean).join(' '));
+  }
+  return specs.length ? `<span class="gear-spec">${specs.join(' / ')}</span>` : '';
+}
+
+function gearRowHtml(g) {
+  return `
+    <div class="gear-row">
+      <span class="gear-name">${escapeHtml(g.name || '-')}</span>
+      ${g.style ? `<span class="badge badge-outline">${escapeHtml(g.style)}</span>` : ''}
+      ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
+      ${gearSpecHtml(g)}
+      ${g.memo  ? `<span class="gear-memo">${escapeHtml(g.memo)}</span>`  : ''}
+      ${g.photo ? `<img src="${escapeHtml(g.photo)}" class="gear-thumb" data-gear-id="${escapeHtml(g.id)}" alt="${escapeHtml(g.name || '')}">` : ''}
+      <div class="gear-actions">
+        <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
+        <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
+      </div>
+    </div>`;
+}
+
+function renderGearLists() {
+  const rods  = currentGears.filter(g => g.type === 'rod');
+  const reels = currentGears.filter(g => g.type === 'reel');
+  els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録された竿はありません。</p>';
+  els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
+}
+
+async function handleGearListClick(e) {
+  const thumb = e.target.closest('.gear-thumb');
+  if (thumb) { openPhotoLightbox(thumb.src, 'gear', thumb.dataset.gearId); return; }
+
+  const btn = e.target.closest('[data-id]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+
+  if (btn.classList.contains('edit-gear-btn')) {
+    const g = currentGears.find(g => g.id === id);
+    if (g) enterGearEditMode(g);
+    return;
+  }
+
+  if (btn.classList.contains('delete-gear-btn')) {
+    const g = currentGears.find(g => g.id === id);
+    if (!g || !confirm(`「${g.name}」を削除しますか？`)) return;
+    await sendAction({ action: 'deleteGear', id });
+    if (g.photoId) await deleteDrivePhoto(g.photoId);
+    await loadAll();
+  }
+}
+
 // ── Catch edit modal ──────────────────────────────────────────
 let editPendingPhotoDataUrl = null;
 let editPhotoRemoved = false;
@@ -1694,15 +1934,18 @@ function closePhotoLightbox() {
 async function deleteLightboxPhoto() {
   if (!lightboxTarget) return;
   const { type, id, photoField } = lightboxTarget;
-  const list = type === 'event' ? currentEvents : currentCatches;
+  const list = type === 'event' ? currentEvents : type === 'gear' ? currentGears : currentCatches;
   const record = list.find(r => r.id === id);
   if (!record || !confirm('この写真を削除しますか？')) return;
   const photoIdField = photoField.replace('photo', 'photoId');
 
   if (isMockMode()) {
-    await sendAction({ ...record, action: type === 'event' ? 'updateEvent' : 'updateCatch', [photoField]: '', [photoIdField]: '' });
+    const action = type === 'event' ? 'updateEvent' : type === 'gear' ? 'updateGear' : 'updateCatch';
+    await sendAction({ ...record, action, [photoField]: '', [photoIdField]: '' });
   } else if (type === 'event') {
     await deleteDrivePhoto(record[photoIdField], { eventId: record.id, photoField });
+  } else if (type === 'gear') {
+    await deleteDrivePhoto(record[photoIdField], { gearId: record.id });
   } else {
     await deleteDrivePhoto(record[photoIdField], { catchId: record.id });
   }
@@ -1929,6 +2172,8 @@ function init() {
   // Nav
   els.navBack.addEventListener('click', showEventsScreen);
   els.navShowForm.addEventListener('click', () => toggleEventForm());
+  els.navShowRodForm.addEventListener('click', () => openGearForm('rod'));
+  els.navShowReelForm.addEventListener('click', () => openGearForm('reel'));
 
   // Settings
   els.saveUrl.addEventListener('click', () => {
@@ -2067,6 +2312,22 @@ function init() {
     renderEventPhotoSlots();
   });
 
+  // Photo capture (gear form)
+  els.gearPhotoInput.addEventListener('change', async () => {
+    const file = els.gearPhotoInput.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await compressImage(file);
+      pendingGearPhotoDataUrl = dataUrl;
+      els.gearPhotoThumb.src = dataUrl;
+      els.gearPhotoPreview.hidden = false;
+    } catch {
+      pendingGearPhotoDataUrl = null;
+    }
+  });
+
+  els.removeGearPhoto.addEventListener('click', clearGearPhotoInput);
+
   // Forms
   els.quickCatchForm.addEventListener('submit', onQuickCatchSubmit);
   els.eventForm.addEventListener('submit', onEventSubmit);
@@ -2074,6 +2335,10 @@ function init() {
     exitEventEditMode();
     toggleEventForm(false);
   });
+  els.gearForm.addEventListener('submit', onGearSubmit);
+  els.cancelGearEdit.addEventListener('click', closeGearForm);
+  els.rodList.addEventListener('click', handleGearListClick);
+  els.reelList.addEventListener('click', handleGearListClick);
   els.catchEditForm.addEventListener('submit', onCatchEditSubmit);
   els.catchModalClose.addEventListener('click', closeCatchModal);
   els.modalBackdrop.addEventListener('click', closeCatchModal);

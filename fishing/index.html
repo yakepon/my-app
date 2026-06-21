@@ -19,6 +19,14 @@
         <path d="M17.6 14.4l1.9-1.2"/>
       </symbol>
 
+      <symbol id="icon-reel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="13.2" r="6.2"/>
+        <circle cx="11" cy="13.2" r="1.5" fill="currentColor" stroke="none"/>
+        <path d="M11 5.4v1.8"/>
+        <path d="M9.7 4.2h2.6"/>
+        <path d="M17.3 8l-1.9 1.9"/>
+      </symbol>
+
       <symbol id="icon-fish" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
         <path d="M2.5 12.5C5 7.8 11 5.5 15.7 7.6c2.4 1.1 3.8 2.8 5.3 4.4-1.5 1.7-2.9 3.5-5.3 4.6C11 18.7 5 16.4 2.5 12.5Z"/>
         <path d="M21 12c1-1.4 2-2.2 2-2.2s.2 1.6 0 4.4c0 0-1-1-2-2.2Z" fill="currentColor" stroke="none"/>
@@ -199,6 +207,8 @@
       <nav class="app-nav" id="appNav">
         <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
         <button type="button" class="nav-link nav-btn nav-btn-register" id="navShowForm"><svg class="icon icon-nav"><use href="#icon-plus"/></svg> 釣行登録</button>
+        <button type="button" class="nav-link nav-btn" id="navShowRodForm"><svg class="icon icon-nav"><use href="#icon-rod"/></svg> 竿を登録</button>
+        <button type="button" class="nav-link nav-btn" id="navShowReelForm"><svg class="icon icon-nav"><use href="#icon-reel"/></svg> リールを登録</button>
       </nav>
     </div>
   </header>
@@ -337,6 +347,117 @@
           <h2><svg class="icon icon-h2"><use href="#icon-anchor"/></svg> 釣行一覧</h2>
         </div>
         <div id="eventsList"><p class="empty">接続設定を行うと記録が表示されます。</p></div>
+      </section>
+
+      <!-- Gear form (竿・リール登録) -->
+      <section id="gear-form" class="panel form-panel" hidden>
+        <h2 id="gearFormTitle">竿を登録</h2>
+        <form id="gearForm">
+          <input type="hidden" name="id">
+          <input type="hidden" name="type">
+          <div class="form-grid">
+            <label>名前
+              <input type="text" name="name" placeholder="例: ダイワ 月下美人 AGS" required>
+            </label>
+            <label>スタイル
+              <input type="text" name="style" list="gearStyleList" placeholder="例: アジング">
+            </label>
+            <label>メーカー
+              <input type="text" name="maker" placeholder="例: ダイワ">
+            </label>
+            <label>自重 (g)
+              <input type="number" name="selfWeight" min="0" step="0.1" placeholder="例: 98">
+            </label>
+            <label>購入日
+              <input type="date" name="purchaseDate">
+            </label>
+            <label>購入価格 (円)
+              <input type="number" name="purchasePrice" min="0" inputmode="numeric" placeholder="例: 28000">
+            </label>
+          </div>
+          <div class="form-grid" id="rodOnlyFields">
+            <label>全長 (cm)
+              <input type="number" name="rodLength" min="0" step="0.1" placeholder="例: 211">
+            </label>
+            <label>錘負荷
+              <input type="text" name="sinkerWeight" placeholder="例: 3-21g">
+            </label>
+          </div>
+          <div class="form-grid" id="reelOnlyFields">
+            <label>巻き取り長さ (cm)
+              <input type="number" name="retrieveLength" min="0" step="0.1" placeholder="例: 74">
+            </label>
+            <label>ギア比
+              <input type="text" name="gearRatio" placeholder="例: 5.6:1">
+            </label>
+            <label>標準巻糸量 ナイロン (lb-m)
+              <input type="text" name="nylonCapacity" placeholder="例: 3lb-150m">
+            </label>
+            <label>標準巻糸量 (号-m)
+              <input type="text" name="peCapacity" placeholder="例: 0.6号-200m">
+            </label>
+            <label>最大ドラグ力 (kg)
+              <input type="number" name="maxDrag" min="0" step="0.1" placeholder="例: 5">
+            </label>
+            <label>ラインタイプ
+              <input type="text" name="lineType" list="lineTypeList" placeholder="例: PEライン">
+            </label>
+            <label>ライン号数
+              <input type="text" name="lineSize" placeholder="例: 0.8号">
+            </label>
+            <label>最新ライン交換日
+              <input type="date" name="lastLineChangeDate">
+            </label>
+          </div>
+          <datalist id="gearStyleList">
+            <option value="アジング">
+            <option value="エギング">
+            <option value="ジギング">
+            <option value="シーバス">
+            <option value="ライトゲーム">
+            <option value="青物">
+          </datalist>
+          <datalist id="lineTypeList">
+            <option value="PEライン">
+            <option value="フロロカーボン">
+            <option value="ナイロン">
+            <option value="エステル">
+          </datalist>
+
+          <label class="photo-label">
+            <input type="file" id="gearPhotoInput" accept="image/*" class="photo-file-input">
+            <span class="photo-trigger" id="gearPhotoTrigger"><svg class="icon icon-inline"><use href="#icon-camera"/></svg> 写真を撮る / 選択（任意）</span>
+          </label>
+          <div id="gearPhotoPreview" class="photo-preview" hidden>
+            <img id="gearPhotoThumb" class="photo-thumb-preview" src="" alt="プレビュー">
+            <button type="button" id="removeGearPhoto" class="remove-photo-btn"><svg class="icon"><use href="#icon-close"/></svg></button>
+          </div>
+
+          <label class="memo-field">メモ
+            <textarea name="memo" rows="2" placeholder="購入動機、使い心地など"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="gearSubmitBtn">登録する</button>
+            <button type="button" class="btn" id="cancelGearEdit">キャンセル</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Gear list (竿一覧) -->
+      <section class="panel records-panel">
+        <div class="section-header">
+          <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 竿一覧</h2>
+        </div>
+        <div id="rodList"><p class="empty">登録された竿はありません。</p></div>
+      </section>
+
+      <!-- Gear list (リール一覧) -->
+      <section class="panel records-panel">
+        <div class="section-header">
+          <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リール一覧</h2>
+        </div>
+        <div id="reelList"><p class="empty">登録されたリールはありません。</p></div>
       </section>
 
       <div class="section-label">
