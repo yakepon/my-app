@@ -1409,7 +1409,6 @@ function enterEventEditMode(ev) {
   els.eventForm.elements['endTime'].value   = formatTime(ev.endTime);
   els.eventFormTitle.textContent  = '釣行を編集';
   els.eventSubmitBtn.textContent  = '更新する';
-  els.cancelEventEdit.hidden = false;
   toggleEventForm(true);
 }
 
@@ -1418,7 +1417,6 @@ function exitEventEditMode() {
   els.eventForm.elements['id'].value = '';
   els.eventFormTitle.textContent  = '釣行を登録';
   els.eventSubmitBtn.textContent  = '登録する';
-  els.cancelEventEdit.hidden = true;
 }
 
 async function onEventSubmit(e) {
