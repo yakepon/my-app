@@ -30,7 +30,7 @@ function getOrCreateSheet(name, headers) {
       sheet.getRange(1, sheet.getLastColumn() + 1, 1, missing.length).setValues([missing]);
     }
   }
-  ensurePlainTextColumns(sheet, headers);
+  ensurePlainTextColumns(sheet, getHeaders(sheet));
   return sheet;
 }
 
@@ -372,8 +372,11 @@ function doPost(e) {
 
   const isEvent = data.action.includes('Event');
   const isGear  = data.action.includes('Gear');
-  const headers = isEvent ? EVENT_HEADERS : isGear ? GEAR_HEADERS : CATCH_HEADERS;
-  const sheet   = getOrCreateSheet(isEvent ? EVENT_SHEET : isGear ? GEAR_SHEET : CATCH_SHEET, headers);
+  const codeHeaders = isEvent ? EVENT_HEADERS : isGear ? GEAR_HEADERS : CATCH_HEADERS;
+  const sheet   = getOrCreateSheet(isEvent ? EVENT_SHEET : isGear ? GEAR_SHEET : CATCH_SHEET, codeHeaders);
+  // 列の並びは過去の追加履歴によりシート上の物理的な順序とコード上の定義順が
+  // ズレている場合があるため、書き込み時は必ずシートの実ヘッダー順を使う。
+  const headers = getHeaders(sheet);
   const verb    = data.action.replace(/Event$|Catch$|Gear$/, ''); // 'add' | 'update' | 'delete'
 
   if (verb === 'delete') {
