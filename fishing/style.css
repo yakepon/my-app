@@ -1129,6 +1129,21 @@ form > textarea { margin-bottom: 0.6rem; }
 .gear-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
 /* ── Rod length ruler (全長比較) ─────────────────────────────── */
+.rod-ruler { position: relative; }
+/* 目盛りグリッド線は全行を貫く別レイヤーとして敷き、行ごとのグリッド計算
+   (8.5rem 名前列 + 0.7rem 隙間 = 9.2rem 左端、3.2rem 長さ列 + 0.7rem 隙間 =
+   3.9rem 右端) と同じオフセットを与えることで、トラック列の幅にだけ正確に重なる。 */
+.rod-ruler-gridlines {
+  position: absolute;
+  left: 9.2rem;
+  right: 3.9rem;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.rod-ruler-gridline { position: absolute; top: 0; bottom: 0; width: 1px; }
+.rod-ruler-gridline-minor { background: var(--border); opacity: 0.7; }
+.rod-ruler-gridline-major { background: var(--ink-faint); opacity: 0.55; }
 .rod-ruler-row {
   display: grid;
   grid-template-columns: 8.5rem 1fr 3.2rem;
@@ -1162,14 +1177,11 @@ form > textarea { margin-bottom: 0.6rem; }
   color: var(--ink-faint);
 }
 .rod-ruler-unit { font-family: var(--font-body); font-size: 0.65rem; color: var(--ink-faint); text-align: right; }
-.rod-ruler-track { position: relative; height: 1.5rem; background: var(--surface-2); border-radius: 2px; }
-.rod-ruler-bar {
-  height: 100%;
-  min-width: 1rem;
-  background: var(--gradient);
-  clip-path: polygon(0 0, 0 100%, 100% 62%, 100% 38%);
-  transition: width 0.4s var(--ease);
-}
+.rod-ruler-track { position: relative; height: 1.9rem; }
+.rod-blank-svg { display: block; height: 100%; min-width: 2.4rem; overflow: visible; }
+.rod-blank-grip { fill: var(--ink-muted); }
+.rod-blank-guide { fill: none; stroke: #fff; stroke-width: 1.4; opacity: 0.9; }
+.rod-blank-tiptop { fill: var(--ink); }
 
 /* ── Reel size & line comparison (サイズ・ライン比較) ──────────── */
 .reel-compare-row {

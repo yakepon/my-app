@@ -2062,7 +2062,43 @@ function renderReelSizeChart(reels) {
   els.reelSizeChart.innerHTML = rows;
 }
 
-// 竿の全長を、実際に並べたような先細りシルエットのバーで比較する。
+// 1本の竿を、グリップ・テーパーするブランク・ガイドリング・トップガイドを持つ
+// SVGシルエットとして描く。竿の長さに比例した実寸スケールで描くため、グリップや
+// ガイドの太さ・間隔は行ごとに変わらず一貫した見た目になる。
+function rodBlankSvg(g, lenCm, unitPerCm) {
+  const H = 56, cy = 28;
+  const buttHalf = 12, tipHalf = 2.2;
+  const barUnits = lenCm * unitPerCm;
+  const gripUnits = Math.min(22, lenCm * 0.16) * unitPerCm;
+  const ctrlX = gripUnits + (barUnits - gripUnits) * 0.55;
+  const gradId = `rodGrad-${g.id}`;
+
+  const nGuides = Math.min(8, Math.max(4, Math.round(lenCm / 40)));
+  const guides = Array.from({ length: nGuides }, (_, i) => {
+    const f = Math.pow((i + 1) / nGuides, 1.5);
+    const x = gripUnits + f * (barUnits - gripUnits);
+    const half = buttHalf + (tipHalf - buttHalf) * f;
+    return `<ellipse class="rod-blank-guide" cx="${x.toFixed(1)}" cy="${cy}" rx="1.6" ry="${(half + 3).toFixed(1)}" />`;
+  }).join('');
+
+  return `
+    <svg class="rod-blank-svg" style="width:${(lenCm * unitPerCm / 10).toFixed(2)}%" viewBox="0 0 ${barUnits.toFixed(1)} ${H}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#6C3FE0"/>
+          <stop offset="80%" stop-color="#ff2d95"/>
+          <stop offset="100%" stop-color="#ff2d95"/>
+        </linearGradient>
+      </defs>
+      <rect class="rod-blank-grip" x="0" y="${(cy - buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
+      <path class="rod-blank-body" fill="url(#${gradId})" d="M ${gripUnits.toFixed(1)} ${(cy - buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(cy - buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(cy - tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${(cy + tipHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(cy + buttHalf).toFixed(1)} ${gripUnits.toFixed(1)} ${(cy + buttHalf).toFixed(1)} Z"/>
+      ${guides}
+      <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="${cy}" r="3"/>
+    </svg>`;
+}
+
+// 竿の全長を、グリップ～ガイドリング～トップガイドまで再現したシルエットで比較する。
+// 全行を貫く目盛りグリッド線を背面に敷くことで、長さの違いを定規のように読み取れる。
 function renderRodLengthRuler(rods) {
   const withLength = rods
     .filter(g => g.rodLength && !isNaN(Number(g.rodLength)))
@@ -2075,6 +2111,7 @@ function renderRodLengthRuler(rods) {
 
   const maxLength = Math.max(...withLength.map(g => Number(g.rodLength)));
   const niceMax = Math.ceil(maxLength / 50) * 50;
+  const unitPerCm = 1000 / niceMax;
   const ticks = [];
   for (let t = 0; t <= niceMax; t += 50) ticks.push(t);
 
@@ -2087,19 +2124,30 @@ function renderRodLengthRuler(rods) {
       <span class="rod-ruler-unit">cm</span>
     </div>`;
 
-  const rows = withLength.map(g => `
+  const minorTicks = [];
+  for (let t = 25; t < niceMax; t += 25) if (t % 50 !== 0) minorTicks.push(t);
+  const gridlines = `
+    <div class="rod-ruler-gridlines">
+      ${minorTicks.map(t => `<span class="rod-ruler-gridline rod-ruler-gridline-minor" style="left:${(t / niceMax * 100).toFixed(2)}%"></span>`).join('')}
+      ${ticks.filter(t => t > 0).map(t => `<span class="rod-ruler-gridline rod-ruler-gridline-major" style="left:${(t / niceMax * 100).toFixed(2)}%"></span>`).join('')}
+    </div>`;
+
+  const rows = withLength.map(g => {
+    const lenCm = Number(g.rodLength);
+    return `
     <div class="rod-ruler-row">
       <span class="rod-ruler-info">
         <span class="rod-ruler-name">${escapeHtml(g.name || '-')}</span>
         ${g.sinkerWeight ? `<span class="rod-ruler-sinker">錘負荷${escapeHtml(g.sinkerWeight)}</span>` : ''}
       </span>
       <div class="rod-ruler-track">
-        <div class="rod-ruler-bar" style="width:${(Number(g.rodLength) / niceMax * 100).toFixed(1)}%"></div>
+        ${rodBlankSvg(g, lenCm, unitPerCm)}
       </div>
       <span class="rod-ruler-len">${escapeHtml(g.rodLength)}cm</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  els.rodLengthRuler.innerHTML = scaleRow + rows;
+  els.rodLengthRuler.innerHTML = `${gridlines}<div class="rod-ruler-rows">${scaleRow}${rows}</div>`;
 }
 
 async function handleGearListClick(e) {
