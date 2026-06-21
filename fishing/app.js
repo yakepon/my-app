@@ -2013,7 +2013,7 @@ function lineAgeBadgeHtml(g) {
 // リールの「スタイル」欄に入力された番号（例: 2500, C3000, 4000HG）をスプールの
 // 大きさ、巻いているライン（種別・太さ）をスプール周りの色付きリングで表現し、
 // 見た目で大きさ・ラインを比較できるようにする。
-// PEラインはアプリ共通のグラデーション、ナイロンラインは黄色で表示する。
+// PEラインはアプリ共通のグラデーション、ナイロンラインは鮮やかな黄色のグラデーションで表示する。
 function renderReelSizeChart(reels) {
   const withSize = reels
     .map(g => ({ g, size: parseLeadingNumber(g.style) }))
@@ -2042,18 +2042,28 @@ function renderReelSizeChart(reels) {
     const isPe     = /pe/i.test(g.lineType || '');
     const isNylon  = /ナイロン|nylon/i.test(g.lineType || '');
     const stroke   = lineNum != null ? MIN_STROKE + (lineNum / maxLineNum) * (MAX_STROKE - MIN_STROKE) : 0;
-    const gradId = `peGrad-${g.id}`;
+    const peGradId    = `peGrad-${g.id}`;
+    const nylonGradId = `nylonGrad-${g.id}`;
 
     const ring = stroke > 0
-      ? `<circle cx="${C}" cy="${C}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${gradId})` : isNylon ? '#f4d23a' : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
+      ? `<circle cx="${C}" cy="${C}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${peGradId})` : isNylon ? `url(#${nylonGradId})` : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
       : '';
 
     const peDefs = isPe ? `
       <defs>
-        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="${peGradId}" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%"   stop-color="#6C3FE0"/>
           <stop offset="80%"  stop-color="#ff2d95"/>
           <stop offset="100%" stop-color="#ff2d95"/>
+        </linearGradient>
+      </defs>` : '';
+
+    const nylonDefs = isNylon ? `
+      <defs>
+        <linearGradient id="${nylonGradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#fff066"/>
+          <stop offset="80%"  stop-color="#ffb300"/>
+          <stop offset="100%" stop-color="#ffb300"/>
         </linearGradient>
       </defs>` : '';
 
@@ -2075,6 +2085,7 @@ function renderReelSizeChart(reels) {
         </span>
         <svg class="reel-spool-svg" width="${DIM}" height="${DIM}" viewBox="0 0 ${DIM} ${DIM}">
           ${peDefs}
+          ${nylonDefs}
           ${ring}
           <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
           ${centerLabel}
