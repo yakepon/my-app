@@ -1959,6 +1959,27 @@ function parseLeadingNumber(str) {
   return m ? Number(m[0]) : null;
 }
 
+// 文字列中の数値をすべて取り出し最大値を返す（"3-21g" → 21 など）。
+// 錘負荷は範囲表記が基本なので、扱える上限（太い方の数値）を代表値として使う。
+function parseMaxNumber(str) {
+  const nums = String(str || '').match(/[\d.]+/g);
+  return nums ? Math.max(...nums.map(Number)) : null;
+}
+
+const GRAM_PER_GO = 3.75; // 1号 = 3.75g（オモリ号数の標準的な換算）
+
+// 錘負荷の上限値を「号」の尺度に揃えて返す。"g"表記（号の指定がない）は
+// 1号=3.75gとしてグラムから号に換算し、"号"表記はそのまま使う。
+// アジング/エギングロッドはg表記、船・サーフロッドは号表記が一般的なため、
+// 混在していても太さの比較が公平になるようにする。
+function sinkerWeightToGo(str) {
+  const s = String(str || '');
+  const max = parseMaxNumber(s);
+  if (max == null) return null;
+  const isGram = /g/i.test(s) && !s.includes('号');
+  return isGram ? max / GRAM_PER_GO : max;
+}
+
 // 最新ライン交換日からの経過日数（未入力なら null）。
 function daysSince(dateStr) {
   const s = normDateStr(dateStr);
@@ -2068,9 +2089,13 @@ function renderReelSizeChart(reels) {
 // 1本の竿を、グリップ・テーパーするブランク・ガイドリング・トップガイドを持つ
 // SVGシルエットとして描く。竿の長さに比例した実寸スケールで描くため、グリップや
 // ガイドの太さ・間隔は行ごとに変わらず一貫した見た目になる。
-function rodBlankSvg(g, lenCm, unitPerCm) {
+// powerRatio (0〜1) は錘負荷の相対的な強さで、ブランクの太さ（butt/tip径）に
+// 反映する。値が大きいほど太く頑丈な竿に見え、耐えられるオモリの重さが
+// 一目でわかるようにする。
+function rodBlankSvg(g, lenCm, unitPerCm, powerRatio) {
   const H = 56, cy = 28;
-  const buttHalf = 12, tipHalf = 2.2;
+  const buttHalf = 7 + powerRatio * 9;   // 7〜16
+  const tipHalf  = 1.4 + powerRatio * 2; // 1.4〜3.4
   const barUnits = lenCm * unitPerCm;
   const gripUnits = Math.min(22, lenCm * 0.16) * unitPerCm;
   const ctrlX = gripUnits + (barUnits - gripUnits) * 0.55;
@@ -2118,6 +2143,11 @@ function renderRodLengthRuler(rods) {
   const ticks = [];
   for (let t = 0; t <= niceMax; t += 50) ticks.push(t);
 
+  // 錘負荷の上限値（号換算）から、登録されている竿の中での相対的な強さ(0〜1)を求める。
+  // 未入力の竿は中間的な太さで描き、極端に細く/太く見えないようにする。
+  const powers = withLength.map(g => sinkerWeightToGo(g.sinkerWeight));
+  const maxPower = Math.max(...powers.filter(n => n != null), 0);
+
   const scaleRow = `
     <div class="rod-ruler-row rod-ruler-scale-row">
       <span></span>
@@ -2137,6 +2167,8 @@ function renderRodLengthRuler(rods) {
 
   const rows = withLength.map(g => {
     const lenCm = Number(g.rodLength);
+    const power = sinkerWeightToGo(g.sinkerWeight);
+    const powerRatio = maxPower > 0 ? (power != null ? power / maxPower : 0.45) : 0.45;
     return `
     <div class="rod-ruler-row">
       <span class="rod-ruler-info">
@@ -2144,7 +2176,7 @@ function renderRodLengthRuler(rods) {
         ${g.sinkerWeight ? `<span class="rod-ruler-sinker">錘負荷${escapeHtml(g.sinkerWeight)}</span>` : ''}
       </span>
       <div class="rod-ruler-track">
-        ${rodBlankSvg(g, lenCm, unitPerCm)}
+        ${rodBlankSvg(g, lenCm, unitPerCm, powerRatio)}
       </div>
       <span class="rod-ruler-len">${escapeHtml(g.rodLength)}cm</span>
     </div>`;
