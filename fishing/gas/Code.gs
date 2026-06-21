@@ -1,7 +1,7 @@
 const EVENT_SHEET  = 'events';
 const CATCH_SHEET  = 'catches';
 const PRICE_SHEET  = 'prices';
-const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
+const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId'];
 const CATCH_HEADERS = ['id', 'eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
 const PHOTO_FOLDER_NAME = 'AnglerLog Photos';
 const PRICE_HEADERS = ['species', 'price'];
@@ -99,10 +99,9 @@ function deletePhotoFile(photoId) {
   } catch (err) { /* 既に削除済み・アクセス不可な場合は無視 */ }
 }
 
-function clearCatchPhotoCell(catchId) {
-  if (!catchId) return;
-  const sheet = getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS);
-  const row = findRow(sheet, String(catchId));
+function clearPhotoCell(sheet, id) {
+  if (!id) return;
+  const row = findRow(sheet, String(id));
   if (row === -1) return;
   const headers = getHeaders(sheet);
   const photoCol   = headers.indexOf('photo') + 1;
@@ -351,7 +350,8 @@ function doPost(e) {
 
   if (data.action === 'deletePhoto') {
     deletePhotoFile(data.photoId);
-    clearCatchPhotoCell(data.catchId);
+    if (data.catchId) clearPhotoCell(getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS), data.catchId);
+    if (data.eventId) clearPhotoCell(getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS), data.eventId);
     return jsonOutput({ result: 'ok' });
   }
 
