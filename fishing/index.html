@@ -453,8 +453,8 @@
             <label>名前
               <input type="text" name="name" placeholder="例: ダイワ 月下美人 AGS" required>
             </label>
-            <label>スタイル
-              <input type="text" name="style" list="gearStyleList" placeholder="例: アジング">
+            <label id="styleLabel"><span id="styleLabelText">スタイル</span>
+              <input type="text" name="style" list="gearStyleList" placeholder="例: アジング" id="styleInput">
             </label>
             <label>メーカー
               <input type="text" name="maker" placeholder="例: ダイワ">
@@ -478,9 +478,6 @@
             </label>
           </div>
           <div class="form-grid" id="reelOnlyFields">
-            <label>リールサイズ (番)
-              <input type="text" name="reelSize" placeholder="例: C3000 / 4000 / 2500HG">
-            </label>
             <label>巻き取り長さ (cm)
               <input type="number" name="retrieveLength" min="0" step="0.1" placeholder="例: 74">
             </label>
