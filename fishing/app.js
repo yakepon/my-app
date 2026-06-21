@@ -245,9 +245,9 @@ function buildSampleData() {
       { id: uid(), type: 'rod',  name: '月下美人 AGS 76L-SMT', style: 'アジング', maker: 'ダイワ', memo: 'お気に入りの軽量ロッド', photo: '', photoId: '', rodLength: '231', selfWeight: '68', sinkerWeight: '0.5-7g',  purchaseDate: '2024-03-10', purchasePrice: '28000' },
       { id: uid(), type: 'rod',  name: 'セフィア BB S706ML',   style: 'エギング', maker: 'シマノ', memo: '',           photo: '', photoId: '', rodLength: '213', selfWeight: '102', sinkerWeight: '3-21g',  purchaseDate: '2023-09-02', purchasePrice: '19800' },
       { id: uid(), type: 'reel', name: '22ソルティガ 4000',    style: '4000', maker: 'ダイワ', memo: '',               photo: '', photoId: '', selfWeight: '600', purchaseDate: '2023-05-20', purchasePrice: '78000',
-        retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
+        reelType: 'スピニング', retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
       { id: uid(), type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'C2000', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
-        retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
+        reelType: 'スピニング', retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
     ],
   };
 }
@@ -258,7 +258,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -1799,6 +1799,7 @@ function enterGearEditMode(g) {
   els.gearForm.elements['purchasePrice'].value  = g.purchasePrice  || '';
   els.gearForm.elements['rodLength'].value      = g.rodLength      || '';
   els.gearForm.elements['sinkerWeight'].value   = g.sinkerWeight   || '';
+  els.gearForm.elements['reelType'].value           = g.reelType           || '';
   els.gearForm.elements['retrieveLength'].value     = g.retrieveLength     || '';
   els.gearForm.elements['gearRatio'].value          = g.gearRatio          || '';
   els.gearForm.elements['nylonCapacity'].value      = g.nylonCapacity      || '';
@@ -1844,6 +1845,7 @@ async function onGearSubmit(e) {
     purchasePrice: fd.get('purchasePrice'),
     rodLength:     type === 'rod' ? fd.get('rodLength')     : '',
     sinkerWeight:  type === 'rod' ? fd.get('sinkerWeight')  : '',
+    reelType:           type === 'reel' ? fd.get('reelType')           : '',
     retrieveLength:     type === 'reel' ? fd.get('retrieveLength')     : '',
     gearRatio:          type === 'reel' ? fd.get('gearRatio')          : '',
     nylonCapacity:      type === 'reel' ? fd.get('nylonCapacity')      : '',
@@ -1904,6 +1906,7 @@ function gearSpecHtml(g) {
   if (g.type === 'rod' && g.rodLength)    specs.push(`全長${escapeHtml(g.rodLength)}cm`);
   if (g.selfWeight)                       specs.push(`自重${escapeHtml(g.selfWeight)}g`);
   if (g.type === 'rod' && g.sinkerWeight) specs.push(`錘負荷${escapeHtml(g.sinkerWeight)}`);
+  if (g.type === 'reel' && g.reelType)        specs.push(escapeHtml(g.reelType));
   if (g.type === 'reel' && g.retrieveLength) specs.push(`巻取${escapeHtml(g.retrieveLength)}cm`);
   if (g.type === 'reel' && g.gearRatio)      specs.push(`ギア比${escapeHtml(g.gearRatio)}`);
   if (g.type === 'reel' && g.maxDrag)        specs.push(`ドラグ${escapeHtml(g.maxDrag)}kg`);

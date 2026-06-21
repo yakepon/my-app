@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260621f">
+  <link rel="stylesheet" href="style.css?v=20260621g">
 </head>
 <body>
   <!-- ══ Icon sprite (all custom line icons live here, referenced via <use>) ══ -->
@@ -484,6 +484,13 @@
             </label>
           </div>
           <div class="form-grid" id="reelOnlyFields">
+            <label>リールタイプ
+              <select name="reelType">
+                <option value="">選択...</option>
+                <option value="スピニング">スピニング</option>
+                <option value="ベイト">ベイト</option>
+              </select>
+            </label>
             <label>巻き取り長さ (cm)
               <input type="number" name="retrieveLength" min="0" step="0.1" placeholder="例: 74">
             </label>
@@ -688,6 +695,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=20260621f"></script>
+  <script src="app.js?v=20260621g"></script>
 </body>
 </html>
