@@ -123,6 +123,7 @@ const els = {
   rodList:  document.getElementById('rodList'),
   reelList: document.getElementById('reelList'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
+  reelSizeChart: document.getElementById('reelSizeChart'),
   rodOnlyFields:  document.getElementById('rodOnlyFields'),
   reelOnlyFields: document.getElementById('reelOnlyFields'),
 };
@@ -242,9 +243,9 @@ function buildSampleData() {
       { id: uid(), type: 'rod',  name: '月下美人 AGS 76L-SMT', style: 'アジング', maker: 'ダイワ', memo: 'お気に入りの軽量ロッド', photo: '', photoId: '', rodLength: '231', selfWeight: '68', sinkerWeight: '0.5-7g',  purchaseDate: '2024-03-10', purchasePrice: '28000' },
       { id: uid(), type: 'rod',  name: 'セフィア BB S706ML',   style: 'エギング', maker: 'シマノ', memo: '',           photo: '', photoId: '', rodLength: '213', selfWeight: '102', sinkerWeight: '3-21g',  purchaseDate: '2023-09-02', purchasePrice: '19800' },
       { id: uid(), type: 'reel', name: '22ソルティガ 4000',    style: '青物', maker: 'ダイワ', memo: '',               photo: '', photoId: '', selfWeight: '600', purchaseDate: '2023-05-20', purchasePrice: '78000',
-        retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
+        reelSize: '4000', retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
       { id: uid(), type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'ライトゲーム', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
-        retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
+        reelSize: 'C2000', retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
     ],
   };
 }
@@ -255,7 +256,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelSize', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -1768,6 +1769,7 @@ function enterGearEditMode(g) {
   els.gearForm.elements['purchasePrice'].value  = g.purchasePrice  || '';
   els.gearForm.elements['rodLength'].value      = g.rodLength      || '';
   els.gearForm.elements['sinkerWeight'].value   = g.sinkerWeight   || '';
+  els.gearForm.elements['reelSize'].value           = g.reelSize           || '';
   els.gearForm.elements['retrieveLength'].value     = g.retrieveLength     || '';
   els.gearForm.elements['gearRatio'].value          = g.gearRatio          || '';
   els.gearForm.elements['nylonCapacity'].value      = g.nylonCapacity      || '';
@@ -1813,6 +1815,7 @@ async function onGearSubmit(e) {
     purchasePrice: fd.get('purchasePrice'),
     rodLength:     type === 'rod' ? fd.get('rodLength')     : '',
     sinkerWeight:  type === 'rod' ? fd.get('sinkerWeight')  : '',
+    reelSize:           type === 'reel' ? fd.get('reelSize')           : '',
     retrieveLength:     type === 'reel' ? fd.get('retrieveLength')     : '',
     gearRatio:          type === 'reel' ? fd.get('gearRatio')          : '',
     nylonCapacity:      type === 'reel' ? fd.get('nylonCapacity')      : '',
@@ -1873,6 +1876,7 @@ function gearSpecHtml(g) {
   if (g.type === 'rod' && g.rodLength)    specs.push(`全長${escapeHtml(g.rodLength)}cm`);
   if (g.selfWeight)                       specs.push(`自重${escapeHtml(g.selfWeight)}g`);
   if (g.type === 'rod' && g.sinkerWeight) specs.push(`錘負荷${escapeHtml(g.sinkerWeight)}`);
+  if (g.type === 'reel' && g.reelSize)       specs.push(`サイズ${escapeHtml(g.reelSize)}`);
   if (g.type === 'reel' && g.retrieveLength) specs.push(`巻取${escapeHtml(g.retrieveLength)}cm`);
   if (g.type === 'reel' && g.gearRatio)      specs.push(`ギア比${escapeHtml(g.gearRatio)}`);
   if (g.type === 'reel' && g.maxDrag)        specs.push(`ドラグ${escapeHtml(g.maxDrag)}kg`);
@@ -1916,6 +1920,81 @@ function renderGearLists() {
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録された竿はありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
   renderRodLengthRuler(rods);
+  renderReelSizeChart(reels);
+}
+
+// 文字列先頭の数値部分を取り出す（"C3000" → 3000, "0.6号" → 0.6 など）。
+function parseLeadingNumber(str) {
+  const m = String(str || '').match(/[\d.]+/);
+  return m ? Number(m[0]) : null;
+}
+
+// リールサイズ（番）をスプールの大きさ、巻いているライン（種別・太さ）を
+// スプール周りの色付きリングで表現し、見た目で大きさ・ラインを比較できるようにする。
+// PEラインは実物のマーキングカラーを模してレインボー、ナイロンラインは黄色で表示する。
+function renderReelSizeChart(reels) {
+  const withSize = reels
+    .map(g => ({ g, size: parseLeadingNumber(g.reelSize) }))
+    .filter(x => x.size != null)
+    .sort((a, b) => b.size - a.size);
+
+  if (withSize.length === 0) {
+    els.reelSizeChart.innerHTML = '<p class="empty">リールサイズを入力すると比較できます。</p>';
+    return;
+  }
+
+  const MIN_R = 16, MAX_R = 40;
+  const MIN_STROKE = 2, MAX_STROKE = 10;
+
+  const maxSize = Math.max(...withSize.map(x => x.size));
+  const lineNums = withSize.map(x => parseLeadingNumber(x.g.lineSize)).filter(n => n != null);
+  const maxLineNum = lineNums.length ? Math.max(...lineNums) : 1;
+
+  const rows = withSize.map(({ g, size }) => {
+    const r = MIN_R + (size / maxSize) * (MAX_R - MIN_R);
+    const lineNum  = parseLeadingNumber(g.lineSize);
+    const isPe     = /pe/i.test(g.lineType || '');
+    const isNylon  = /ナイロン|nylon/i.test(g.lineType || '');
+    const stroke   = lineNum != null ? MIN_STROKE + (lineNum / maxLineNum) * (MAX_STROKE - MIN_STROKE) : 0;
+    const dim = Math.ceil((r + stroke) * 2 + 4);
+    const c   = dim / 2;
+    const gradId = `peGrad-${g.id}`;
+
+    const ring = stroke > 0
+      ? `<circle cx="${c}" cy="${c}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${gradId})` : isNylon ? '#f4d23a' : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
+      : '';
+
+    const peDefs = isPe ? `
+      <defs>
+        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"  stop-color="#ff3b3b"/>
+          <stop offset="16%" stop-color="#ff9c33"/>
+          <stop offset="33%" stop-color="#ffe23b"/>
+          <stop offset="50%" stop-color="#4ad66d"/>
+          <stop offset="66%" stop-color="#33b5ff"/>
+          <stop offset="83%" stop-color="#5d6bff"/>
+          <stop offset="100%" stop-color="#c84bff"/>
+        </linearGradient>
+      </defs>` : '';
+
+    const lineLabel = [g.lineType, g.lineSize].filter(Boolean).join(' ');
+
+    return `
+      <div class="reel-compare-row">
+        <span class="reel-compare-name">${escapeHtml(g.name || '-')}</span>
+        <svg class="reel-spool-svg" width="${dim}" height="${dim}" viewBox="0 0 ${dim} ${dim}">
+          ${peDefs}
+          ${ring}
+          <circle cx="${c}" cy="${c}" r="${r}" class="reel-spool-body" />
+        </svg>
+        <span class="reel-compare-meta">
+          <span class="reel-compare-size">${escapeHtml(g.reelSize)}</span>
+          ${lineLabel ? `<span class="reel-compare-line">${escapeHtml(lineLabel)}</span>` : '<span class="reel-compare-line">ラインなし</span>'}
+        </span>
+      </div>`;
+  }).join('');
+
+  els.reelSizeChart.innerHTML = rows;
 }
 
 // 竿の全長を、実際に並べたような先細りシルエットのバーで比較する。

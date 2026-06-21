@@ -478,6 +478,9 @@
             </label>
           </div>
           <div class="form-grid" id="reelOnlyFields">
+            <label>リールサイズ (番)
+              <input type="text" name="reelSize" placeholder="例: C3000 / 4000 / 2500HG">
+            </label>
             <label>巻き取り長さ (cm)
               <input type="number" name="retrieveLength" min="0" step="0.1" placeholder="例: 74">
             </label>
@@ -547,6 +550,12 @@
           <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 竿一覧</h2>
         </div>
         <div id="rodList"><p class="empty">登録された竿はありません。</p></div>
+      </section>
+
+      <!-- Reel size & line comparison -->
+      <section class="panel chart-panel">
+        <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
+        <div id="reelSizeChart" class="reel-compare"></div>
       </section>
 
       <!-- Gear list (リール一覧) -->
