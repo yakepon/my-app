@@ -1978,7 +1978,7 @@ function lineAgeBadgeHtml(g) {
 // リールの「スタイル」欄に入力された番号（例: 2500, C3000, 4000HG）をスプールの
 // 大きさ、巻いているライン（種別・太さ）をスプール周りの色付きリングで表現し、
 // 見た目で大きさ・ラインを比較できるようにする。
-// PEラインは実物のマーキングカラーを模してレインボー、ナイロンラインは黄色で表示する。
+// PEラインはアプリ共通のグラデーション、ナイロンラインは黄色で表示する。
 function renderReelSizeChart(reels) {
   const withSize = reels
     .map(g => ({ g, size: parseLeadingNumber(g.style) }))
@@ -2016,13 +2016,9 @@ function renderReelSizeChart(reels) {
     const peDefs = isPe ? `
       <defs>
         <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"  stop-color="#ff3b3b"/>
-          <stop offset="16%" stop-color="#ff9c33"/>
-          <stop offset="33%" stop-color="#ffe23b"/>
-          <stop offset="50%" stop-color="#4ad66d"/>
-          <stop offset="66%" stop-color="#33b5ff"/>
-          <stop offset="83%" stop-color="#5d6bff"/>
-          <stop offset="100%" stop-color="#c84bff"/>
+          <stop offset="0%"   stop-color="#6C3FE0"/>
+          <stop offset="80%"  stop-color="#ff2d95"/>
+          <stop offset="100%" stop-color="#ff2d95"/>
         </linearGradient>
       </defs>` : '';
 
@@ -2039,6 +2035,8 @@ function renderReelSizeChart(reels) {
         <span class="reel-compare-info">
           <span class="reel-compare-name">${escapeHtml(g.name || '-')}</span>
           <span class="reel-compare-size">${escapeHtml(g.style)}</span>
+          ${g.retrieveLength ? `<span class="reel-compare-spec">巻取${escapeHtml(g.retrieveLength)}cm</span>` : ''}
+          ${g.gearRatio      ? `<span class="reel-compare-spec">ギア比${escapeHtml(g.gearRatio)}</span>`      : ''}
         </span>
         <svg class="reel-spool-svg" width="${DIM}" height="${DIM}" viewBox="0 0 ${DIM} ${DIM}">
           ${peDefs}

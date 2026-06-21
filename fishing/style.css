@@ -1184,6 +1184,7 @@ form > textarea { margin-bottom: 0.6rem; }
   white-space: nowrap;
 }
 .reel-compare-size { font-family: var(--font-body); font-size: 0.72rem; color: var(--ink-muted); }
+.reel-compare-spec { font-family: var(--font-body); font-size: 0.68rem; color: var(--ink-faint); }
 .reel-spool-svg { display: block; flex-shrink: 0; justify-self: center; }
 .reel-spool-body { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
 .reel-spool-label { font-family: var(--font-body); font-size: 0.62rem; font-weight: 700; fill: var(--ink); }
