@@ -62,6 +62,10 @@ const els = {
   photoPreview:   document.getElementById('photoPreview'),
   photoThumb:     document.getElementById('photoThumb'),
   removePhoto:    document.getElementById('removePhoto'),
+  editPhotoInput:   document.getElementById('editPhotoInput'),
+  editPhotoPreview: document.getElementById('editPhotoPreview'),
+  editPhotoThumb:   document.getElementById('editPhotoThumb'),
+  editRemovePhoto:  document.getElementById('editRemovePhoto'),
   catchSubmitBtn: document.getElementById('catchSubmitBtn'),
   catchesList:    document.getElementById('catchesList'),
   statTotalCatch:   document.getElementById('statTotalCatch'),
@@ -1496,6 +1500,17 @@ async function onEventSubmit(e) {
 }
 
 // ── Catch edit modal ──────────────────────────────────────────
+let editPendingPhotoDataUrl = null;
+let editPhotoRemoved = false;
+
+function resetEditPhotoState() {
+  editPendingPhotoDataUrl = null;
+  editPhotoRemoved = false;
+  els.editPhotoInput.value = '';
+  els.editPhotoPreview.hidden = true;
+  els.editPhotoThumb.src = '';
+}
+
 function openCatchModal(c) {
   const f = els.catchEditForm;
   f.elements['id'].value      = c.id;
@@ -1510,6 +1525,13 @@ function openCatchModal(c) {
   f.elements['lure'].value    = c.lure    || '';
   f.elements['point'].value   = c.point   || '';
   f.elements['memo'].value    = c.memo    || '';
+
+  resetEditPhotoState();
+  if (c.photo) {
+    els.editPhotoThumb.src = c.photo;
+    els.editPhotoPreview.hidden = false;
+  }
+
   els.catchModal.hidden = false;
   document.body.style.overflow = 'hidden';
 }
@@ -1518,6 +1540,7 @@ function closeCatchModal() {
   els.catchModal.hidden = true;
   document.body.style.overflow = '';
   els.catchEditForm.reset();
+  resetEditPhotoState();
 }
 
 let lightboxCatchId = null;
@@ -1552,9 +1575,11 @@ async function deleteLightboxPhoto() {
 async function onCatchEditSubmit(e) {
   e.preventDefault();
   const fd = new FormData(els.catchEditForm);
+  const catchId = fd.get('id');
+  const originalPhotoId = fd.get('photoId');
   const payload = {
     action:  'updateCatch',
-    id:      fd.get('id'),
+    id:      catchId,
     eventId: fd.get('eventId'),
     photo:   fd.get('photo'),
     photoId: fd.get('photoId'),
@@ -1568,8 +1593,31 @@ async function onCatchEditSubmit(e) {
     memo:    fd.get('memo'),
   };
 
+  let oldPhotoIdToDelete = null;
+
+  if (editPhotoRemoved) {
+    payload.photo   = '';
+    payload.photoId = '';
+    if (originalPhotoId) oldPhotoIdToDelete = originalPhotoId;
+  } else if (editPendingPhotoDataUrl) {
+    if (isMockMode()) {
+      payload.photo   = editPendingPhotoDataUrl;
+      payload.photoId = '';
+    } else {
+      const uploaded = await uploadPhotoToDrive(editPendingPhotoDataUrl, catchId);
+      if (uploaded) {
+        payload.photo   = uploaded.photo;
+        payload.photoId = uploaded.photoId;
+        if (originalPhotoId) oldPhotoIdToDelete = originalPhotoId;
+      } else {
+        setStatus('写真のアップロードに失敗しました。写真以外の内容のみ更新します。', 'error');
+      }
+    }
+  }
+
   const ok = await sendAction(payload);
   if (ok) {
+    if (oldPhotoIdToDelete) await deleteDrivePhoto(oldPhotoIdToDelete);
     setStatus('釣果を更新しました。', 'ok');
     closeCatchModal();
     await loadAll();
@@ -1821,6 +1869,29 @@ function init() {
   });
 
   els.removePhoto.addEventListener('click', clearPhotoInput);
+
+  // Photo capture (catch edit modal)
+  els.editPhotoInput.addEventListener('change', async () => {
+    const file = els.editPhotoInput.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await compressImage(file);
+      editPendingPhotoDataUrl = dataUrl;
+      editPhotoRemoved = false;
+      els.editPhotoThumb.src = dataUrl;
+      els.editPhotoPreview.hidden = false;
+    } catch {
+      editPendingPhotoDataUrl = null;
+    }
+  });
+
+  els.editRemovePhoto.addEventListener('click', () => {
+    editPendingPhotoDataUrl = null;
+    editPhotoRemoved = true;
+    els.editPhotoInput.value = '';
+    els.editPhotoPreview.hidden = true;
+    els.editPhotoThumb.src = '';
+  });
 
   // Forms
   els.quickCatchForm.addEventListener('submit', onQuickCatchSubmit);

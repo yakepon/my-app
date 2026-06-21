@@ -496,6 +496,16 @@
         <label class="memo-field">メモ
           <textarea name="memo" rows="2"></textarea>
         </label>
+
+        <label class="photo-label">
+          <input type="file" id="editPhotoInput" accept="image/*" class="photo-file-input">
+          <span class="photo-trigger" id="editPhotoTrigger"><svg class="icon icon-inline"><use href="#icon-camera"/></svg> 写真を撮る / 選択（任意）</span>
+        </label>
+        <div id="editPhotoPreview" class="photo-preview" hidden>
+          <img id="editPhotoThumb" class="photo-thumb-preview" src="" alt="プレビュー">
+          <button type="button" id="editRemovePhoto" class="remove-photo-btn"><svg class="icon"><use href="#icon-close"/></svg></button>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">更新する</button>
           <button type="button" class="btn" id="catchModalClose">キャンセル</button>
