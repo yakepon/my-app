@@ -2,7 +2,8 @@ const EVENT_SHEET  = 'events';
 const CATCH_SHEET  = 'catches';
 const PRICE_SHEET  = 'prices';
 const EVENT_HEADERS = ['id', 'date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
-const CATCH_HEADERS = ['id', 'eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo'];
+const CATCH_HEADERS = ['id', 'eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
+const PHOTO_FOLDER_NAME = 'AnglerLog Photos';
 const PRICE_HEADERS = ['species', 'price'];
 // "06:12" のような時刻文字列はスプレッドシートに自動で時刻型として認識され、
 // 読み込み時にDateオブジェクトになってしまう（フロント側のHH:MM処理が壊れる原因）。
@@ -61,6 +62,53 @@ function sheetToRecords(sheet) {
 
 function jsonOutput(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── 釣果写真（Google Drive） ────────────────────────────────────
+// アップロード先フォルダはスクリプトプロパティ PHOTO_FOLDER_ID に記録し、
+// 初回アップロード時に自動作成する。
+function getPhotoFolder() {
+  const props = PropertiesService.getScriptProperties();
+  const folderId = props.getProperty('PHOTO_FOLDER_ID');
+  if (folderId) {
+    try { return DriveApp.getFolderById(folderId); } catch (err) { /* フォルダが削除済みなら作り直す */ }
+  }
+  const folder = DriveApp.createFolder(PHOTO_FOLDER_NAME);
+  props.setProperty('PHOTO_FOLDER_ID', folder.getId());
+  return folder;
+}
+
+function uploadPhoto(dataUrl, catchId) {
+  const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl || '');
+  if (!m) throw new Error('invalid dataUrl');
+  const mimeType = m[1];
+  const bytes    = Utilities.base64Decode(m[2]);
+  const ext      = (mimeType.split('/')[1] || 'jpg');
+  const blob     = Utilities.newBlob(bytes, mimeType, `catch_${catchId || Utilities.getUuid()}.${ext}`);
+
+  const file = getPhotoFolder().createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  const photoId = file.getId();
+  return { photoId, photoUrl: `https://drive.google.com/thumbnail?id=${photoId}&sz=w1600` };
+}
+
+function deletePhotoFile(photoId) {
+  if (!photoId) return;
+  try {
+    DriveApp.getFileById(photoId).setTrashed(true);
+  } catch (err) { /* 既に削除済み・アクセス不可な場合は無視 */ }
+}
+
+function clearCatchPhotoCell(catchId) {
+  if (!catchId) return;
+  const sheet = getOrCreateSheet(CATCH_SHEET, CATCH_HEADERS);
+  const row = findRow(sheet, String(catchId));
+  if (row === -1) return;
+  const headers = getHeaders(sheet);
+  const photoCol   = headers.indexOf('photo') + 1;
+  const photoIdCol = headers.indexOf('photoId') + 1;
+  if (photoCol)   sheet.getRange(row, photoCol).setValue('');
+  if (photoIdCol) sheet.getRange(row, photoIdCol).setValue('');
 }
 
 // 「エリア」欄の文字列に含まれる地名から、気象庁 潮汐推算データの観測地点
@@ -293,6 +341,17 @@ function doPost(e) {
   if (data.action === 'savePrice') {
     const sheet = getOrCreateSheet(PRICE_SHEET, PRICE_HEADERS);
     upsertPrice(sheet, data.species, data.price);
+    return jsonOutput({ result: 'ok' });
+  }
+
+  if (data.action === 'uploadPhoto') {
+    const { photoId, photoUrl } = uploadPhoto(data.dataUrl, data.catchId);
+    return jsonOutput({ result: 'ok', photoId, photoUrl });
+  }
+
+  if (data.action === 'deletePhoto') {
+    deletePhotoFile(data.photoId);
+    clearCatchPhotoCell(data.catchId);
     return jsonOutput({ result: 'ok' });
   }
 

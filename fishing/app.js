@@ -84,6 +84,11 @@ const els = {
   catchEditForm:  document.getElementById('catchEditForm'),
   catchModalClose: document.getElementById('catchModalClose'),
   modalBackdrop:  document.getElementById('modalBackdrop'),
+  photoLightbox:        document.getElementById('photoLightbox'),
+  photoLightboxImg:     document.getElementById('photoLightboxImg'),
+  photoLightboxClose:   document.getElementById('photoLightboxClose'),
+  photoLightboxDelete:  document.getElementById('photoLightboxDelete'),
+  photoLightboxBackdrop: document.getElementById('photoLightboxBackdrop'),
   spotList:   document.getElementById('spotList'),
   targetList: document.getElementById('targetList'),
   demoNotice: document.getElementById('demoNotice'),
@@ -214,7 +219,7 @@ function mockExec(payload) {
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime'];
-  const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo'];
+  const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -352,9 +357,29 @@ function compressImage(file, maxWidth = 1280, quality = 0.8) {
   });
 }
 
-function savePhoto(catchId, dataUrl)  { localStorage.setItem('angler_photo_' + catchId, dataUrl); }
-function getPhoto(catchId)            { return localStorage.getItem('angler_photo_' + catchId); }
-function deletePhoto(catchId)         { localStorage.removeItem('angler_photo_' + catchId); }
+// 写真本体はオンライン時はGoogle Driveへアップロードし、URLのみ釣果レコードの
+// photo列に保存する（デモモードはGoogle Driveに保存できないため、圧縮済みのdataURLを
+// そのままphoto列に保存する＝端末ローカル限定）。
+async function uploadPhotoToDrive(dataUrl, catchId) {
+  const url = getGasUrl();
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'uploadPhoto', dataUrl, catchId }),
+    });
+    if (!res.ok) return null;
+    const body = await res.json();
+    if (!body || body.result !== 'ok') return null;
+    return { photo: body.photoUrl, photoId: body.photoId };
+  } catch {
+    return null;
+  }
+}
+
+async function deleteDrivePhoto(photoId, catchId) {
+  if (isMockMode() || !photoId) return;
+  await sendAction({ action: 'deletePhoto', photoId, catchId: catchId || '' });
+}
 
 // ── Screen navigation ─────────────────────────────────────────
 function showEventsScreen() {
@@ -971,12 +996,12 @@ function renderEventCatches() {
   }
 
   els.catchesList.innerHTML = catches.map(c => {
-    const photo    = getPhoto(c.id);
+    const photo    = c.photo;
     const countNum = Number(c.count) || 1;
     const value    = catchValue(c);
     return `
       <div class="catch-row">
-        ${photo ? `<img src="${escapeHtml(photo)}" class="catch-thumb" alt="釣果写真">` : ''}
+        ${photo ? `<img src="${escapeHtml(photo)}" class="catch-thumb" data-catch-id="${escapeHtml(c.id)}" alt="釣果写真">` : ''}
         <span class="cr-time">${formatTime(c.time) || '--:--'}</span>
         <span class="cr-species">${escapeHtml(c.species || '-')}</span>
         <span class="cr-count">${countNum}匹</span>
@@ -1366,14 +1391,30 @@ async function onQuickCatchSubmit(e) {
     lure:    '',
     point:   '',
     memo:    '',
+    photo:   '',
+    photoId: '',
   };
 
   els.catchSubmitBtn.disabled = true;
   els.catchSubmitBtn.textContent = '記録中...';
 
+  if (pendingPhotoDataUrl) {
+    if (isMockMode()) {
+      payload.photo = pendingPhotoDataUrl;
+    } else {
+      els.catchSubmitBtn.textContent = '写真をアップロード中...';
+      const uploaded = await uploadPhotoToDrive(pendingPhotoDataUrl, catchId);
+      if (uploaded) {
+        payload.photo   = uploaded.photo;
+        payload.photoId = uploaded.photoId;
+      } else {
+        setStatus('写真のアップロードに失敗しました。釣果は写真なしで記録します。', 'error');
+      }
+    }
+  }
+
   const ok = await sendAction(payload);
   if (ok) {
-    if (pendingPhotoDataUrl) savePhoto(catchId, pendingPhotoDataUrl);
     setStatus(`${selectedSpecies} ${selectedCount}匹 を記録しました！ (${nowTime()})`, 'ok');
     resetCountSelection();
     clearPhotoInput();
@@ -1459,6 +1500,8 @@ function openCatchModal(c) {
   const f = els.catchEditForm;
   f.elements['id'].value      = c.id;
   f.elements['eventId'].value = c.eventId;
+  f.elements['photo'].value   = c.photo   || '';
+  f.elements['photoId'].value = c.photoId || '';
   f.elements['time'].value    = formatTime(c.time);
   f.elements['species'].value = c.species || '';
   f.elements['count'].value   = c.count   || '';
@@ -1477,6 +1520,35 @@ function closeCatchModal() {
   els.catchEditForm.reset();
 }
 
+let lightboxCatchId = null;
+
+function openPhotoLightbox(src, catchId) {
+  lightboxCatchId = catchId;
+  els.photoLightboxImg.src = src;
+  els.photoLightbox.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closePhotoLightbox() {
+  lightboxCatchId = null;
+  els.photoLightbox.hidden = true;
+  els.photoLightboxImg.src = '';
+  document.body.style.overflow = '';
+}
+
+async function deleteLightboxPhoto() {
+  const c = currentCatches.find(cc => cc.id === lightboxCatchId);
+  if (!c || !confirm('この写真を削除しますか？')) return;
+
+  if (isMockMode()) {
+    await sendAction({ ...c, action: 'updateCatch', photo: '', photoId: '' });
+  } else {
+    await deleteDrivePhoto(c.photoId, c.id);
+  }
+  closePhotoLightbox();
+  await loadAll();
+}
+
 async function onCatchEditSubmit(e) {
   e.preventDefault();
   const fd = new FormData(els.catchEditForm);
@@ -1484,6 +1556,8 @@ async function onCatchEditSubmit(e) {
     action:  'updateCatch',
     id:      fd.get('id'),
     eventId: fd.get('eventId'),
+    photo:   fd.get('photo'),
+    photoId: fd.get('photoId'),
     time:    fd.get('time'),
     species: fd.get('species'),
     count:   fd.get('count'),
@@ -1561,7 +1635,7 @@ async function handleEventsClick(e) {
     if (!confirm('この釣行とその釣果をすべて削除しますか？')) return;
     const related = currentCatches.filter(c => c.eventId === id);
     for (const c of related) {
-      deletePhoto(c.id);
+      await deleteDrivePhoto(c.photoId);
       await sendAction({ action: 'deleteCatch', id: c.id });
     }
     await sendAction({ action: 'deleteEvent', id });
@@ -1582,7 +1656,8 @@ async function handleCatchesClick(e) {
 
   if (btn.classList.contains('delete-catch-btn')) {
     if (!confirm('この釣果を削除しますか？')) return;
-    deletePhoto(id);
+    const c = currentCatches.find(cc => cc.id === id);
+    await deleteDrivePhoto(c && c.photoId);
     await sendAction({ action: 'deleteCatch', id });
     await loadAll();
   }
@@ -1757,6 +1832,14 @@ function init() {
   els.catchEditForm.addEventListener('submit', onCatchEditSubmit);
   els.catchModalClose.addEventListener('click', closeCatchModal);
   els.modalBackdrop.addEventListener('click', closeCatchModal);
+
+  els.catchesList.addEventListener('click', e => {
+    const thumb = e.target.closest('.catch-thumb');
+    if (thumb) openPhotoLightbox(thumb.src, thumb.dataset.catchId);
+  });
+  els.photoLightboxClose.addEventListener('click', closePhotoLightbox);
+  els.photoLightboxBackdrop.addEventListener('click', closePhotoLightbox);
+  els.photoLightboxDelete.addEventListener('click', deleteLightboxPhoto);
 
   els.heatmap.addEventListener('click', e => {
     const chip = e.target.closest('.hm-chip');

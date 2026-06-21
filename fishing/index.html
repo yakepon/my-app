@@ -125,6 +125,11 @@
         <path d="M6 6 18 18M18 6 6 18"/>
       </symbol>
 
+      <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M18 7l-.8 12.1a1.5 1.5 0 0 1-1.5 1.4H8.3a1.5 1.5 0 0 1-1.5-1.4L6 7"/>
+        <path d="M10 11v6M14 11v6"/>
+      </symbol>
+
       <symbol id="icon-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="8.5"/>
         <circle cx="12" cy="12" r="4.6"/>
@@ -463,6 +468,8 @@
       <form id="catchEditForm">
         <input type="hidden" name="id">
         <input type="hidden" name="eventId">
+        <input type="hidden" name="photo">
+        <input type="hidden" name="photoId">
         <div class="form-grid">
           <label>時刻
             <input type="time" name="time">
@@ -495,6 +502,16 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- Photo Lightbox -->
+  <div id="photoLightbox" class="modal photo-lightbox" hidden>
+    <div class="modal-backdrop" id="photoLightboxBackdrop"></div>
+    <div class="lightbox-actions">
+      <button type="button" class="lightbox-btn lightbox-delete" id="photoLightboxDelete" title="写真を削除"><svg class="icon"><use href="#icon-trash"/></svg></button>
+      <button type="button" class="lightbox-btn lightbox-close" id="photoLightboxClose" title="閉じる"><svg class="icon"><use href="#icon-close"/></svg></button>
+    </div>
+    <img id="photoLightboxImg" class="lightbox-img" src="" alt="釣果写真（拡大）">
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
