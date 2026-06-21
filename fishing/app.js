@@ -936,11 +936,11 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
       <rect class="tide-night" x="${x2.toFixed(1)}" y="0" width="${(240 - x2).toFixed(1)}" height="100"></rect>
     `;
     sunHtml = `<span class="badge badge-outline tide-sun-badge">
-      <svg class="icon icon-inline"><use href="#icon-sunrise"/></svg>${formatJstTime(sun.sunrise)}
-      <svg class="icon icon-inline"><use href="#icon-sunset"/></svg>${formatJstTime(sun.sunset)}
+      <svg class="icon icon-inline"><use href="#icon-sun"/></svg>${formatJstTime(sun.sunrise)}
+      <svg class="icon icon-inline"><use href="#icon-moon"/></svg>${formatJstTime(sun.sunset)}
     </span>`;
-    markers.push({ h: sunriseH, cls: 'tide-marker-sunrise', icon: 'icon-sunrise', title: `日の出 ${formatJstTime(sun.sunrise)}` });
-    markers.push({ h: sunsetH,  cls: 'tide-marker-sunset',  icon: 'icon-sunset',  title: `日の入り ${formatJstTime(sun.sunset)}` });
+    markers.push({ h: sunriseH, cls: 'tide-marker-sunrise', icon: 'icon-sun',  title: `日の出 ${formatJstTime(sun.sunrise)}` });
+    markers.push({ h: sunsetH,  cls: 'tide-marker-sunset',  icon: 'icon-moon', title: `日の入り ${formatJstTime(sun.sunset)}` });
   }
 
   let tripBand = '';

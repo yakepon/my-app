@@ -494,7 +494,8 @@ main, header, footer, section { position: relative; z-index: 2; }
   cursor: default;
 }
 .tide-marker .icon { width: 10px; height: 10px; }
-.tide-marker-sunrise, .tide-marker-sunset { color: var(--warn); }
+.tide-marker-sunrise { color: var(--warn); }
+.tide-marker-sunset  { color: var(--ink-muted); }
 .tide-marker-start, .tide-marker-end { top: 24px; }
 .tide-marker-start { color: var(--accent-2); }
 .tide-marker-end   { color: var(--danger); }
