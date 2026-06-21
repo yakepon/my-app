@@ -1164,7 +1164,7 @@ form > textarea { margin-bottom: 0.6rem; }
 /* ── Reel size & line comparison (サイズ・ライン比較) ──────────── */
 .reel-compare-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 0.9rem;
   padding: 0.5rem 0;
@@ -1185,6 +1185,20 @@ form > textarea { margin-bottom: 0.6rem; }
 .reel-spool-body { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
 .reel-spool-label { font-family: var(--font-body); font-size: 0.62rem; font-weight: 700; fill: var(--ink); }
 .reel-spool-label-empty { font-size: 0.55rem; font-weight: 400; fill: var(--ink-faint); }
+
+.reel-line-age {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.reel-line-age .icon { width: 1em; height: 1em; }
+.reel-line-age-warn   { color: var(--warn); }
+.reel-line-age-danger { color: var(--danger); }
 
 .icon-btn {
   font-size: 0.7rem;

@@ -1945,6 +1945,36 @@ function parseLeadingNumber(str) {
   return m ? Number(m[0]) : null;
 }
 
+// 最新ライン交換日からの経過日数（未入力なら null）。
+function daysSince(dateStr) {
+  const s = normDateStr(dateStr);
+  if (!s) return null;
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return null;
+  const today = new Date(todayStr());
+  return Math.floor((today - d) / 86400000);
+}
+
+const LINE_AGE_WARN_DAYS   = 365; // 1年以上: 交換を検討
+const LINE_AGE_DANGER_DAYS = 730; // 2年以上: 交換必須
+
+// ライン交換からの経過日数を、しきい値に応じて色・アイコン付きで表すバッジ。
+function lineAgeBadgeHtml(g) {
+  const days = daysSince(g.lastLineChangeDate);
+  if (days == null) return '';
+  if (days >= LINE_AGE_DANGER_DAYS) {
+    return `<span class="reel-line-age reel-line-age-danger" title="ライン交換から${days}日。交換必須です。">
+      <svg class="icon icon-inline"><use href="#icon-alert"/></svg>交換必須・${days}日
+    </span>`;
+  }
+  if (days >= LINE_AGE_WARN_DAYS) {
+    return `<span class="reel-line-age reel-line-age-warn" title="ライン交換から${days}日。そろそろ交換を検討してください。">
+      <svg class="icon icon-inline"><use href="#icon-alert"/></svg>要交換・${days}日
+    </span>`;
+  }
+  return `<span class="reel-line-age reel-line-age-ok">${days}日</span>`;
+}
+
 // リールの「スタイル」欄に入力された番号（例: 2500, C3000, 4000HG）をスプールの
 // 大きさ、巻いているライン（種別・太さ）をスプール周りの色付きリングで表現し、
 // 見た目で大きさ・ラインを比較できるようにする。
@@ -2016,6 +2046,7 @@ function renderReelSizeChart(reels) {
           <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
           ${centerLabel}
         </svg>
+        ${lineAgeBadgeHtml(g)}
       </div>`;
   }).join('');
 
