@@ -807,7 +807,7 @@ main, header, footer, section { position: relative; z-index: 2; }
   transform: translateY(-2px);
   color: #fff;
 }
-.btn-primary:active { transform: translateY(0) scale(0.97); filter: brightness(0.82); color: #fff; }
+.btn-primary:active { background: var(--ink); border-color: var(--ink); color: #fff; transform: translateY(0) scale(0.97); }
 
 .btn-outline { border-color: var(--accent); color: var(--accent); }
 .btn-outline:hover { background: rgba(255,45,149,0.06); }
@@ -1297,7 +1297,7 @@ form > textarea { margin-bottom: 0.6rem; }
   font-weight: 700;
 }
 .nav-btn-register:hover { color: #fff; background: var(--gradient); border-color: transparent; box-shadow: 0 8px 18px -8px rgba(255,45,149,0.45); }
-.nav-btn-register:active { background: var(--gradient); border-color: transparent; color: #fff; filter: brightness(0.82); transform: translateY(0) scale(0.97); }
+.nav-btn-register:active { background: var(--ink); border-color: var(--ink); color: #fff; transform: translateY(0) scale(0.97); }
 
 /* ── Screen containers ──────────────────────────────────────── */
 .screen { padding-top: 0.4rem; }
