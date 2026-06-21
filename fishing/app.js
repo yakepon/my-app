@@ -1964,15 +1964,15 @@ function lineAgeBadgeHtml(g) {
   if (days == null) return '';
   if (days >= LINE_AGE_DANGER_DAYS) {
     return `<span class="reel-line-age reel-line-age-danger" title="ライン交換から${days}日。交換必須です。">
-      <svg class="icon icon-inline"><use href="#icon-alert"/></svg>交換必須・${days}日
+      <svg class="icon icon-inline"><use href="#icon-alert"/></svg>交換必須<small>交換から${days}日</small>
     </span>`;
   }
   if (days >= LINE_AGE_WARN_DAYS) {
     return `<span class="reel-line-age reel-line-age-warn" title="ライン交換から${days}日。そろそろ交換を検討してください。">
-      <svg class="icon icon-inline"><use href="#icon-alert"/></svg>要交換・${days}日
+      <svg class="icon icon-inline"><use href="#icon-alert"/></svg>要交換<small>交換から${days}日</small>
     </span>`;
   }
-  return `<span class="reel-line-age reel-line-age-ok">${days}日</span>`;
+  return `<span class="reel-line-age reel-line-age-ok"><small>交換から${days}日</small></span>`;
 }
 
 // リールの「スタイル」欄に入力された番号（例: 2500, C3000, 4000HG）をスプールの
