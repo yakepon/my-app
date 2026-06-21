@@ -1164,13 +1164,14 @@ form > textarea { margin-bottom: 0.6rem; }
 /* ── Reel size & line comparison (サイズ・ライン比較) ──────────── */
 .reel-compare-row {
   display: grid;
-  grid-template-columns: 8.5rem auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 0.9rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--border);
 }
 .reel-compare-row:last-child { border-bottom: none; }
+.reel-compare-info { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 .reel-compare-name {
   font-size: 0.78rem;
   font-weight: 700;
@@ -1179,11 +1180,11 @@ form > textarea { margin-bottom: 0.6rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.reel-compare-size { font-family: var(--font-body); font-size: 0.72rem; color: var(--ink-muted); }
 .reel-spool-svg { display: block; flex-shrink: 0; }
 .reel-spool-body { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
-.reel-compare-meta { display: flex; flex-direction: column; gap: 0.15rem; }
-.reel-compare-size { font-family: var(--font-body); font-size: 0.8rem; font-weight: 700; color: var(--ink); }
-.reel-compare-line { font-family: var(--font-body); font-size: 0.68rem; color: var(--ink-muted); }
+.reel-spool-label { font-family: var(--font-body); font-size: 0.62rem; font-weight: 700; fill: var(--ink); }
+.reel-spool-label-empty { font-size: 0.55rem; font-weight: 400; fill: var(--ink-faint); }
 
 .icon-btn {
   font-size: 0.7rem;

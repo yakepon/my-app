@@ -1960,8 +1960,12 @@ function renderReelSizeChart(reels) {
     return;
   }
 
-  const MIN_R = 16, MAX_R = 40;
+  const MIN_R = 20, MAX_R = 32;
   const MIN_STROKE = 2, MAX_STROKE = 10;
+  // SVGのキャンバスは全行で固定サイズにし、円は常にキャンバス中心に描く。
+  // これにより縦に並べたときにリールサイズが違っても円の中心が揃う。
+  const DIM = 84;
+  const C = DIM / 2;
 
   const maxSize = Math.max(...withSize.map(x => x.size));
   const lineNums = withSize.map(x => parseLeadingNumber(x.g.lineSize)).filter(n => n != null);
@@ -1973,12 +1977,10 @@ function renderReelSizeChart(reels) {
     const isPe     = /pe/i.test(g.lineType || '');
     const isNylon  = /ナイロン|nylon/i.test(g.lineType || '');
     const stroke   = lineNum != null ? MIN_STROKE + (lineNum / maxLineNum) * (MAX_STROKE - MIN_STROKE) : 0;
-    const dim = Math.ceil((r + stroke) * 2 + 4);
-    const c   = dim / 2;
     const gradId = `peGrad-${g.id}`;
 
     const ring = stroke > 0
-      ? `<circle cx="${c}" cy="${c}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${gradId})` : isNylon ? '#f4d23a' : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
+      ? `<circle cx="${C}" cy="${C}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${gradId})` : isNylon ? '#f4d23a' : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
       : '';
 
     const peDefs = isPe ? `
@@ -1994,20 +1996,26 @@ function renderReelSizeChart(reels) {
         </linearGradient>
       </defs>` : '';
 
-    const lineLabel = [g.lineType, g.lineSize].filter(Boolean).join(' ');
+    const lineTypeShort = isPe ? 'PE' : isNylon ? 'ナイロン' : (g.lineType || '');
+    const centerLabel = lineTypeShort || g.lineSize
+      ? `<text x="${C}" y="${C}" text-anchor="middle" dominant-baseline="middle" class="reel-spool-label">
+          <tspan x="${C}" dy="-0.15em">${escapeHtml(lineTypeShort)}</tspan>
+          <tspan x="${C}" dy="1.15em">${escapeHtml(g.lineSize || '')}</tspan>
+        </text>`
+      : `<text x="${C}" y="${C}" text-anchor="middle" dominant-baseline="middle" class="reel-spool-label reel-spool-label-empty">ラインなし</text>`;
 
     return `
       <div class="reel-compare-row">
-        <span class="reel-compare-name">${escapeHtml(g.name || '-')}</span>
-        <svg class="reel-spool-svg" width="${dim}" height="${dim}" viewBox="0 0 ${dim} ${dim}">
+        <span class="reel-compare-info">
+          <span class="reel-compare-name">${escapeHtml(g.name || '-')}</span>
+          <span class="reel-compare-size">${escapeHtml(g.style)}</span>
+        </span>
+        <svg class="reel-spool-svg" width="${DIM}" height="${DIM}" viewBox="0 0 ${DIM} ${DIM}">
           ${peDefs}
           ${ring}
-          <circle cx="${c}" cy="${c}" r="${r}" class="reel-spool-body" />
+          <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
+          ${centerLabel}
         </svg>
-        <span class="reel-compare-meta">
-          <span class="reel-compare-size">${escapeHtml(g.style)}</span>
-          ${lineLabel ? `<span class="reel-compare-line">${escapeHtml(lineLabel)}</span>` : '<span class="reel-compare-line">ラインなし</span>'}
-        </span>
       </div>`;
   }).join('');
 
