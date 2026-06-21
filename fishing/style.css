@@ -777,7 +777,7 @@ main, header, footer, section { position: relative; z-index: 2; }
   touch-action: manipulation;
 }
 .btn:hover { background: var(--surface-2); border-color: var(--ink); color: var(--ink); transform: translateY(-1px); }
-.btn:active { transform: translateY(0) scale(0.97); }
+.btn:active { background: var(--ink); border-color: var(--ink); color: #fff; transform: translateY(0) scale(0.97); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 .btn-primary {
@@ -792,10 +792,11 @@ main, header, footer, section { position: relative; z-index: 2; }
   transform: translateY(-2px);
   color: #fff;
 }
-.btn-primary:active { transform: translateY(0) scale(0.97); }
+.btn-primary:active { transform: translateY(0) scale(0.97); filter: brightness(0.82); color: #fff; }
 
 .btn-outline { border-color: var(--accent); color: var(--accent); }
 .btn-outline:hover { background: rgba(255,45,149,0.06); }
+.btn-outline:active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 .btn-catch {
   width: 100%;
@@ -820,6 +821,7 @@ main, header, footer, section { position: relative; z-index: 2; }
 
 .btn-danger { border-color: rgba(224, 48, 63, 0.4); color: var(--danger); }
 .btn-danger:hover { background: rgba(224, 48, 63, 0.08); border-color: var(--danger); color: var(--danger); }
+.btn-danger:active { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 /* ── Badges ────────────────────────────────────────────────── */
 .badge {
@@ -929,9 +931,11 @@ form > textarea { margin-bottom: 0.6rem; }
 
 .btn-start-trip { border-color: rgba(108, 63, 224, 0.4); color: var(--accent-2); }
 .btn-start-trip:hover { background: rgba(108,63,224,0.06); border-color: var(--accent-2); color: var(--accent-2); }
+.btn-start-trip:active { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
 
 .btn-end-trip { border-color: rgba(224, 48, 63, 0.4); color: var(--danger); }
 .btn-end-trip:hover { background: rgba(224,48,63,0.06); border-color: var(--danger); color: var(--danger); }
+.btn-end-trip:active { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 .ec-time-badge .icon { color: var(--accent-2); }
 
@@ -1267,7 +1271,7 @@ form > textarea { margin-bottom: 0.6rem; }
   -webkit-tap-highlight-color: transparent;
 }
 .nav-btn:hover { color: var(--ink); border-color: var(--ink); background: var(--surface-2); transform: translateY(-1px); }
-.nav-btn:active { transform: translateY(0) scale(0.97); }
+.nav-btn:active { background: var(--ink); border-color: var(--ink); color: #fff; transform: translateY(0) scale(0.97); }
 
 .nav-btn-register {
   background: var(--gradient);
@@ -1276,6 +1280,7 @@ form > textarea { margin-bottom: 0.6rem; }
   font-weight: 700;
 }
 .nav-btn-register:hover { color: #fff; background: var(--gradient); border-color: transparent; box-shadow: 0 8px 18px -8px rgba(255,45,149,0.45); }
+.nav-btn-register:active { background: var(--gradient); border-color: transparent; color: #fff; filter: brightness(0.82); transform: translateY(0) scale(0.97); }
 
 /* ── Screen containers ──────────────────────────────────────── */
 .screen { padding-top: 0.4rem; }
