@@ -2057,6 +2057,24 @@ function renderReelSizeChart(reels) {
       ? `<circle cx="${C}" cy="${C}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${peGradId})` : isNylon ? `url(#${nylonGradId})` : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
       : '';
 
+    // 巻かれたラインの質感を出すため、リング帯の中に細い同心円を重ねて
+    // 「巻き」の筋を表現する。本数はライン太さ(stroke)に応じて増やし、
+    // 太いラインほど巻き数が多く見えるようにする。
+    const nWraps = stroke > 0 ? Math.max(3, Math.round(stroke * 1.2)) : 0;
+    const windTexture = Array.from({ length: nWraps }, (_, i) => {
+      const t = (i + 1) / (nWraps + 1);
+      const rr = r + stroke * t;
+      return `<circle cx="${C}" cy="${C}" r="${rr.toFixed(1)}" class="reel-spool-wind" />`;
+    }).join('');
+
+    // スプールの縁（フランジ）を表す薄いリムを、ライン帯の外側にもう一周描く。
+    const flange = stroke > 0
+      ? `<circle cx="${C}" cy="${C}" r="${(r + stroke + 1.3).toFixed(1)}" class="reel-spool-flange" />`
+      : '';
+
+    // 中心はスプール軸（アーバー）に見立て、本体の中にもう一段小さいリムを描く。
+    const innerRim = `<circle cx="${C}" cy="${C}" r="${(r * 0.55).toFixed(1)}" class="reel-spool-inner-rim" />`;
+
     const peDefs = isPe ? `
       <defs>
         <linearGradient id="${peGradId}" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -2095,7 +2113,10 @@ function renderReelSizeChart(reels) {
           ${peDefs}
           ${nylonDefs}
           ${ring}
+          ${windTexture}
+          ${flange}
           <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
+          ${innerRim}
           ${centerLabel}
         </svg>
         ${lineAgeBadgeHtml(g)}
