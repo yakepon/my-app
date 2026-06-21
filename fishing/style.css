@@ -957,8 +957,18 @@ form > textarea { margin-bottom: 0.6rem; }
 .ec-spot-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.55rem; }
 .ec-spot { font-size: 1.08rem; font-weight: 900; color: var(--ink); flex: 1; min-width: 0; }
 .ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; }
-.ec-meta { display: flex; flex-direction: column; gap: 0.4rem; }
-.ec-meta-row { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.ec-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.3rem; }
+.ec-group { display: flex; align-items: baseline; gap: 0.6rem; }
+.ec-group-label {
+  flex-shrink: 0;
+  width: 2.6rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+.ec-group-content { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; min-width: 0; }
 
 .badge-target {
   background: rgba(214, 138, 0, 0.06);
@@ -968,8 +978,6 @@ form > textarea { margin-bottom: 0.6rem; }
 .badge-target .icon { color: var(--warn); }
 
 /* ── Trip start/end & catch rate ──────────────────────────────── */
-.ec-time-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.75rem; }
-
 .btn-start-trip { border-color: rgba(108, 63, 224, 0.4); color: var(--accent-2); }
 .btn-start-trip:hover { background: rgba(108,63,224,0.06); border-color: var(--accent-2); color: var(--accent-2); }
 .btn-start-trip:active { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
@@ -1128,6 +1136,7 @@ form > textarea { margin-bottom: 0.6rem; }
   gap: 0.7rem;
   padding: 0.4rem 0;
 }
+.rod-ruler-info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .rod-ruler-name {
   font-size: 0.78rem;
   font-weight: 700;
@@ -1136,6 +1145,7 @@ form > textarea { margin-bottom: 0.6rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.rod-ruler-sinker { font-family: var(--font-body); font-size: 0.68rem; color: var(--ink-faint); }
 .rod-ruler-len {
   font-family: var(--font-body);
   font-size: 0.75rem;

@@ -632,16 +632,39 @@ function renderEventsList(expanded = false) {
     // 一定時間（10分）未満は釣果率を表示しない
     const rate  = (hours && hours >= (10 / 60) && totalCatch > 0) ? totalCatch / hours : null;
 
-    const timeRow = `
-      <div class="ec-time-row">
-        ${ev.startTime
-          ? `<span class="badge badge-outline ec-time-badge"><svg class="icon icon-inline"><use href="#icon-clock"/></svg>${formatTime(ev.startTime)}${ev.endTime ? '–' + formatTime(ev.endTime) : ' 〜 計測中'}</span>`
-          : `<button type="button" class="btn btn-sm btn-start-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-play"/></svg>開始</button>`}
-        ${ev.startTime && !ev.endTime
-          ? `<button type="button" class="btn btn-sm btn-end-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-stop"/></svg>終了</button>`
-          : ''}
-        ${hours ? `<span class="badge badge-outline">${formatDuration(hours)}</span>` : ''}
-        ${rate != null ? `<span class="ec-rate">${rate.toFixed(1)}匹/時間</span>` : ''}
+    // 釣行一覧の各カードは「行程」「天候」「釣果」「コスパ」のラベル付きグループに
+    // 分けて表示し、内容がない区分はグループ自体を出さない。
+    const itineraryGroup = `
+      ${ev.style ? `<span class="badge badge-outline">${escapeHtml(ev.style)}</span>` : ''}
+      ${ev.startTime
+        ? `<span class="badge badge-outline ec-time-badge"><svg class="icon icon-inline"><use href="#icon-clock"/></svg>${formatTime(ev.startTime)}${ev.endTime ? '–' + formatTime(ev.endTime) : ' 〜 計測中'}</span>`
+        : `<button type="button" class="btn btn-sm btn-start-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-play"/></svg>開始</button>`}
+      ${ev.startTime && !ev.endTime
+        ? `<button type="button" class="btn btn-sm btn-end-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-stop"/></svg>終了</button>`
+        : ''}
+      ${hours ? `<span class="badge badge-outline">${formatDuration(hours)}</span>` : ''}`;
+
+    const weatherGroup = `
+      ${ev.weather ? `<span class="badge badge-outline">${escapeHtml(ev.weather)}</span>` : ''}
+      ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
+      <span class="ec-weather-slot" data-id="${escapeHtml(ev.id)}"></span>`;
+
+    const showCatchGroup = ev.target || species.length || totalCatch > 0 || rate != null;
+    const catchGroup = `
+      ${ev.target ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(ev.target)}</span>` : ''}
+      ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
+      ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
+      ${rate != null ? `<span class="ec-rate">${rate.toFixed(1)}匹/時間</span>` : ''}`;
+
+    const showCostGroup = ev.cost || totalValue > 0;
+    const costGroup = `
+      ${ev.cost ? `<span class="ec-cost">¥${Number(ev.cost).toLocaleString()}</span>` : ''}
+      ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-coin"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}`;
+
+    const metaGroupHtml = (label, content) => `
+      <div class="ec-group">
+        <span class="ec-group-label">${label}</span>
+        <div class="ec-group-content">${content}</div>
       </div>`;
 
     return `
@@ -658,25 +681,13 @@ function renderEventsList(expanded = false) {
                 ${photos.length ? `<div class="ec-photos">${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
               </div>
               <div class="ec-meta">
-                <div class="ec-meta-row">
-                  ${ev.style   ? `<span class="badge badge-outline">${escapeHtml(ev.style)}</span>` : ''}
-                  ${ev.weather ? `<span class="badge badge-outline">${escapeHtml(ev.weather)}</span>` : ''}
-                  ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
-                  <span class="ec-weather-slot" data-id="${escapeHtml(ev.id)}"></span>
-                </div>
-                ${(ev.target || species.length) ? `<div class="ec-meta-row">
-                  ${ev.target ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(ev.target)}</span>` : ''}
-                  ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
-                </div>` : ''}
-                ${(ev.cost || totalCatch > 0 || totalValue > 0) ? `<div class="ec-meta-row">
-                  ${ev.cost    ? `<span class="ec-cost">¥${Number(ev.cost).toLocaleString()}</span>` : ''}
-                  ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
-                  ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-coin"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}
-                </div>` : ''}
+                ${metaGroupHtml('行程', itineraryGroup)}
+                ${metaGroupHtml('天候', weatherGroup)}
+                ${showCatchGroup ? metaGroupHtml('釣果', catchGroup) : ''}
+                ${showCostGroup  ? metaGroupHtml('コスパ', costGroup) : ''}
               </div>
             </div>
           </div>
-          ${timeRow}
         </div>
         ${ev.memo ? `
         <div class="ec-memo-row">
@@ -2078,7 +2089,10 @@ function renderRodLengthRuler(rods) {
 
   const rows = withLength.map(g => `
     <div class="rod-ruler-row">
-      <span class="rod-ruler-name">${escapeHtml(g.name || '-')}</span>
+      <span class="rod-ruler-info">
+        <span class="rod-ruler-name">${escapeHtml(g.name || '-')}</span>
+        ${g.sinkerWeight ? `<span class="rod-ruler-sinker">錘負荷${escapeHtml(g.sinkerWeight)}</span>` : ''}
+      </span>
       <div class="rod-ruler-track">
         <div class="rod-ruler-bar" style="width:${(Number(g.rodLength) / niceMax * 100).toFixed(1)}%"></div>
       </div>
