@@ -477,6 +477,28 @@ main, header, footer, section { position: relative; z-index: 2; }
   color: var(--accent);
 }
 
+.tide-markers { position: absolute; inset: 0; pointer-events: none; }
+.tide-marker {
+  position: absolute;
+  top: 3px;
+  transform: translateX(-50%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1.5px solid currentColor;
+  pointer-events: auto;
+  cursor: default;
+}
+.tide-marker .icon { width: 10px; height: 10px; }
+.tide-marker-sunrise, .tide-marker-sunset { color: var(--warn); }
+.tide-marker-start, .tide-marker-end { top: 24px; }
+.tide-marker-start { color: var(--accent-2); }
+.tide-marker-end   { color: var(--danger); }
+
 .tide-axis {
   display: flex;
   gap: 0.4rem;

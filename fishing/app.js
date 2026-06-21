@@ -818,6 +818,12 @@ function formatJstTime(date) {
   return date.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' });
 }
 
+function formatHourFraction(h) {
+  const hh = Math.floor(h) % 24;
+  const mm = Math.round((h - Math.floor(h)) * 60);
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
 async function fetchTide(area, dateStr) {
   if (isMockMode()) return null; // デモモードはGAS経由の外部取得ができないため非対応
   const url = getGasUrl();
@@ -919,6 +925,7 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
 
   let nightRects = '';
   let sunHtml = '';
+  const markers = [];
   if (sun) {
     const sunriseH = jstHourFraction(sun.sunrise);
     const sunsetH  = jstHourFraction(sun.sunset);
@@ -929,8 +936,11 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
       <rect class="tide-night" x="${x2.toFixed(1)}" y="0" width="${(240 - x2).toFixed(1)}" height="100"></rect>
     `;
     sunHtml = `<span class="badge badge-outline tide-sun-badge">
-      <svg class="icon icon-inline"><use href="#icon-clock"/></svg>日の出 ${formatJstTime(sun.sunrise)} ／ 日の入り ${formatJstTime(sun.sunset)}
+      <svg class="icon icon-inline"><use href="#icon-sunrise"/></svg>${formatJstTime(sun.sunrise)}
+      <svg class="icon icon-inline"><use href="#icon-sunset"/></svg>${formatJstTime(sun.sunset)}
     </span>`;
+    markers.push({ h: sunriseH, cls: 'tide-marker-sunrise', icon: 'icon-sunrise', title: `日の出 ${formatJstTime(sun.sunrise)}` });
+    markers.push({ h: sunsetH,  cls: 'tide-marker-sunset',  icon: 'icon-sunset',  title: `日の入り ${formatJstTime(sun.sunset)}` });
   }
 
   let tripBand = '';
@@ -949,9 +959,23 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
       `;
     }).join('');
     tripHtml = `<span class="badge badge-outline tide-trip-badge">
-      <svg class="icon icon-inline"><use href="#icon-rod"/></svg>釣行時間
+      <svg class="icon icon-inline"><use href="#icon-play"/></svg>${formatHourFraction(tripRange.start)}
+      ${tripRange.ongoing
+        ? '〜 計測中'
+        : `<svg class="icon icon-inline"><use href="#icon-stop"/></svg>${formatHourFraction(tripRange.end)}`}
     </span>`;
+    markers.push({ h: tripRange.start, cls: 'tide-marker-start', icon: 'icon-play', title: `釣行開始 ${formatHourFraction(tripRange.start)}` });
+    if (!tripRange.ongoing) {
+      markers.push({ h: tripRange.end, cls: 'tide-marker-end', icon: 'icon-stop', title: `釣行終了 ${formatHourFraction(tripRange.end)}` });
+    }
   }
+
+  const markersHtml = markers.length
+    ? `<div class="tide-markers">${markers.map(m => `
+        <div class="tide-marker ${m.cls}" style="left:${(m.h / 24 * 100).toFixed(2)}%" title="${escapeHtml(m.title)}">
+          <svg class="icon"><use href="#${m.icon}"/></svg>
+        </div>`).join('')}</div>`
+    : '';
 
   return `
     ${phaseHtml || sunHtml || tripHtml || extremaHtml ? `<div class="tide-chart-meta">${phaseHtml}${sunHtml}${tripHtml}${extremaHtml}</div>` : ''}
@@ -965,6 +989,7 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
           <path class="tide-line" d="${pathD}"></path>
         </svg>
         <div class="tide-columns">${columns}</div>
+        ${markersHtml}
       </div>
     </div>
     <div class="tide-axis">
@@ -1010,7 +1035,11 @@ async function renderTideChart() {
   if (startH != null) {
     const endH = parseHourFraction(activeEvent.endTime);
     const now = new Date();
-    tripRange = { start: startH, end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60) };
+    tripRange = {
+      start: startH,
+      end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60),
+      ongoing: endH == null,
+    };
   }
 
   els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour, activeEvent.tide, sun, tripRange);
