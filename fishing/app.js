@@ -54,8 +54,6 @@ const els = {
   catchScreen:    document.getElementById('catchScreen'),
   gearScreen:     document.getElementById('gearScreen'),
   eventBanner:    document.getElementById('eventBanner'),
-  tideChartPanel: document.getElementById('tideChartPanel'),
-  tideChart:      document.getElementById('tideChart'),
   quickCatchForm: document.getElementById('quickCatchForm'),
   speciesGrid:         document.getElementById('speciesGrid'),
   speciesPrompt:       document.getElementById('speciesPrompt'),
@@ -657,13 +655,11 @@ function renderEventsList(expanded = false) {
     els.eventsList.innerHTML = styleFilter
       ? '<p class="empty">この釣り方の釣行記録はまだありません。</p>'
       : '<p class="empty">まだ釣行記録がありません。「釣行登録」から登録してみましょう。</p>';
-    renderTideStrip([]);
     return;
   }
 
   const visible = expanded ? sorted : sorted.slice(0, EVENTS_INITIAL);
   const hiddenCount = sorted.length - EVENTS_INITIAL;
-  renderTideStrip(visible);
 
   const today = todayStr();
   els.eventsList.innerHTML = visible.map(ev => {
@@ -736,6 +732,12 @@ function renderEventsList(expanded = false) {
                 ${showCatchGroup ? metaGroupHtml('釣果', catchGroup) : ''}
                 ${showCostGroup  ? metaGroupHtml('コスパ', costGroup) : ''}
               </div>
+              <div class="ec-tide-group">
+                <span class="ec-group-label">潮汐</span>
+                <div class="tide-scroll-wrap" data-tide-event-id="${escapeHtml(ev.id)}">
+                  <div class="tide-scroll-inner"><p class="empty">読み込み中...</p></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -770,6 +772,7 @@ function renderEventsList(expanded = false) {
   }
 
   visible.forEach(loadEventWeather);
+  visible.forEach(hydrateTideGroup);
 }
 
 function renderEventBanner() {
@@ -1323,59 +1326,42 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
   `;
 }
 
-// 釣行一覧に表示中の各釣行について、潮汐と釣果のグラフを横スクロールで並べる。
-function renderTideStrip(events) {
-  if (!events.length) {
-    els.tideChartPanel.hidden = true;
-    els.tideChart.innerHTML = '';
+// 釣行一覧の各カードに埋め込んだ「潮汐」グループへ、非同期で取得したグラフを差し込む。
+// グラフ自体は24時間分の幅を持つため、カードが狭い場合はグラフ部分のみ横スクロールする。
+async function hydrateTideGroup(ev) {
+  const dateStr = normDateStr(ev.date);
+  const hours = await fetchTideCached(ev.area, dateStr);
+  const inner = document.querySelector(`.tide-scroll-wrap[data-tide-event-id="${cssEscape(ev.id)}"] .tide-scroll-inner`);
+  if (!inner) return; // 再描画でDOMが入れ替わっている場合
+
+  if (!hours) {
+    inner.innerHTML = '<p class="empty">この釣行のエリアでは潮汐データを取得できませんでした。</p>';
     return;
   }
 
-  els.tideChartPanel.hidden = false;
-  els.tideChart.innerHTML = events.map(ev => `
-    <div class="tide-chart-card" data-event-id="${escapeHtml(ev.id)}">
-      <div class="tide-chart-card-head">
-        <span class="tide-chart-card-date">${escapeHtml(formatDateLabel(ev.date))}</span>
-        <span class="tide-chart-card-spot">${escapeHtml(ev.spot || '-')}</span>
-      </div>
-      <div class="tide-chart-card-body"><p class="empty">読み込み中...</p></div>
-    </div>`).join('');
+  const countByHour = Array(24).fill(0);
+  currentCatches
+    .filter(c => c.eventId === ev.id)
+    .forEach(c => {
+      const h = parseHour(c.time);
+      if (!isNaN(h)) countByHour[h] += Number(c.count) || 1;
+    });
 
-  events.forEach(async ev => {
-    const dateStr = normDateStr(ev.date);
-    const hours = await fetchTideCached(ev.area, dateStr);
-    const body = els.tideChart.querySelector(`[data-event-id="${ev.id}"] .tide-chart-card-body`);
-    if (!body) return; // 再描画でDOMが入れ替わっている場合
+  const coords = resolveAreaCoords(ev.area);
+  const sun = coords ? calcSunTimes(coords.lat, coords.lon, dateStr) : null;
+  let tripRange = null;
+  const startH = parseHourFraction(ev.startTime);
+  if (startH != null) {
+    const endH = parseHourFraction(ev.endTime);
+    const now = new Date();
+    tripRange = {
+      start: startH,
+      end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60),
+      ongoing: endH == null,
+    };
+  }
 
-    if (!hours) {
-      body.innerHTML = '<p class="empty">この釣行のエリアでは潮汐データを取得できませんでした。</p>';
-      return;
-    }
-
-    const countByHour = Array(24).fill(0);
-    currentCatches
-      .filter(c => c.eventId === ev.id)
-      .forEach(c => {
-        const h = parseHour(c.time);
-        if (!isNaN(h)) countByHour[h] += Number(c.count) || 1;
-      });
-
-    const coords = resolveAreaCoords(ev.area);
-    const sun = coords ? calcSunTimes(coords.lat, coords.lon, dateStr) : null;
-    let tripRange = null;
-    const startH = parseHourFraction(ev.startTime);
-    if (startH != null) {
-      const endH = parseHourFraction(ev.endTime);
-      const now = new Date();
-      tripRange = {
-        start: startH,
-        end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60),
-        ongoing: endH == null,
-      };
-    }
-
-    body.innerHTML = buildTideChartHtml(hours, countByHour, ev.tide, sun, tripRange);
-  });
+  inner.innerHTML = buildTideChartHtml(hours, countByHour, ev.tide, sun, tripRange);
 }
 
 function renderEventCatches() {
