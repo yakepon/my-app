@@ -591,19 +591,19 @@ main, header, footer, section { position: relative; z-index: 2; }
 }
 
 .heatmap-cell {
-  height: 22px;
-  border-radius: 4px;
+  height: 16px;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 0.56rem;
+  font-size: 0.52rem;
   font-weight: 700;
 }
 
 @media (min-width: 600px) {
-  .heatmap-grid { grid-template-columns: 44px repeat(12, 1fr); gap: 3px; min-width: 520px; }
-  .heatmap-cell { height: 36px; border-radius: 5px; font-size: 0.7rem; }
+  .heatmap-grid { grid-template-columns: 44px repeat(12, 1fr); gap: 2px; min-width: 520px; }
+  .heatmap-cell { height: 24px; border-radius: 4px; font-size: 0.66rem; }
 }
 
 .heatmap-corner { background: transparent; }
