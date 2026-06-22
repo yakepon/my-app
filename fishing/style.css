@@ -1629,6 +1629,49 @@ form > textarea { margin-bottom: 0.6rem; }
 .hm-chip.hm-chip-active { background: var(--gradient); border-color: transparent; color: #fff; }
 .hm-chip.hm-chip-active:hover { color: #fff; }
 
+.heatmap-filter-spot { margin-bottom: 0.6rem; }
+
+.heatmap-date-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 860px;
+  margin: 0 auto 0.9rem;
+  padding: 0 1rem;
+}
+.hm-date-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+.hm-date-input {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  padding: 0.26rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.hm-date-input:focus { outline: none; border-color: var(--accent-2); }
+.hm-date-clear {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.24rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hm-date-clear:hover { border-color: var(--accent); background: #fff; }
+
 .heatmap-wrap-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* ── Expand / collapse button ───────────────────────────────── */

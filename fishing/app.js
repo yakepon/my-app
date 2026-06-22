@@ -151,6 +151,8 @@ let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let gearTab        = 'rod'; // 'rod' | 'reel'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
+let heatmapSpotFilter    = ''; // '' = 全釣り場
+let heatmapDateFilter    = ''; // '' = 日付指定なし (YYYY-MM-DD)
 let styleFilter = ''; // '' = すべての釣り方
 
 function filteredEvents() {
@@ -1344,23 +1346,47 @@ const HM_HOUR_LABELS = [...Array.from({ length: 23 }, (_, i) => String(i + 1).pa
 
 function renderHeatmap() {
   const events  = filteredEvents();
-  const withTime = filteredCatches(events).filter(c => c.time && c.eventId);
+  const withTime = filteredCatches(events)
+    .filter(c => c.time && c.eventId)
+    .map(c => ({ c, ev: events.find(e => e.id === c.eventId) }))
+    .filter(x => x.ev);
 
   // 魚種フィルタチップ
-  const allSpecies = [...new Set(withTime.map(c => c.species).filter(Boolean))].sort();
-  const filterHtml = `<div class="heatmap-filter">
+  const allSpecies = [...new Set(withTime.map(x => x.c.species).filter(Boolean))].sort();
+  const speciesFilterHtml = `<div class="heatmap-filter">
     <button class="hm-chip${!heatmapSpeciesFilter ? ' hm-chip-active' : ''}" data-species="">全魚種</button>
     ${allSpecies.map(s => `<button class="hm-chip${heatmapSpeciesFilter === s ? ' hm-chip-active' : ''}" data-species="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}
   </div>`;
+
+  // 釣り場名フィルタチップ
+  const allSpots = [...new Set(withTime.map(x => x.ev.spot).filter(Boolean))].sort();
+  const spotFilterHtml = `<div class="heatmap-filter heatmap-filter-spot">
+    <button class="hm-chip${!heatmapSpotFilter ? ' hm-chip-active' : ''}" data-spot="">全釣り場</button>
+    ${allSpots.map(s => `<button class="hm-chip${heatmapSpotFilter === s ? ' hm-chip-active' : ''}" data-spot="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}
+  </div>`;
+
+  // 日付フィルタ
+  const dateFilterHtml = `<div class="heatmap-date-filter">
+    <label class="hm-date-label">日付
+      <input type="date" class="hm-date-input" value="${escapeHtml(heatmapDateFilter)}">
+    </label>
+    ${heatmapDateFilter ? '<button type="button" class="hm-date-clear">日付条件をクリア</button>' : ''}
+  </div>`;
+
+  const filterHtml = speciesFilterHtml + spotFilterHtml + dateFilterHtml;
 
   if (!withTime.length) {
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">釣果データがありません。</p>';
     return;
   }
 
-  const filtered = heatmapSpeciesFilter
-    ? withTime.filter(c => c.species === heatmapSpeciesFilter)
-    : withTime;
+  // 魚種フィルタ ＆ （日付＋釣り場名）フィルタ は AND 条件で絞り込む
+  const filtered = withTime.filter(({ c, ev }) => {
+    if (heatmapSpeciesFilter && c.species !== heatmapSpeciesFilter) return false;
+    if (heatmapSpotFilter && ev.spot !== heatmapSpotFilter) return false;
+    if (heatmapDateFilter && normDateStr(ev.date) !== heatmapDateFilter) return false;
+    return true;
+  });
 
   if (!filtered.length) {
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">該当する釣果データがありません。</p>';
@@ -1370,9 +1396,7 @@ function renderHeatmap() {
   // counts[monthIdx 0-11][slotIdx 0-23]
   const counts = Array.from({ length: 12 }, () => Array(24).fill(0));
 
-  filtered.forEach(c => {
-    const ev = events.find(e => e.id === c.eventId);
-    if (!ev) return;
+  filtered.forEach(({ c, ev }) => {
     const hour = parseHour(c.time);
     if (isNaN(hour)) return;
     const d = new Date(normDateStr(ev.date) + 'T00:00:00');
@@ -2780,9 +2804,25 @@ function init() {
   els.photoLightboxDelete.addEventListener('click', deleteLightboxPhoto);
 
   els.heatmap.addEventListener('click', e => {
+    const dateClear = e.target.closest('.hm-date-clear');
+    if (dateClear) {
+      heatmapDateFilter = '';
+      renderHeatmap();
+      return;
+    }
     const chip = e.target.closest('.hm-chip');
     if (!chip) return;
-    heatmapSpeciesFilter = chip.dataset.species;
+    if (chip.dataset.spot !== undefined) {
+      heatmapSpotFilter = chip.dataset.spot;
+    } else {
+      heatmapSpeciesFilter = chip.dataset.species;
+    }
+    renderHeatmap();
+  });
+
+  els.heatmap.addEventListener('change', e => {
+    if (!e.target.matches('.hm-date-input')) return;
+    heatmapDateFilter = e.target.value || '';
     renderHeatmap();
   });
 
