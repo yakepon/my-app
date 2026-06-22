@@ -375,26 +375,38 @@
         <span class="label-text">分析</span>
       </div>
 
-      <!-- Charts -->
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-chart-trend"/></svg> 釣行トレンド（前年比）</h2>
-        <div class="chart-wrap chart-wrap-tall"><canvas id="trendChart"></canvas></div>
-      </section>
+      <!-- Analysis tabs (釣行分析 / 釣果分析) -->
+      <div class="gear-tabs" role="tablist">
+        <button type="button" class="gear-tab" id="analysisTabTrip" data-analysis-tab="trip" role="tab" aria-selected="true">釣行分析</button>
+        <button type="button" class="gear-tab" id="analysisTabCatch" data-analysis-tab="catch" role="tab" aria-selected="false">釣果分析</button>
+      </div>
 
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-fish"/></svg> 魚種別 釣果</h2>
-        <div class="chart-wrap"><canvas id="speciesChart"></canvas></div>
-      </section>
+      <div id="analysisTripPanel">
+        <section class="panel chart-panel">
+          <h2><svg class="icon icon-h2"><use href="#icon-chart-trend"/></svg> 釣行トレンド（前年比）</h2>
+          <div class="chart-wrap chart-wrap-tall"><canvas id="trendChart"></canvas></div>
+        </section>
+      </div>
 
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-map-pin"/></svg> 釣り場別 釣果</h2>
-        <div class="chart-wrap"><canvas id="spotChart"></canvas></div>
-      </section>
+      <div id="analysisCatchPanel" hidden>
+        <section class="panel chart-panel">
+          <h2 class="heatmap-h2">
+            <span class="h2-title"><svg class="icon icon-h2"><use href="#icon-heatmap"/></svg> 月別・時間帯別 ヒートマップ（釣果数）</span>
+            <span class="heatmap-total-badge" id="heatmapTotalBadge"></span>
+          </h2>
+          <div class="heatmap-wrap" id="heatmap"></div>
+        </section>
 
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-heatmap"/></svg> 月別・時間帯別 ヒートマップ（釣果数）</h2>
-        <div class="heatmap-wrap" id="heatmap"></div>
-      </section>
+        <section class="panel chart-panel">
+          <h2><svg class="icon icon-h2"><use href="#icon-fish"/></svg> 魚種別 釣果</h2>
+          <div class="chart-wrap"><canvas id="speciesChart"></canvas></div>
+        </section>
+
+        <section class="panel chart-panel">
+          <h2><svg class="icon icon-h2"><use href="#icon-map-pin"/></svg> 釣り場別 釣果</h2>
+          <div class="chart-wrap"><canvas id="spotChart"></canvas></div>
+        </section>
+      </div>
 
     </div><!-- /eventsScreen -->
 

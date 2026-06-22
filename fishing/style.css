@@ -339,6 +339,19 @@ main, header, footer, section { position: relative; z-index: 2; }
   border-bottom: 1px solid var(--border);
 }
 
+.heatmap-h2 { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+.heatmap-total-badge {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(255, 45, 149, 0.08);
+  border: 1px solid rgba(255, 45, 149, 0.25);
+  border-radius: 99px;
+  padding: 0.2rem 0.7rem;
+  white-space: nowrap;
+}
+
 /* ── Stats strip ───────────────────────────────────────────── */
 .stats-strip {
   display: grid;
@@ -1619,7 +1632,8 @@ form > textarea { margin-bottom: 0.6rem; }
   color: var(--ink-muted);
 }
 .hm-species-select,
-.hm-trip-select {
+.hm-trip-select,
+.hm-tide-select {
   font-family: var(--font-body);
   font-size: 0.78rem;
   padding: 0.3rem 0.6rem;
@@ -1630,7 +1644,8 @@ form > textarea { margin-bottom: 0.6rem; }
   max-width: 220px;
 }
 .hm-species-select:focus,
-.hm-trip-select:focus { outline: none; border-color: var(--accent-2); }
+.hm-trip-select:focus,
+.hm-tide-select:focus { outline: none; border-color: var(--accent-2); }
 
 .style-filter {
   display: flex;

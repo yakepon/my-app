@@ -86,6 +86,7 @@ const els = {
   speciesChart: document.getElementById('speciesChart'),
   spotChart:    document.getElementById('spotChart'),
   heatmap:      document.getElementById('heatmap'),
+  heatmapTotalBadge: document.getElementById('heatmapTotalBadge'),
   styleFilter:  document.getElementById('styleFilter'),
   eventForm:       document.getElementById('eventForm'),
   eventFormTitle:  document.getElementById('eventFormTitle'),
@@ -136,6 +137,10 @@ const els = {
   reelOnlyFields: document.getElementById('reelOnlyFields'),
   styleLabelText: document.getElementById('styleLabelText'),
   styleInput: document.getElementById('styleInput'),
+  analysisTabTrip:    document.getElementById('analysisTabTrip'),
+  analysisTabCatch:   document.getElementById('analysisTabCatch'),
+  analysisTripPanel:  document.getElementById('analysisTripPanel'),
+  analysisCatchPanel: document.getElementById('analysisCatchPanel'),
 };
 
 // ── State ─────────────────────────────────────────────────────
@@ -150,8 +155,10 @@ let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let gearTab        = 'rod'; // 'rod' | 'reel'
+let analysisTab    = 'trip'; // 'trip' | 'catch'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let heatmapTripFilter    = ''; // '' = すべての釣行 / それ以外はイベントID（日付＋釣り場名で一意な釣行）
+let heatmapTideFilter    = ''; // '' = すべての潮
 let styleFilter = ''; // '' = すべての釣り方
 
 function filteredEvents() {
@@ -519,6 +526,23 @@ function setGearTab(tab) {
   els.gearTabReel.setAttribute('aria-selected', String(tab === 'reel'));
   els.gearRodPanel.hidden  = tab !== 'rod';
   els.gearReelPanel.hidden = tab !== 'reel';
+}
+
+// 分析画面の「釣行分析」「釣果分析」タブ切り替え。
+function setAnalysisTab(tab) {
+  analysisTab = tab;
+  els.analysisTabTrip.classList.toggle('gear-tab-active', tab === 'trip');
+  els.analysisTabCatch.classList.toggle('gear-tab-active', tab === 'catch');
+  els.analysisTabTrip.setAttribute('aria-selected', String(tab === 'trip'));
+  els.analysisTabCatch.setAttribute('aria-selected', String(tab === 'catch'));
+  els.analysisTripPanel.hidden  = tab !== 'trip';
+  els.analysisCatchPanel.hidden = tab !== 'catch';
+  // hidden中はcanvasの幅が0になるため、表示時にChartの再計算が必要
+  if (tab === 'trip' && trendChartInst) trendChartInst.resize();
+  if (tab === 'catch') {
+    if (speciesChartInst) speciesChartInst.resize();
+    if (spotChartInst) spotChartInst.resize();
+  }
 }
 
 // ── API ───────────────────────────────────────────────────────
@@ -1374,19 +1398,36 @@ function renderHeatmap() {
       </select>
     </label>`;
 
-  const filterHtml = `<div class="heatmap-filter-row">${tripFilterHtml}${speciesFilterHtml}</div>`;
+  // 潮フィルタ（プルダウン）
+  const TIDE_ORDER = ['大潮', '中潮', '小潮', '長潮', '若潮'];
+  const allTides = [...new Set(withTime.map(x => x.ev.tide).filter(Boolean))]
+    .sort((a, b) => TIDE_ORDER.indexOf(a) - TIDE_ORDER.indexOf(b));
+  const tideFilterHtml = `
+    <label class="hm-select-label">潮
+      <select class="hm-tide-select">
+        <option value=""${!heatmapTideFilter ? ' selected' : ''}>すべての潮</option>
+        ${allTides.map(t => `<option value="${escapeHtml(t)}"${heatmapTideFilter === t ? ' selected' : ''}>${escapeHtml(t)}</option>`).join('')}
+      </select>
+    </label>`;
+
+  const filterHtml = `<div class="heatmap-filter-row">${tripFilterHtml}${speciesFilterHtml}${tideFilterHtml}</div>`;
 
   if (!withTime.length) {
+    els.heatmapTotalBadge.textContent = '';
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">釣果データがありません。</p>';
     return;
   }
 
-  // 魚種フィルタ ＆ 釣行（日付＋釣り場名）フィルタ は AND 条件で絞り込む
+  // 魚種フィルタ ＆ 釣行（日付＋釣り場名）フィルタ ＆ 潮フィルタ は AND 条件で絞り込む
   const filtered = withTime.filter(({ c, ev }) => {
     if (heatmapSpeciesFilter && c.species !== heatmapSpeciesFilter) return false;
     if (heatmapTripFilter && ev.id !== heatmapTripFilter) return false;
+    if (heatmapTideFilter && ev.tide !== heatmapTideFilter) return false;
     return true;
   });
+
+  const totalCount = filtered.reduce((sum, { c }) => sum + (Number(c.count) || 1), 0);
+  els.heatmapTotalBadge.textContent = `絞り込み結果 ${totalCount}匹`;
 
   if (!filtered.length) {
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">該当する釣果データがありません。</p>';
@@ -2612,6 +2653,10 @@ function init() {
   els.gearTabReel.addEventListener('click', () => setGearTab('reel'));
   setGearTab(gearTab);
 
+  els.analysisTabTrip.addEventListener('click', () => setAnalysisTab('trip'));
+  els.analysisTabCatch.addEventListener('click', () => setAnalysisTab('catch'));
+  setAnalysisTab(analysisTab);
+
   // Settings
   els.saveUrl.addEventListener('click', () => {
     const val = els.gasUrl.value.trim();
@@ -2809,6 +2854,9 @@ function init() {
       renderHeatmap();
     } else if (e.target.matches('.hm-trip-select')) {
       heatmapTripFilter = e.target.value;
+      renderHeatmap();
+    } else if (e.target.matches('.hm-tide-select')) {
+      heatmapTideFilter = e.target.value;
       renderHeatmap();
     }
   });
