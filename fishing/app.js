@@ -1124,25 +1124,41 @@ function renderAreaMap() {
     return;
   }
 
-  // 釣り場名から判定できたものはピンポイントで集計し、判定できなかった
-  // （が、エリア欄からは選択中の都道府県と判定できる）釣行は件数のみ別途表示する。
+  // 釣り場名から判定できたものはピンポイントで集計し、判定できなかった釣り場名は
+  // （エリア欄の内容に関わらず）そのまま一覧表示し、登録漏れに気づけるようにする。
   const spotCounts = new Map(); // key -> { spot, count }
-  let unresolved = 0;
+  const unresolvedNames = new Map(); // 入力された釣り場名 -> 件数
   events.forEach(ev => {
     const spot = resolveKanagawaSpot(ev.spot);
     if (spot) {
       const entry = spotCounts.get(spot.key) || { spot, count: 0 };
       entry.count++;
       spotCounts.set(spot.key, entry);
-      return;
+    } else if (ev.spot) {
+      unresolvedNames.set(ev.spot, (unresolvedNames.get(ev.spot) || 0) + 1);
     }
-    const loc = resolveKantoLocation(ev.area);
-    if (loc && loc.pref === SELECTED_PREF) unresolved++;
   });
 
   const bounds = computeMapBounds(KANTO_PREF_POLYGONS[SELECTED_PREF], 0.07, 0.09);
   const view = computeMapView(bounds, 420, 30);
   const project = (lat, lon) => projectLatLon(lat, lon, bounds, view);
+
+  const defs = `
+    <defs>
+      <linearGradient id="kantoSeaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#eef7fb"/>
+        <stop offset="100%" stop-color="#c3cdf0"/>
+      </linearGradient>
+      <linearGradient id="kantoLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#fbfaf6"/>
+        <stop offset="100%" stop-color="#efeae0"/>
+      </linearGradient>
+      <radialGradient id="kantoDotGrad" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#ff62b3"/>
+        <stop offset="55%" stop-color="#ff2d95"/>
+        <stop offset="100%" stop-color="#6C3FE0"/>
+      </radialGradient>
+    </defs>`;
 
   const seaRect = `<rect class="kanto-sea" x="0" y="0" width="${view.w}" height="${view.h}"></rect>`;
 
@@ -1151,14 +1167,29 @@ function renderAreaMap() {
     .join(' ');
   const landShape = `<polygon points="${landPoints}" class="kanto-pref-land"><title>${escapeHtml(SELECTED_PREF)}</title></polygon>`;
 
+  // 距離スケールバー（経度1度あたりの距離をこの緯度のcos補正で概算）
+  const latMid = (bounds.latMin + bounds.latMax) / 2;
+  const kmPerDegLon = 111.32 * Math.cos(latMid * Math.PI / 180);
+  const pxPerDegLon = (project(latMid, bounds.lonMin + 1).x - project(latMid, bounds.lonMin).x);
+  const scaleKm = 10;
+  const scalePx = Math.abs(pxPerDegLon) * (scaleKm / kmPerDegLon);
+  const scaleX = view.margin, scaleY = view.h - 14;
+  const scaleBar = `
+    <g class="kanto-scale-bar">
+      <line x1="${scaleX}" y1="${scaleY}" x2="${(scaleX + scalePx).toFixed(1)}" y2="${scaleY}"></line>
+      <line x1="${scaleX}" y1="${scaleY - 4}" x2="${scaleX}" y2="${scaleY + 4}"></line>
+      <line x1="${(scaleX + scalePx).toFixed(1)}" y1="${scaleY - 4}" x2="${(scaleX + scalePx).toFixed(1)}" y2="${scaleY + 4}"></line>
+      <text x="${(scaleX + scalePx / 2).toFixed(1)}" y="${scaleY - 7}" text-anchor="middle">${scaleKm}km</text>
+    </g>`;
+
   const max = Math.max(1, ...[...spotCounts.values()].map(e => e.count));
   const dots = [...spotCounts.values()].map(({ spot, count }) => {
     const { x, y } = project(spot.lat, spot.lon);
-    const r = (9 + (count / max) * 10).toFixed(1);
-    const alpha = (0.55 + (count / max) * 0.45).toFixed(2);
+    const r = (10 + (count / max) * 10).toFixed(1);
+    const dim = (0.7 + (count / max) * 0.3).toFixed(2);
     return `
-      <g>
-        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(spot.key)}: ${count}回</title></circle>
+      <g class="kanto-dot-group" data-spot-key="${escapeHtml(spot.key)}" style="opacity:${dim}">
+        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot"><title>${escapeHtml(spot.key)}: ${count}回</title></circle>
         <text x="${x}" y="${y}" class="kanto-dot-count" text-anchor="middle" dominant-baseline="central">${count}</text>
       </g>`;
   }).join('');
@@ -1167,19 +1198,26 @@ function renderAreaMap() {
   const rankHtml = ranked.length
     ? `<ol class="kanto-rank-list">
         ${ranked.map(({ spot, count }) => `
-          <li>
+          <li data-spot-key="${escapeHtml(spot.key)}">
+            <span class="kanto-rank-dot"></span>
             <span class="kanto-rank-pref">${escapeHtml(spot.key)}</span>
             <span class="kanto-rank-count">${count}回</span>
           </li>`).join('')}
       </ol>`
     : '<p class="empty" style="margin-top:0.8rem">登録済みの釣り場が見つかりませんでした。</p>';
 
-  const unresolvedHtml = unresolved
-    ? `<p class="kanto-unresolved">※ 釣り場名から地図上の位置を判定できなかった${escapeHtml(SELECTED_PREF)}の釣行が${unresolved}件あります。</p>`
+  const unresolvedHtml = unresolvedNames.size
+    ? `<div class="kanto-unresolved">
+        <p>※ 地図上の位置が分からない釣り場があります。座標を追加すれば表示できます。</p>
+        <ul class="kanto-unresolved-list">
+          ${[...unresolvedNames.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) =>
+            `<li>${escapeHtml(name)}<span class="kanto-unresolved-count">${n}件</span></li>`).join('')}
+        </ul>
+      </div>`
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${seaRect}${landShape}${dots}</svg>
+    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${seaRect}${landShape}${scaleBar}${dots}</svg>
     <p class="kanto-map-caption">※ ${escapeHtml(SELECTED_PREF)}県のみ対応の簡易版です（都道府県の選択は今後対応予定）</p>
     ${rankHtml}
     ${unresolvedHtml}`;
@@ -3140,6 +3178,20 @@ function init() {
       heatmapTideFilter = e.target.value;
       renderHeatmap();
     }
+  });
+
+  // エリア分析: ランキングのリストとマップ上の丸をホバーで連動させる
+  els.kantoMap.addEventListener('mouseover', e => {
+    const item = e.target.closest('[data-spot-key]');
+    if (!item) return;
+    const key = item.dataset.spotKey;
+    els.kantoMap.querySelectorAll(`[data-spot-key="${cssEscape(key)}"]`).forEach(el => el.classList.add('is-active'));
+  });
+  els.kantoMap.addEventListener('mouseout', e => {
+    const item = e.target.closest('[data-spot-key]');
+    if (!item) return;
+    const key = item.dataset.spotKey;
+    els.kantoMap.querySelectorAll(`[data-spot-key="${cssEscape(key)}"]`).forEach(el => el.classList.remove('is-active'));
   });
 
   els.styleFilter.addEventListener('click', e => {

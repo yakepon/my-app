@@ -1685,35 +1685,47 @@ form > textarea { margin-bottom: 0.6rem; }
 .heatmap-wrap-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* ── Kanto area map（緯度経度ベースの簡易散布図） ───────────────── */
-.kanto-map-wrap { max-width: 640px; margin: 0 auto; }
-.kanto-svg { width: 100%; height: auto; display: block; }
-.kanto-sea { fill: #d6ecf8; }
-.kanto-pref-land {
-  fill: #f3ecd9;
-  stroke: #9c8f6b;
-  stroke-width: 2;
-  stroke-linejoin: round;
-  transition: opacity 0.15s;
+.kanto-map-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0.9rem;
+  background: var(--surface-2);
+  border-radius: var(--radius);
 }
-.kanto-pref-land:hover { opacity: 0.85; }
-.kanto-pref-overlay { stroke: none; pointer-events: none; }
-.kanto-pref-label {
+.kanto-svg { width: 100%; height: auto; display: block; }
+.kanto-sea { fill: url(#kantoSeaGrad); }
+.kanto-pref-land {
+  fill: url(#kantoLandGrad);
+  stroke: rgba(108, 63, 224, 0.45);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 10px 20px rgba(108, 63, 224, 0.22));
+}
+.kanto-scale-bar { stroke: var(--ink-faint); stroke-width: 1; opacity: 0.85; }
+.kanto-scale-bar text {
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 900;
-  fill: var(--ink);
-  opacity: 0.6;
-  letter-spacing: 0.03em;
-  pointer-events: none;
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--ink-faint);
+  stroke: none;
 }
 .kanto-map-caption {
   font-size: 0.66rem;
   color: var(--ink-faint);
   text-align: center;
-  margin: 0.5rem 0 0;
+  margin: 0.6rem 0 0;
 }
-.kanto-dot { stroke: #fff; stroke-width: 1.2; transition: opacity 0.15s; }
-.kanto-dot:hover { opacity: 0.8; }
+
+.kanto-dot-group { transition: opacity 0.15s, filter 0.15s; cursor: default; }
+.kanto-dot-group.is-active { opacity: 1 !important; }
+.kanto-dot {
+  fill: url(#kantoDotGrad);
+  stroke: #fff;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 3px 6px rgba(45, 10, 70, 0.35));
+  transition: stroke-width 0.15s;
+}
+.kanto-dot-group.is-active .kanto-dot { stroke-width: 2.6; }
 .kanto-dot-count {
   font-family: var(--font-display);
   font-size: 11px;
@@ -1726,23 +1738,33 @@ form > textarea { margin-bottom: 0.6rem; }
   list-style: none;
   margin: 1.2rem 0 0;
   padding: 0;
-  max-width: 320px;
+  max-width: 340px;
   margin-left: auto;
   margin-right: auto;
 }
 .kanto-rank-list li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.45rem 0.2rem;
+  gap: 0.55rem;
+  padding: 0.5rem 0.4rem;
   border-bottom: 1px solid var(--border);
   font-family: var(--font-body);
   font-size: 0.82rem;
+  border-radius: 8px;
+  transition: background 0.15s;
 }
+.kanto-rank-list li.is-active { background: rgba(108, 63, 224, 0.08); }
 .kanto-rank-list li:last-child { border-bottom: none; }
-.kanto-rank-pref { font-weight: 700; color: var(--ink); }
+.kanto-rank-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: radial-gradient(circle at 35% 30%, #ff62b3, #ff2d95 55%, #6C3FE0);
+}
+.kanto-rank-pref { font-weight: 700; color: var(--ink); flex: 1; min-width: 0; }
 .kanto-rank-sub { font-weight: 400; color: var(--ink-faint); font-size: 0.74rem; }
-.kanto-rank-count { font-weight: 700; color: var(--accent); }
+.kanto-rank-count { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
 
 .kanto-unresolved {
   font-size: 0.72rem;
@@ -1750,6 +1772,25 @@ form > textarea { margin-bottom: 0.6rem; }
   text-align: center;
   margin: 0.8rem 0 0;
 }
+.kanto-unresolved-list {
+  list-style: none;
+  margin: 0.4rem auto 0;
+  padding: 0;
+  max-width: 340px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.kanto-unresolved-list li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+.kanto-unresolved-count { color: var(--ink-faint); margin-left: 0.3rem; }
 
 /* ── Expand / collapse button ───────────────────────────────── */
 .expand-btn {
