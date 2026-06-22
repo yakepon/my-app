@@ -1588,9 +1588,9 @@ form > textarea { margin-bottom: 0.6rem; }
 /* ── Heatmap filters ───────────────────────────────────────── */
 .heatmap-filter-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   max-width: 860px;
   margin: 0 auto 0.7rem;
   padding: 0 1rem;
@@ -1602,18 +1602,25 @@ form > textarea { margin-bottom: 0.6rem; }
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--ink-muted);
+  flex: 1 1 0;
+  min-width: 0;
 }
 .hm-species-select,
 .hm-trip-select,
 .hm-tide-select {
   font-family: var(--font-body);
   font-size: 0.78rem;
-  padding: 0.3rem 0.6rem;
+  padding: 0.3rem 0.4rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface-2);
   color: var(--ink);
+  width: 100%;
+  min-width: 0;
   max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hm-species-select:focus,
 .hm-trip-select:focus,
