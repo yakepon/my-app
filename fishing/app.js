@@ -1068,25 +1068,40 @@ function projectLatLon(lat, lon, bounds, view) {
 }
 
 // 都道府県の輪郭ポリゴン（lat/lon配列）から、緯度方向のパディングを加えた表示範囲を求める。
-function computeMapBounds(polygonPoints, latPad, lonPad) {
+// targetAspect（実距離の幅÷高さ）を指定すると、都道府県ごとに形が違っても表示の縦横比が
+// 揃うよう、短い方の軸にパディングを追加して比率を合わせる（中心はずらさない）。
+function computeMapBounds(polygonPoints, latPad, lonPad, targetAspect) {
   const lats = polygonPoints.map(p => p[0]);
   const lons = polygonPoints.map(p => p[1]);
-  return {
-    latMin: Math.min(...lats) - latPad,
-    latMax: Math.max(...lats) + latPad,
-    lonMin: Math.min(...lons) - lonPad,
-    lonMax: Math.max(...lons) + lonPad,
-  };
+  let latMin = Math.min(...lats) - latPad;
+  let latMax = Math.max(...lats) + latPad;
+  let lonMin = Math.min(...lons) - lonPad;
+  let lonMax = Math.max(...lons) + lonPad;
+
+  if (targetAspect) {
+    const latMid = (latMin + latMax) / 2;
+    const cosLat = Math.cos(latMid * Math.PI / 180);
+    const latSpan = latMax - latMin;
+    const lonSpan = lonMax - lonMin;
+    const curAspect = (lonSpan * cosLat) / latSpan;
+    if (curAspect < targetAspect) {
+      const neededLonSpan = (targetAspect * latSpan) / cosLat;
+      const extra = (neededLonSpan - lonSpan) / 2;
+      lonMin -= extra; lonMax += extra;
+    } else if (curAspect > targetAspect) {
+      const neededLatSpan = (lonSpan * cosLat) / targetAspect;
+      const extra = (neededLatSpan - latSpan) / 2;
+      latMin -= extra; latMax += extra;
+    }
+  }
+
+  return { latMin, latMax, lonMin, lonMax };
 }
 
-// 緯度による経度方向の距離縮み（cos(緯度)）を考慮し、実際の地図に近い縦横比のviewBoxサイズを求める。
-function computeMapView(bounds, targetH, margin) {
-  const latSpan = bounds.latMax - bounds.latMin;
-  const lonSpan = bounds.lonMax - bounds.lonMin;
-  const latMid = (bounds.latMin + bounds.latMax) / 2;
-  const cosLat = Math.cos(latMid * Math.PI / 180);
+// 固定の縦横比でviewBoxサイズを求める（都道府県が変わっても表示の高さを揺らさないため）。
+function computeMapView(targetAspect, targetH, margin) {
   const drawH = targetH - margin * 2;
-  const drawW = drawH * (lonSpan * cosLat) / latSpan;
+  const drawW = drawH * targetAspect;
   return { w: Math.round(drawW + margin * 2), h: targetH, margin };
 }
 
@@ -1192,8 +1207,10 @@ function renderAreaMap() {
     }
   });
 
-  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[selectedAreaPref], 0.04, 0.05);
-  const view = computeMapView(bounds, 420, 20);
+  // 都道府県ごとに形が違っても表示の高さが揃うよう、固定の縦横比に合わせて表示範囲を求める
+  const AREA_MAP_ASPECT = 1.3;
+  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[selectedAreaPref], 0.04, 0.05, AREA_MAP_ASPECT);
+  const view = computeMapView(AREA_MAP_ASPECT, 420, 20);
   const project = (lat, lon) => projectLatLon(lat, lon, bounds, view);
 
   const defs = `
