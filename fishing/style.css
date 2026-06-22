@@ -1676,6 +1676,57 @@ form > textarea { margin-bottom: 0.6rem; }
 
 .heatmap-wrap-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+/* ── Kanto area map（緯度経度ベースの簡易散布図） ───────────────── */
+.kanto-map-wrap { max-width: 480px; margin: 0 auto; }
+.kanto-svg { width: 100%; height: auto; display: block; }
+.kanto-pref-bg-label {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 900;
+  fill: var(--ink-faint);
+  opacity: 0.55;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+.kanto-dot { stroke: #fff; stroke-width: 1.5; transition: opacity 0.15s; }
+.kanto-dot:hover { opacity: 0.8; }
+.kanto-dot-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--ink);
+  pointer-events: none;
+}
+
+.kanto-rank-list {
+  list-style: none;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.kanto-rank-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.2rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+}
+.kanto-rank-list li:last-child { border-bottom: none; }
+.kanto-rank-pref { font-weight: 700; color: var(--ink); }
+.kanto-rank-sub { font-weight: 400; color: var(--ink-faint); font-size: 0.74rem; }
+.kanto-rank-count { font-weight: 700; color: var(--accent); }
+
+.kanto-unresolved {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  text-align: center;
+  margin: 0.8rem 0 0;
+}
+
 /* ── Expand / collapse button ───────────────────────────────── */
 .expand-btn {
   display: block;

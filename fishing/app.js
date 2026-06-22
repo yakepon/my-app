@@ -87,6 +87,7 @@ const els = {
   spotChart:    document.getElementById('spotChart'),
   heatmap:      document.getElementById('heatmap'),
   heatmapTotalBadge: document.getElementById('heatmapTotalBadge'),
+  kantoMap:     document.getElementById('kantoMap'),
   styleFilter:  document.getElementById('styleFilter'),
   eventForm:       document.getElementById('eventForm'),
   eventFormTitle:  document.getElementById('eventFormTitle'),
@@ -631,6 +632,7 @@ function renderAll() {
   renderStats();
   renderCharts();
   renderHeatmap();
+  renderAreaMap();
   populateDatalists();
   buildPriceGrid();
   buildSpeciesGrid();
@@ -911,6 +913,158 @@ function resolveAreaCoords(area) {
     if (area.indexOf(name) !== -1) return AREA_COORDS[name];
   }
   return null;
+}
+
+// 「エリア」欄の地名から関東1都6県の市町村レベルの緯度経度を取得する。
+// 釣り場と関連の深い市町村を中心に収録した簡易版（網羅的な行政区域データではない）。
+const KANTO_PREFECTURES = ['東京', '神奈川', '千葉', '埼玉', '茨城', '栃木', '群馬'];
+
+const KANTO_CITY_COORDS = {
+  // 神奈川県
+  '横浜':   { lat: 35.45, lon: 139.65, pref: '神奈川' },
+  '川崎':   { lat: 35.51, lon: 139.71, pref: '神奈川' },
+  '本牧':   { lat: 35.42, lon: 139.67, pref: '神奈川' },
+  '横須賀': { lat: 35.28, lon: 139.67, pref: '神奈川' },
+  '三浦':   { lat: 35.15, lon: 139.62, pref: '神奈川' },
+  '湘南港': { lat: 35.30, lon: 139.39, pref: '神奈川' },
+  '茅ヶ崎': { lat: 35.33, lon: 139.41, pref: '神奈川' },
+  '藤沢':   { lat: 35.34, lon: 139.49, pref: '神奈川' },
+  '江の島': { lat: 35.30, lon: 139.48, pref: '神奈川' },
+  '小田原': { lat: 35.25, lon: 139.15, pref: '神奈川' },
+  // 千葉県
+  '銚子':   { lat: 35.73, lon: 140.83, pref: '千葉' },
+  '勝浦':   { lat: 35.13, lon: 140.25, pref: '千葉' },
+  '御宿':   { lat: 35.18, lon: 140.35, pref: '千葉' },
+  '大原':   { lat: 35.25, lon: 140.38, pref: '千葉' },
+  '鴨川':   { lat: 35.13, lon: 139.97, pref: '千葉' },
+  '南房総': { lat: 34.92, lon: 139.83, pref: '千葉' },
+  '館山':   { lat: 34.98, lon: 139.87, pref: '千葉' },
+  '富津':   { lat: 35.30, lon: 139.83, pref: '千葉' },
+  '金谷':   { lat: 35.03, lon: 139.80, pref: '千葉' },
+  '木更津': { lat: 35.38, lon: 139.93, pref: '千葉' },
+  '市原':   { lat: 35.50, lon: 140.07, pref: '千葉' },
+  '千葉':   { lat: 35.60, lon: 140.10, pref: '千葉' },
+  '船橋':   { lat: 35.70, lon: 139.98, pref: '千葉' },
+  // 茨城県
+  '鹿嶋':   { lat: 35.97, lon: 140.65, pref: '茨城' },
+  '大洗':   { lat: 36.31, lon: 140.58, pref: '茨城' },
+  '神栖':   { lat: 35.89, lon: 140.66, pref: '茨城' },
+  '日立':   { lat: 36.60, lon: 140.65, pref: '茨城' },
+  '土浦':   { lat: 36.08, lon: 140.20, pref: '茨城' },
+  '水戸':   { lat: 36.34, lon: 140.45, pref: '茨城' },
+  // 栃木県
+  '宇都宮': { lat: 36.57, lon: 139.88, pref: '栃木' },
+  '那須':   { lat: 36.91, lon: 140.05, pref: '栃木' },
+  '日光':   { lat: 36.75, lon: 139.60, pref: '栃木' },
+  '那須塩原': { lat: 36.97, lon: 139.97, pref: '栃木' },
+  // 群馬県
+  '前橋':   { lat: 36.39, lon: 139.06, pref: '群馬' },
+  '高崎':   { lat: 36.32, lon: 139.00, pref: '群馬' },
+  'みなかみ': { lat: 36.68, lon: 138.99, pref: '群馬' },
+  '渋川':   { lat: 36.49, lon: 139.00, pref: '群馬' },
+  // 埼玉県
+  'さいたま': { lat: 35.86, lon: 139.65, pref: '埼玉' },
+  '川越':   { lat: 35.92, lon: 139.49, pref: '埼玉' },
+  '秩父':   { lat: 35.99, lon: 139.09, pref: '埼玉' },
+  '春日部': { lat: 35.98, lon: 139.75, pref: '埼玉' },
+  // 東京都
+  '東京':   { lat: 35.68, lon: 139.77, pref: '東京' },
+  '大田区': { lat: 35.56, lon: 139.72, pref: '東京' },
+  '江戸川': { lat: 35.70, lon: 139.87, pref: '東京' },
+  '八王子': { lat: 35.66, lon: 139.34, pref: '東京' },
+  '奥多摩': { lat: 35.81, lon: 139.10, pref: '東京' },
+};
+
+// 市町村名が見つからず都県名のみ一致した場合のフォールバック座標（おおよその県中心）。
+const KANTO_PREF_CENTROID = {
+  '神奈川': { lat: 35.45, lon: 139.40 },
+  '千葉':   { lat: 35.55, lon: 140.20 },
+  '茨城':   { lat: 36.25, lon: 140.30 },
+  '栃木':   { lat: 36.55, lon: 139.70 },
+  '群馬':   { lat: 36.50, lon: 139.10 },
+  '埼玉':   { lat: 36.00, lon: 139.45 },
+  '東京':   { lat: 35.65, lon: 139.45 },
+};
+
+const KANTO_MAP_BOUNDS = { latMin: 34.85, latMax: 37.0, lonMin: 138.8, lonMax: 141.0 };
+const KANTO_MAP_VIEW = { w: 340, h: 320, margin: 26 };
+
+function kantoLatLonToXY(lat, lon) {
+  const { latMin, latMax, lonMin, lonMax } = KANTO_MAP_BOUNDS;
+  const { w, h, margin } = KANTO_MAP_VIEW;
+  return {
+    x: margin + (lon - lonMin) / (lonMax - lonMin) * (w - margin * 2),
+    y: margin + (latMax - lat) / (latMax - latMin) * (h - margin * 2),
+  };
+}
+
+// 「エリア」欄の地名から、市町村レベル→都県レベルの順で関東の位置を判定する。
+function resolveKantoLocation(area) {
+  if (!area) return null;
+  for (const name in KANTO_CITY_COORDS) {
+    if (area.indexOf(name) !== -1) return { key: name, precise: true, ...KANTO_CITY_COORDS[name] };
+  }
+  for (const pref of KANTO_PREFECTURES) {
+    if (area.indexOf(pref) !== -1) return { key: pref, precise: false, pref, ...KANTO_PREF_CENTROID[pref] };
+  }
+  return null;
+}
+
+function renderAreaMap() {
+  const events = filteredEvents();
+  if (!events.length) {
+    els.kantoMap.innerHTML = '<p class="empty">釣行記録がありません。</p>';
+    return;
+  }
+
+  const locCounts = new Map(); // key -> { loc, count }
+  let unresolved = 0;
+  events.forEach(ev => {
+    const loc = resolveKantoLocation(ev.area);
+    if (!loc) { if (ev.area) unresolved++; return; }
+    const entry = locCounts.get(loc.key) || { loc, count: 0 };
+    entry.count++;
+    locCounts.set(loc.key, entry);
+  });
+
+  const max = Math.max(1, ...[...locCounts.values()].map(e => e.count));
+
+  // 背景にうっすら都県名を表示し、地図上の目印にする
+  const prefLabels = KANTO_PREFECTURES.map(pref => {
+    const { x, y } = kantoLatLonToXY(KANTO_PREF_CENTROID[pref].lat, KANTO_PREF_CENTROID[pref].lon);
+    return `<text x="${x}" y="${y}" class="kanto-pref-bg-label" text-anchor="middle">${escapeHtml(pref)}</text>`;
+  }).join('');
+
+  const dots = [...locCounts.values()].map(({ loc, count }) => {
+    const { x, y } = kantoLatLonToXY(loc.lat, loc.lon);
+    const r = 9 + (count / max) * 13;
+    const alpha = (0.35 + (count / max) * 0.55).toFixed(2);
+    return `
+      <g>
+        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(loc.key)}: ${count}回</title></circle>
+        <text x="${x}" y="${y + r + 13}" class="kanto-dot-label" text-anchor="middle">${escapeHtml(loc.key)} ${count}回</text>
+      </g>`;
+  }).join('');
+
+  const ranked = [...locCounts.values()].sort((a, b) => b.count - a.count);
+  const rankHtml = ranked.length
+    ? `<ol class="kanto-rank-list">
+        ${ranked.map(({ loc, count }) => `
+          <li>
+            <span class="kanto-rank-pref">${escapeHtml(loc.key)}${loc.key !== loc.pref ? `<span class="kanto-rank-sub">（${escapeHtml(loc.pref)}）</span>` : ''}</span>
+            <span class="kanto-rank-count">${count}回</span>
+          </li>`).join('')}
+      </ol>`
+    : '<p class="empty" style="margin-top:0.8rem">エリアが記録された釣行がありません。</p>';
+
+  const unresolvedHtml = unresolved
+    ? `<p class="kanto-unresolved">※ エリア欄の地名から場所を判定できなかった釣行が${unresolved}件あります。</p>`
+    : '';
+
+  els.kantoMap.innerHTML = `
+    <svg class="kanto-svg" viewBox="0 0 ${KANTO_MAP_VIEW.w} ${KANTO_MAP_VIEW.h}" xmlns="http://www.w3.org/2000/svg">${prefLabels}${dots}</svg>
+    ${rankHtml}
+    ${unresolvedHtml}`;
 }
 
 // 簡易日の出・日の入り計算（Sunrise equation, NOAA近似式）。
