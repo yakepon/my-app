@@ -312,6 +312,12 @@ main, header, footer, section { position: relative; z-index: 2; }
 }
 .gear-tab.gear-tab-active:hover { color: #fff; }
 
+.gear-register-btn {
+  display: block;
+  max-width: 860px;
+  margin: 0 auto 1.2rem;
+}
+
 /* ── Panels (shared) ───────────────────────────────────────── */
 .panel {
   background: var(--surface);
@@ -1320,6 +1326,52 @@ form > textarea { margin-bottom: 0.6rem; }
   margin-bottom: 1.2rem;
   padding-bottom: 0.7rem;
   border-bottom: 1px solid var(--border);
+}
+
+/* ── Line info modal (PE / ナイロン 早見表) ───────────────────── */
+.line-info-box { max-width: 640px; }
+
+.line-info-subtitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin: 1.4rem 0 0.6rem;
+}
+.line-info-subtitle:first-of-type { margin-top: 0; }
+
+.line-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+.line-info-table caption {
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin-bottom: 0.4rem;
+}
+.line-info-table th, .line-info-table td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+.line-info-table th {
+  background: var(--surface-2);
+  font-weight: 700;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.line-info-tables-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 540px) {
+  .line-info-tables-2col { grid-template-columns: 1fr; }
 }
 
 /* ── Photo lightbox ────────────────────────────────────────── */

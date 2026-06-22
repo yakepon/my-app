@@ -101,6 +101,10 @@ const els = {
   photoLightboxClose:   document.getElementById('photoLightboxClose'),
   photoLightboxDelete:  document.getElementById('photoLightboxDelete'),
   photoLightboxBackdrop: document.getElementById('photoLightboxBackdrop'),
+  lineInfoBtn:      document.getElementById('lineInfoBtn'),
+  lineInfoModal:    document.getElementById('lineInfoModal'),
+  lineInfoClose:    document.getElementById('lineInfoClose'),
+  lineInfoBackdrop: document.getElementById('lineInfoBackdrop'),
   spotList:   document.getElementById('spotList'),
   targetList: document.getElementById('targetList'),
   demoNotice: document.getElementById('demoNotice'),
@@ -2310,6 +2314,16 @@ function closeCatchModal() {
   resetEditPhotoState();
 }
 
+function openLineInfoModal() {
+  els.lineInfoModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLineInfoModal() {
+  els.lineInfoModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
 let lightboxTarget = null; // { type: 'catch' | 'event', id, photoField }
 
 function openPhotoLightbox(src, type, id, photoField = 'photo') {
@@ -2749,6 +2763,9 @@ function init() {
   els.catchEditForm.addEventListener('submit', onCatchEditSubmit);
   els.catchModalClose.addEventListener('click', closeCatchModal);
   els.modalBackdrop.addEventListener('click', closeCatchModal);
+  els.lineInfoBtn.addEventListener('click', openLineInfoModal);
+  els.lineInfoClose.addEventListener('click', closeLineInfoModal);
+  els.lineInfoBackdrop.addEventListener('click', closeLineInfoModal);
 
   els.catchesList.addEventListener('click', e => {
     const thumb = e.target.closest('.catch-thumb');

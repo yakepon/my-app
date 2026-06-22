@@ -139,6 +139,12 @@
         <path d="M6 6 18 18M18 6 6 18"/>
       </symbol>
 
+      <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8.5"/>
+        <path d="M12 11v5.2"/>
+        <circle cx="12" cy="7.6" r="0.4" fill="currentColor" stroke="none"/>
+      </symbol>
+
       <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M18 7l-.8 12.1a1.5 1.5 0 0 1-1.5 1.4H8.3a1.5 1.5 0 0 1-1.5-1.4L6 7"/>
         <path d="M10 11v6M14 11v6"/>
@@ -214,8 +220,6 @@
         <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
         <button type="button" class="nav-link nav-btn nav-btn-register" id="navShowForm"><svg class="icon icon-nav"><use href="#icon-plus"/></svg> 釣行登録</button>
         <button type="button" class="nav-link nav-btn" id="navShowGear"><svg class="icon icon-nav"><use href="#icon-rod"/></svg> タックル管理</button>
-        <button type="button" class="nav-link nav-btn" id="navShowRodForm" hidden><svg class="icon icon-nav"><use href="#icon-rod"/></svg> ロッドを登録</button>
-        <button type="button" class="nav-link nav-btn" id="navShowReelForm" hidden><svg class="icon icon-nav"><use href="#icon-reel"/></svg> リールを登録</button>
       </nav>
     </div>
   </header>
@@ -554,6 +558,8 @@
       </section>
 
       <div id="gearRodPanel">
+        <button type="button" class="btn btn-primary gear-register-btn" id="navShowRodForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> ロッドを登録</button>
+
         <!-- Rod length comparison -->
         <section class="panel chart-panel">
           <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 全長比較</h2>
@@ -571,9 +577,14 @@
       </div>
 
       <div id="gearReelPanel" hidden>
+        <button type="button" class="btn btn-primary gear-register-btn" id="navShowReelForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> リールを登録</button>
+
         <!-- Reel size & line comparison -->
         <section class="panel chart-panel">
-          <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
+            <button type="button" class="icon-btn" id="lineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン早見表</button>
+          </div>
           <p class="hint">円の大きさはリールサイズ（スプール径）の目安です。巻かれたラインの太さは号数を、色はラインの種類（紫〜ピンク=PEライン、黄色=ナイロンライン）を表します。</p>
           <div id="reelSizeChart" class="reel-compare"></div>
         </section>
@@ -692,6 +703,72 @@
           <button type="button" class="btn" id="catchModalClose">キャンセル</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Line Info Modal (PE / ナイロン 早見表) -->
+  <div id="lineInfoModal" class="modal" hidden>
+    <div class="modal-backdrop" id="lineInfoBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">ライン早見表（参考情報）</h3>
+
+      <h4 class="line-info-subtitle">PEライン と ナイロンラインの違い</h4>
+      <table class="line-info-table">
+        <thead>
+          <tr><th>項目</th><th>PEライン</th><th>ナイロンライン</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>伸び</td><td>ほぼ伸びない（感度◎）</td><td>よく伸びる（アタリ・衝撃を吸収）</td></tr>
+          <tr><td>感度</td><td>非常に高い</td><td>低め</td></tr>
+          <tr><td>比重</td><td>水に浮く（飛距離◎）</td><td>水に沈む</td></tr>
+          <tr><td>直線強度</td><td>非常に強い（号数の割に高強度）</td><td>PEより劣る</td></tr>
+          <tr><td>耐摩耗性</td><td>弱い（こすれで傷つきやすい）</td><td>強い</td></tr>
+          <tr><td>結び目強度</td><td>弱い（専用ノットが必須）</td><td>強い（結びやすい）</td></tr>
+          <tr><td>価格</td><td>高め</td><td>安価</td></tr>
+          <tr><td>劣化</td><td>紫外線には強いが擦れに弱い</td><td>紫外線・経年で劣化しやすい</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">号数とポンド(lb)・対応強度の目安</h4>
+      <p class="hint">メーカーや製品によって差があります。あくまで目安としてご利用ください。</p>
+      <div class="line-info-tables-2col">
+        <table class="line-info-table">
+          <caption>PEライン</caption>
+          <thead><tr><th>号数</th><th>強度目安</th></tr></thead>
+          <tbody>
+            <tr><td>0.3号</td><td>6lb（約2.7kg）</td></tr>
+            <tr><td>0.4号</td><td>8lb（約3.6kg）</td></tr>
+            <tr><td>0.6号</td><td>12lb（約5.4kg）</td></tr>
+            <tr><td>0.8号</td><td>16lb（約7.3kg）</td></tr>
+            <tr><td>1号</td><td>20lb（約9kg）</td></tr>
+            <tr><td>1.5号</td><td>25lb（約11kg）</td></tr>
+            <tr><td>2号</td><td>30lb（約14kg）</td></tr>
+            <tr><td>3号</td><td>50lb（約23kg）</td></tr>
+            <tr><td>4号</td><td>60lb（約27kg）</td></tr>
+            <tr><td>5号</td><td>80lb（約36kg）</td></tr>
+          </tbody>
+        </table>
+        <table class="line-info-table">
+          <caption>ナイロン / フロロライン</caption>
+          <thead><tr><th>号数</th><th>強度目安</th></tr></thead>
+          <tbody>
+            <tr><td>0.8号</td><td>3lb（約1.4kg）</td></tr>
+            <tr><td>1号</td><td>4lb（約1.8kg）</td></tr>
+            <tr><td>1.5号</td><td>6lb（約2.7kg）</td></tr>
+            <tr><td>2号</td><td>8lb（約3.6kg）</td></tr>
+            <tr><td>3号</td><td>12lb（約5.4kg）</td></tr>
+            <tr><td>4号</td><td>16lb（約7.3kg）</td></tr>
+            <tr><td>5号</td><td>20lb（約9kg）</td></tr>
+            <tr><td>6号</td><td>24lb（約11kg）</td></tr>
+            <tr><td>8号</td><td>30lb（約14kg）</td></tr>
+            <tr><td>10号</td><td>40lb（約18kg）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="lineInfoClose">閉じる</button>
+      </div>
     </div>
   </div>
 
