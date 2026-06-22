@@ -388,7 +388,12 @@
         </section>
 
         <section class="panel chart-panel">
-          <h2><svg class="icon icon-h2"><use href="#icon-map-pin"/></svg> エリア分析（神奈川県・釣り場別）</h2>
+          <h2><svg class="icon icon-h2"><use href="#icon-map-pin"/></svg> エリア分析（釣り場別）</h2>
+          <div class="gear-tabs" id="areaPrefTabs" role="tablist">
+            <button type="button" class="gear-tab" data-pref="神奈川" role="tab">神奈川</button>
+            <button type="button" class="gear-tab" data-pref="千葉" role="tab">千葉</button>
+            <button type="button" class="gear-tab" data-pref="静岡" role="tab">静岡</button>
+          </div>
           <div class="kanto-map-wrap" id="kantoMap"></div>
         </section>
       </div>
@@ -804,6 +809,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=20260622s"></script>
+  <script src="app.js?v=20260622v"></script>
 </body>
 </html>

@@ -86,6 +86,7 @@ const els = {
   heatmap:      document.getElementById('heatmap'),
   heatmapTotalBadge: document.getElementById('heatmapTotalBadge'),
   kantoMap:     document.getElementById('kantoMap'),
+  areaPrefTabs: document.getElementById('areaPrefTabs'),
   styleFilter:  document.getElementById('styleFilter'),
   eventForm:       document.getElementById('eventForm'),
   eventFormTitle:  document.getElementById('eventFormTitle'),
@@ -934,31 +935,45 @@ function resolveAreaCoords(area) {
 const KANTO_PREFECTURES = ['群馬', '栃木', '茨城', '埼玉', '千葉', '東京', '神奈川', '山梨', '静岡'];
 
 const KANTO_CITY_COORDS = {
-  // 神奈川県
+  // 神奈川県（海沿いの市町をすべて収録）
   '横浜':   { lat: 35.45, lon: 139.65, pref: '神奈川' },
   '川崎':   { lat: 35.51, lon: 139.71, pref: '神奈川' },
   '本牧':   { lat: 35.42, lon: 139.67, pref: '神奈川' },
   '横須賀': { lat: 35.28, lon: 139.67, pref: '神奈川' },
+  '鎌倉':   { lat: 35.319, lon: 139.546, pref: '神奈川' },
+  '逗子':   { lat: 35.297, lon: 139.579, pref: '神奈川' },
+  '葉山':   { lat: 35.257, lon: 139.586, pref: '神奈川' },
   '三浦':   { lat: 35.15, lon: 139.62, pref: '神奈川' },
   '湘南港': { lat: 35.30, lon: 139.39, pref: '神奈川' },
   '茅ヶ崎': { lat: 35.33, lon: 139.41, pref: '神奈川' },
   '藤沢':   { lat: 35.34, lon: 139.49, pref: '神奈川' },
   '江の島': { lat: 35.30, lon: 139.48, pref: '神奈川' },
+  '平塚':   { lat: 35.328, lon: 139.343, pref: '神奈川' },
+  '大磯':   { lat: 35.307, lon: 139.313, pref: '神奈川' },
+  '二宮':   { lat: 35.302, lon: 139.262, pref: '神奈川' },
   '小田原': { lat: 35.25, lon: 139.15, pref: '神奈川' },
-  // 千葉県
+  '真鶴':   { lat: 35.156, lon: 139.137, pref: '神奈川' },
+  '湯河原': { lat: 35.131, lon: 139.107, pref: '神奈川' },
+  // 千葉県（海沿いの市をすべて収録）
+  '旭':     { lat: 35.720, lon: 140.650, pref: '千葉' },
   '銚子':   { lat: 35.73, lon: 140.83, pref: '千葉' },
   '勝浦':   { lat: 35.13, lon: 140.25, pref: '千葉' },
   '御宿':   { lat: 35.18, lon: 140.35, pref: '千葉' },
+  'いすみ': { lat: 35.220, lon: 140.388, pref: '千葉' },
   '大原':   { lat: 35.25, lon: 140.38, pref: '千葉' },
   '鴨川':   { lat: 35.13, lon: 139.97, pref: '千葉' },
   '南房総': { lat: 34.92, lon: 139.83, pref: '千葉' },
   '館山':   { lat: 34.98, lon: 139.87, pref: '千葉' },
   '富津':   { lat: 35.30, lon: 139.83, pref: '千葉' },
   '金谷':   { lat: 35.03, lon: 139.80, pref: '千葉' },
+  '君津':   { lat: 35.335, lon: 139.905, pref: '千葉' },
   '木更津': { lat: 35.38, lon: 139.93, pref: '千葉' },
   '市原':   { lat: 35.50, lon: 140.07, pref: '千葉' },
   '千葉':   { lat: 35.60, lon: 140.10, pref: '千葉' },
+  '習志野': { lat: 35.660, lon: 140.027, pref: '千葉' },
   '船橋':   { lat: 35.70, lon: 139.98, pref: '千葉' },
+  '市川':   { lat: 35.719, lon: 139.931, pref: '千葉' },
+  '浦安':   { lat: 35.654, lon: 139.902, pref: '千葉' },
   // 茨城県
   '鹿嶋':   { lat: 35.97, lon: 140.65, pref: '茨城' },
   '大洗':   { lat: 36.31, lon: 140.58, pref: '茨城' },
@@ -1006,6 +1021,7 @@ const KANTO_CITY_COORDS = {
   '沼津':   { lat: 35.10, lon: 138.86, pref: '静岡' },
   '三島':   { lat: 35.12, lon: 138.91, pref: '静岡' },
   '内浦':   { lat: 35.05, lon: 138.87, pref: '静岡' },
+  '富士':   { lat: 35.16, lon: 138.68, pref: '静岡' },
   '清水':   { lat: 35.02, lon: 138.49, pref: '静岡' },
   '静岡':   { lat: 34.98, lon: 138.38, pref: '静岡' },
   '焼津':   { lat: 34.87, lon: 138.32, pref: '静岡' },
@@ -1086,9 +1102,11 @@ function resolveKantoLocation(area) {
   return null;
 }
 
-// 神奈川県内の主要な釣り場の緯度経度（簡易版・網羅的ではない）。
-// 「将来的に都道府県を選べるようにする」構想に向けて、まずは神奈川県のみ収録。
-const SELECTED_PREF = '神奈川';
+// エリア分析で選択可能な都道府県（市町村レベルのデータが揃っているもののみ）。
+const AREA_PREF_OPTIONS = ['神奈川', '千葉', '静岡'];
+let selectedAreaPref = '神奈川';
+
+// 神奈川県内の主要な釣り場の緯度経度（簡易版・網羅的ではない・市町村レベルより精密）。
 const KANAGAWA_SPOT_COORDS = {
   '大黒海釣り公園':     { lat: 35.466, lon: 139.687 },
   '本牧海づり施設':     { lat: 35.421, lon: 139.668 },
@@ -1128,17 +1146,24 @@ function resolveCityOnly(text, pref) {
 }
 
 // 釣り場名でピンポイントに判定できなければ、釣り場名→エリア名の順に市町村レベルでも判定する。
-function resolveKanagawaLocation(ev) {
-  const spot = resolveKanagawaSpot(ev.spot);
-  if (spot) return { ...spot, precise: true };
-  const cityFromSpot = resolveCityOnly(ev.spot, SELECTED_PREF);
+// 施設名リスト（KANAGAWA_SPOT_COORDS）は神奈川県のみ収録しているため、選択中が神奈川の時だけ使う。
+function resolveAreaLocation(ev) {
+  if (selectedAreaPref === '神奈川') {
+    const spot = resolveKanagawaSpot(ev.spot);
+    if (spot) return { ...spot, precise: true };
+  }
+  const cityFromSpot = resolveCityOnly(ev.spot, selectedAreaPref);
   if (cityFromSpot) return { ...cityFromSpot, precise: false };
-  const cityFromArea = resolveCityOnly(ev.area, SELECTED_PREF);
+  const cityFromArea = resolveCityOnly(ev.area, selectedAreaPref);
   if (cityFromArea) return { ...cityFromArea, precise: false };
   return null;
 }
 
 function renderAreaMap() {
+  els.areaPrefTabs?.querySelectorAll('.gear-tab').forEach(btn => {
+    btn.classList.toggle('gear-tab-active', btn.dataset.pref === selectedAreaPref);
+  });
+
   const events = filteredEvents();
   if (!events.length) {
     els.kantoMap.innerHTML = '<p class="empty">釣行記録がありません。</p>';
@@ -1150,7 +1175,7 @@ function renderAreaMap() {
   const spotCounts = new Map(); // key -> { spot, count }
   const unresolvedNames = new Map(); // 入力された釣り場名 -> 件数
   events.forEach(ev => {
-    const spot = resolveKanagawaLocation(ev);
+    const spot = resolveAreaLocation(ev);
     if (spot) {
       const entry = spotCounts.get(spot.key) || { spot, count: 0 };
       entry.count++;
@@ -1160,7 +1185,7 @@ function renderAreaMap() {
     }
   });
 
-  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[SELECTED_PREF], 0.04, 0.05);
+  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[selectedAreaPref], 0.04, 0.05);
   const view = computeMapView(bounds, 420, 20);
   const project = (lat, lon) => projectLatLon(lat, lon, bounds, view);
 
@@ -1173,10 +1198,10 @@ function renderAreaMap() {
       </radialGradient>
     </defs>`;
 
-  const landPoints = KANTO_PREF_POLYGONS[SELECTED_PREF]
+  const landPoints = KANTO_PREF_POLYGONS[selectedAreaPref]
     .map(([lat, lon]) => { const { x, y } = project(lat, lon); return `${x.toFixed(1)},${y.toFixed(1)}`; })
     .join(' ');
-  const landShape = `<polygon points="${landPoints}" class="kanto-pref-land"><title>${escapeHtml(SELECTED_PREF)}</title></polygon>`;
+  const landShape = `<polygon points="${landPoints}" class="kanto-pref-land"><title>${escapeHtml(selectedAreaPref)}</title></polygon>`;
 
   const max = Math.max(1, ...[...spotCounts.values()].map(e => e.count));
   const dots = [...spotCounts.values()].map(({ spot, count }) => {
@@ -1216,7 +1241,7 @@ function renderAreaMap() {
 
   els.kantoMap.innerHTML = `
     <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${landShape}${dots}</svg>
-    <p class="kanto-map-caption">※ ${escapeHtml(SELECTED_PREF)}県のみ対応の簡易版です（都道府県の選択は今後対応予定）</p>
+    <p class="kanto-map-caption">※ ${AREA_PREF_OPTIONS.map(escapeHtml).join('・')}のみ対応の簡易版です</p>
     ${rankHtml}
     ${unresolvedHtml}`;
 }
@@ -2948,6 +2973,13 @@ function init() {
   els.analysisTabTrip.addEventListener('click', () => setAnalysisTab('trip'));
   els.analysisTabCatch.addEventListener('click', () => setAnalysisTab('catch'));
   setAnalysisTab(analysisTab);
+
+  els.areaPrefTabs.addEventListener('click', e => {
+    const btn = e.target.closest('.gear-tab');
+    if (!btn) return;
+    selectedAreaPref = btn.dataset.pref;
+    renderAreaMap();
+  });
 
   // Settings
   els.saveUrl.addEventListener('click', () => {
