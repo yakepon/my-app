@@ -214,7 +214,7 @@
         <button type="button" class="nav-link nav-btn" id="navBack" hidden><svg class="icon icon-nav"><use href="#icon-arrow-left"/></svg> 釣行一覧</button>
         <button type="button" class="nav-link nav-btn nav-btn-register" id="navShowForm"><svg class="icon icon-nav"><use href="#icon-plus"/></svg> 釣行登録</button>
         <button type="button" class="nav-link nav-btn" id="navShowGear"><svg class="icon icon-nav"><use href="#icon-rod"/></svg> タックル管理</button>
-        <button type="button" class="nav-link nav-btn" id="navShowRodForm" hidden><svg class="icon icon-nav"><use href="#icon-rod"/></svg> 竿を登録</button>
+        <button type="button" class="nav-link nav-btn" id="navShowRodForm" hidden><svg class="icon icon-nav"><use href="#icon-rod"/></svg> ロッドを登録</button>
         <button type="button" class="nav-link nav-btn" id="navShowReelForm" hidden><svg class="icon icon-nav"><use href="#icon-reel"/></svg> リールを登録</button>
       </nav>
     </div>
@@ -449,9 +449,14 @@
         <span class="label-text">タックル管理</span>
       </div>
 
-      <!-- Gear form (竿・リール登録) -->
+      <div class="gear-tabs" role="tablist">
+        <button type="button" class="gear-tab" id="gearTabRod" data-gear-tab="rod" role="tab" aria-selected="true"><svg class="icon icon-inline"><use href="#icon-rod"/></svg> ロッド</button>
+        <button type="button" class="gear-tab" id="gearTabReel" data-gear-tab="reel" role="tab" aria-selected="false"><svg class="icon icon-inline"><use href="#icon-reel"/></svg> リール</button>
+      </div>
+
+      <!-- Gear form (ロッド・リール登録) -->
       <section id="gear-form" class="panel form-panel" hidden>
-        <h2 id="gearFormTitle">竿を登録</h2>
+        <h2 id="gearFormTitle">ロッドを登録</h2>
         <form id="gearForm">
           <input type="hidden" name="id">
           <input type="hidden" name="type">
@@ -548,34 +553,38 @@
         </form>
       </section>
 
-      <!-- Rod length comparison -->
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 全長比較</h2>
-        <p class="hint">ブランクの太さは錘負荷（扱えるオモリ・ルアーの重さ）の目安です。太いほど高負荷に対応します。g表記は1号=3.75gとして号数に揃えて比較しています。</p>
-        <div id="rodLengthRuler" class="rod-ruler"></div>
-      </section>
+      <div id="gearRodPanel">
+        <!-- Rod length comparison -->
+        <section class="panel chart-panel">
+          <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 全長比較</h2>
+          <p class="hint">ブランクの太さは錘負荷（扱えるオモリ・ルアーの重さ）の目安です。太いほど高負荷に対応します。g表記は1号=3.75gとして号数に揃えて比較しています。</p>
+          <div id="rodLengthRuler" class="rod-ruler"></div>
+        </section>
 
-      <!-- Gear list (竿一覧) -->
-      <section class="panel records-panel">
-        <div class="section-header">
-          <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 竿一覧</h2>
-        </div>
-        <div id="rodList"><p class="empty">登録された竿はありません。</p></div>
-      </section>
+        <!-- Gear list (ロッド一覧) -->
+        <section class="panel records-panel">
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド一覧</h2>
+          </div>
+          <div id="rodList"><p class="empty">登録されたロッドはありません。</p></div>
+        </section>
+      </div>
 
-      <!-- Reel size & line comparison -->
-      <section class="panel chart-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
-        <div id="reelSizeChart" class="reel-compare"></div>
-      </section>
+      <div id="gearReelPanel" hidden>
+        <!-- Reel size & line comparison -->
+        <section class="panel chart-panel">
+          <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
+          <div id="reelSizeChart" class="reel-compare"></div>
+        </section>
 
-      <!-- Gear list (リール一覧) -->
-      <section class="panel records-panel">
-        <div class="section-header">
-          <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リール一覧</h2>
-        </div>
-        <div id="reelList"><p class="empty">登録されたリールはありません。</p></div>
-      </section>
+        <!-- Gear list (リール一覧) -->
+        <section class="panel records-panel">
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リール一覧</h2>
+          </div>
+          <div id="reelList"><p class="empty">登録されたリールはありません。</p></div>
+        </section>
+      </div>
 
     </div><!-- /gearScreen -->
 

@@ -276,6 +276,42 @@ main, header, footer, section { position: relative; z-index: 2; }
   color: var(--ink);
 }
 
+/* ── Gear tabs (ロッド / リール) ───────────────────────────── */
+.gear-tabs {
+  display: flex;
+  gap: 0.3rem;
+  max-width: 860px;
+  margin: 0 auto 1.2rem;
+  padding: 0.3rem;
+  background: var(--surface-2);
+  border-radius: 99px;
+}
+.gear-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.gear-tab:hover { color: var(--accent-2); }
+.gear-tab.gear-tab-active {
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.gear-tab.gear-tab-active:hover { color: #fff; }
+
 /* ── Panels (shared) ───────────────────────────────────────── */
 .panel {
   background: var(--surface);

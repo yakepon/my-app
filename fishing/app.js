@@ -124,6 +124,10 @@ const els = {
   reelList: document.getElementById('reelList'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
+  gearTabRod:   document.getElementById('gearTabRod'),
+  gearTabReel:  document.getElementById('gearTabReel'),
+  gearRodPanel: document.getElementById('gearRodPanel'),
+  gearReelPanel: document.getElementById('gearReelPanel'),
   rodOnlyFields:  document.getElementById('rodOnlyFields'),
   reelOnlyFields: document.getElementById('reelOnlyFields'),
   styleLabelText: document.getElementById('styleLabelText'),
@@ -141,6 +145,7 @@ let selectedSpecies = '';
 let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
+let gearTab        = 'rod'; // 'rod' | 'reel'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let styleFilter = ''; // '' = すべての釣り方
 
@@ -439,7 +444,7 @@ function eventPhotoSlots(ev) {
     .filter(p => p.url);
 }
 
-// タックル（竿・リール）も写真を最大3枚（photo/photoId, photo2/photoId2, photo3/photoId3）まで持てる。
+// タックル（ロッド・リール）も写真を最大3枚（photo/photoId, photo2/photoId2, photo3/photoId3）まで持てる。
 const GEAR_PHOTO_SUFFIXES = ['', '2', '3'];
 
 function gearPhotoFieldNames(suffix) {
@@ -498,6 +503,17 @@ function showGearScreen() {
   els.navShowRodForm.hidden  = false;
   els.navShowReelForm.hidden = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// タックル管理画面の「ロッド」「リール」タブ切り替え。
+function setGearTab(tab) {
+  gearTab = tab;
+  els.gearTabRod.classList.toggle('gear-tab-active', tab === 'rod');
+  els.gearTabReel.classList.toggle('gear-tab-active', tab === 'reel');
+  els.gearTabRod.setAttribute('aria-selected', String(tab === 'rod'));
+  els.gearTabReel.setAttribute('aria-selected', String(tab === 'reel'));
+  els.gearRodPanel.hidden  = tab !== 'rod';
+  els.gearReelPanel.hidden = tab !== 'reel';
 }
 
 // ── API ───────────────────────────────────────────────────────
@@ -1717,7 +1733,7 @@ async function onEventSubmit(e) {
   els.eventSubmitBtn.textContent = fd.get('id') ? '更新する' : '登録する';
 }
 
-// ── Gear (竿・リール) ────────────────────────────────────────────
+// ── Gear (ロッド・リール) ────────────────────────────────────────────
 // 編集中の写真スロット（最大3枚）。各要素: { field, idField, url, id, pendingDataUrl, removed }
 let gearPhotoState = [];
 
@@ -1750,7 +1766,7 @@ function resetGearPhotoState() {
 
 // リールはスタイル欄に「アジング」のようなカテゴリではなくサイズ番号
 // （例: C3000, 4000, 2500HG）を入力してもらい、それをリールサイズ・ライン比較の
-// 大きさの基準として使う。竿の場合は通常のスタイルカテゴリ入力に戻す。
+// 大きさの基準として使う。ロッドの場合は通常のスタイルカテゴリ入力に戻す。
 function applyStyleFieldForType(type) {
   if (type === 'reel') {
     els.styleLabelText.textContent = 'スタイル（リールサイズ番号）';
@@ -1767,7 +1783,7 @@ function resetGearForm(type) {
   els.gearForm.reset();
   els.gearForm.elements['id'].value   = '';
   els.gearForm.elements['type'].value = type;
-  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : '竿を登録';
+  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : 'ロッドを登録';
   els.gearSubmitBtn.textContent  = '登録する';
   els.rodOnlyFields.hidden  = type !== 'rod';
   els.reelOnlyFields.hidden = type !== 'reel';
@@ -1777,6 +1793,7 @@ function resetGearForm(type) {
 
 function openGearForm(type) {
   resetGearForm(type);
+  setGearTab(type === 'reel' ? 'reel' : 'rod');
   const section = document.getElementById('gear-form');
   section.hidden = false;
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1808,10 +1825,11 @@ function enterGearEditMode(g) {
   els.gearForm.elements['lineType'].value           = g.lineType           || '';
   els.gearForm.elements['lineSize'].value           = g.lineSize           || '';
   els.gearForm.elements['lastLineChangeDate'].value = normDateStr(g.lastLineChangeDate);
-  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : '竿') + 'を編集';
+  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : 'ロッド') + 'を編集';
   els.gearSubmitBtn.textContent = '更新する';
   els.rodOnlyFields.hidden  = g.type !== 'rod';
   els.reelOnlyFields.hidden = g.type !== 'reel';
+  setGearTab(g.type === 'reel' ? 'reel' : 'rod');
 
   gearPhotoState = makeEmptyGearPhotoState();
   gearPhotoState.forEach(slot => {
@@ -1947,7 +1965,7 @@ function gearRowHtml(g) {
 function renderGearLists() {
   const rods  = currentGears.filter(g => g.type === 'rod');
   const reels = currentGears.filter(g => g.type === 'reel');
-  els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録された竿はありません。</p>';
+  els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
@@ -2126,11 +2144,11 @@ function renderReelSizeChart(reels) {
   els.reelSizeChart.innerHTML = rows;
 }
 
-// 1本の竿を、グリップ・テーパーするブランク・ガイドリング・トップガイドを持つ
-// SVGシルエットとして描く。竿の長さに比例した実寸スケールで描くため、グリップや
+// 1本のロッドを、グリップ・テーパーするブランク・ガイドリング・トップガイドを持つ
+// SVGシルエットとして描く。ロッドの長さに比例した実寸スケールで描くため、グリップや
 // ガイドの太さ・間隔は行ごとに変わらず一貫した見た目になる。
 // powerRatio (0〜1) は錘負荷の相対的な強さで、ブランクの太さ（butt/tip径）に
-// 反映する。値が大きいほど太く頑丈な竿に見え、耐えられるオモリの重さが
+// 反映する。値が大きいほど太く頑丈なロッドに見え、耐えられるオモリの重さが
 // 一目でわかるようにする。
 function rodBlankSvg(g, lenCm, unitPerCm, powerRatio) {
   const H = 56, cy = 28;
@@ -2165,7 +2183,7 @@ function rodBlankSvg(g, lenCm, unitPerCm, powerRatio) {
     </svg>`;
 }
 
-// 竿の全長を、グリップ～ガイドリング～トップガイドまで再現したシルエットで比較する。
+// ロッドの全長を、グリップ～ガイドリング～トップガイドまで再現したシルエットで比較する。
 // 全行を貫く目盛りグリッド線を背面に敷くことで、長さの違いを定規のように読み取れる。
 function renderRodLengthRuler(rods) {
   const withLength = rods
@@ -2173,7 +2191,7 @@ function renderRodLengthRuler(rods) {
     .sort((a, b) => Number(b.rodLength) - Number(a.rodLength));
 
   if (withLength.length === 0) {
-    els.rodLengthRuler.innerHTML = '<p class="empty">全長を入力した竿を登録すると比較できます。</p>';
+    els.rodLengthRuler.innerHTML = '<p class="empty">全長を入力したロッドを登録すると比較できます。</p>';
     return;
   }
 
@@ -2183,8 +2201,8 @@ function renderRodLengthRuler(rods) {
   const ticks = [];
   for (let t = 0; t <= niceMax; t += 50) ticks.push(t);
 
-  // 錘負荷の上限値（号換算）から、登録されている竿の中での相対的な強さ(0〜1)を求める。
-  // 未入力の竿は中間的な太さで描き、極端に細く/太く見えないようにする。
+  // 錘負荷の上限値（号換算）から、登録されているロッドの中での相対的な強さ(0〜1)を求める。
+  // 未入力のロッドは中間的な太さで描き、極端に細く/太く見えないようにする。
   const powers = withLength.map(g => sinkerWeightToGo(g.sinkerWeight));
   const maxPower = Math.max(...powers.filter(n => n != null), 0);
 
@@ -2552,6 +2570,9 @@ function init() {
   els.navShowGear.addEventListener('click', showGearScreen);
   els.navShowRodForm.addEventListener('click', () => openGearForm('rod'));
   els.navShowReelForm.addEventListener('click', () => openGearForm('reel'));
+  els.gearTabRod.addEventListener('click', () => setGearTab('rod'));
+  els.gearTabReel.addEventListener('click', () => setGearTab('reel'));
+  setGearTab(gearTab);
 
   // Settings
   els.saveUrl.addEventListener('click', () => {
