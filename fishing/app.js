@@ -1061,29 +1061,33 @@ function renderAreaMap() {
   });
   const prefMax = Math.max(1, ...Object.values(prefTotals));
 
-  // 背景に都県の簡易輪郭を描き、おおよその県境がわかるようにする
+  // 海（背景）
+  const seaRect = `<rect class="kanto-sea" x="0" y="0" width="${KANTO_MAP_VIEW.w}" height="${KANTO_MAP_VIEW.h}"></rect>`;
+
+  // 陸地（都県の簡易輪郭）。未訪問でも陸地として塗り、訪問数に応じてピンクを重ねる。
   const prefShapes = KANTO_PREFECTURES.map(pref => {
     const n = prefTotals[pref] || 0;
-    const alpha = n ? (0.1 + (n / prefMax) * 0.3).toFixed(2) : 0.05;
+    const overlayAlpha = n ? (0.18 + (n / prefMax) * 0.5).toFixed(2) : 0;
     const points = KANTO_PREF_POLYGONS[pref]
       .map(([lat, lon]) => { const { x, y } = kantoLatLonToXY(lat, lon); return `${x.toFixed(1)},${y.toFixed(1)}`; })
       .join(' ');
     const { x: lx, y: ly } = kantoLatLonToXY(KANTO_PREF_CENTROID[pref].lat, KANTO_PREF_CENTROID[pref].lon);
     return `
       <g>
-        <polygon points="${points}" class="kanto-pref-shape" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(pref)}: ${n}回</title></polygon>
+        <polygon points="${points}" class="kanto-pref-land"><title>${escapeHtml(pref)}: ${n}回</title></polygon>
+        ${n ? `<polygon points="${points}" class="kanto-pref-overlay" style="fill:rgba(255,45,149,${overlayAlpha})"></polygon>` : ''}
         <text x="${lx}" y="${ly}" class="kanto-pref-label" text-anchor="middle">${escapeHtml(pref)}</text>
       </g>`;
   }).join('');
 
   const dots = [...locCounts.values()].map(({ loc, count }) => {
     const { x, y } = kantoLatLonToXY(loc.lat, loc.lon);
-    const r = 9 + (count / max) * 13;
-    const alpha = (0.35 + (count / max) * 0.55).toFixed(2);
+    const r = (7 + (count / max) * 7).toFixed(1);
+    const alpha = (0.55 + (count / max) * 0.45).toFixed(2);
     return `
       <g>
         <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(loc.key)}: ${count}回</title></circle>
-        <text x="${x}" y="${y + r + 13}" class="kanto-dot-label" text-anchor="middle">${escapeHtml(loc.key)} ${count}回</text>
+        <text x="${x}" y="${y}" class="kanto-dot-count" text-anchor="middle" dominant-baseline="central">${count}</text>
       </g>`;
   }).join('');
 
@@ -1103,7 +1107,7 @@ function renderAreaMap() {
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${KANTO_MAP_VIEW.w} ${KANTO_MAP_VIEW.h}" xmlns="http://www.w3.org/2000/svg">${prefShapes}${dots}</svg>
+    <svg class="kanto-svg" viewBox="0 0 ${KANTO_MAP_VIEW.w} ${KANTO_MAP_VIEW.h}" xmlns="http://www.w3.org/2000/svg">${seaRect}${prefShapes}${dots}</svg>
     <p class="kanto-map-caption">※ 県境は簡略化したイラストです（市は地名のみで判定し、点で表示）</p>
     ${rankHtml}
     ${unresolvedHtml}`;
