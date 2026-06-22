@@ -745,8 +745,8 @@ function renderEventsList(expanded = false) {
           <p class="ec-memo"${collapsedMemoIds.has(ev.id) ? ' hidden' : ''}>${escapeHtml(ev.memo)}</p>
         </div>` : ''}
         <div class="event-card-actions">
-          <button type="button" class="btn btn-primary enter-catches-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">釣果を入力 <svg class="icon icon-inline"><use href="#icon-arrow-right"/></svg></button>
-          <button type="button" class="btn btn-sm tide-toggle-btn" data-id="${escapeHtml(ev.id)}">${tideActive ? '釣行詳細に戻る' : '潮汐グラフ'}</button>
+          <button type="button" class="btn btn-sm tide-toggle-btn" data-id="${escapeHtml(ev.id)}">${tideActive ? '元に戻る' : '潮汐グラフ'}</button>
+          <button type="button" class="btn btn-primary enter-catches-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">釣果入力 <svg class="icon icon-inline"><use href="#icon-arrow-right"/></svg></button>
           <button type="button" class="btn btn-sm edit-event-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">編集</button>
           <button type="button" class="btn btn-sm btn-danger delete-event-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">削除</button>
         </div>
@@ -2853,7 +2853,7 @@ async function handleEventsClick(e) {
     meta.hidden = showTide;
     tideBody.hidden = !showTide;
     card.querySelectorAll('.ec-action-default').forEach(b => { b.hidden = showTide; });
-    btn.textContent = showTide ? '釣行詳細に戻る' : '潮汐グラフ';
+    btn.textContent = showTide ? '元に戻る' : '潮汐グラフ';
     if (showTide) {
       tideViewIds.add(id);
       hydrateTideGroup(currentEvents.find(e => e.id === id));
