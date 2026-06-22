@@ -1056,12 +1056,13 @@ form > textarea { margin-bottom: 0.6rem; }
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 700;
-  color: var(--ink-muted);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  color: var(--danger);
+  background: rgba(224, 48, 63, 0.08);
+  border: 1px solid rgba(224, 48, 63, 0.25);
   border-radius: 99px;
   padding: 0.15rem 0.55rem;
 }
+.ec-cost .icon { color: var(--danger); }
 
 .ec-total-catch {
   font-family: var(--font-body);

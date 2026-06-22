@@ -679,8 +679,8 @@ function renderEventsList(expanded = false) {
 
     const showCostGroup = ev.cost || totalValue > 0;
     const costGroup = `
-      ${ev.cost ? `<span class="ec-cost">¥${Number(ev.cost).toLocaleString()}</span>` : ''}
-      ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-coin"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}`;
+      ${ev.cost ? `<span class="ec-cost"><svg class="icon icon-inline"><use href="#icon-minus-circle"/></svg>−¥${Number(ev.cost).toLocaleString()}</span>` : ''}
+      ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-plus-circle"/></svg>+¥${totalValue.toLocaleString()}</span>` : ''}`;
 
     const metaGroupHtml = (label, content) => `
       <div class="ec-group">
@@ -1350,33 +1350,31 @@ function renderHeatmap() {
     .map(c => ({ c, ev: events.find(e => e.id === c.eventId) }))
     .filter(x => x.ev);
 
-  // 魚種フィルタ（プルダウン）
-  const allSpecies = [...new Set(withTime.map(x => x.c.species).filter(Boolean))].sort();
-  const speciesFilterHtml = `<div class="heatmap-filter-row">
-    <label class="hm-select-label">魚種
-      <select class="hm-species-select">
-        <option value=""${!heatmapSpeciesFilter ? ' selected' : ''}>全魚種</option>
-        ${allSpecies.map(s => `<option value="${escapeHtml(s)}"${heatmapSpeciesFilter === s ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}
-      </select>
-    </label>
-  </div>`;
-
   // 釣行（日付＋釣り場名）フィルタ（プルダウン）
   const tripMap = new Map();
   withTime.forEach(({ ev }) => {
     if (!tripMap.has(ev.id)) tripMap.set(ev.id, `${normDateStr(ev.date)} ${ev.spot || '釣り場不明'}`);
   });
   const trips = [...tripMap.entries()].sort((a, b) => b[1].localeCompare(a[1]));
-  const tripFilterHtml = `<div class="heatmap-filter-row">
+  const tripFilterHtml = `
     <label class="hm-select-label">釣行
       <select class="hm-trip-select">
         <option value=""${!heatmapTripFilter ? ' selected' : ''}>すべての釣行</option>
         ${trips.map(([id, label]) => `<option value="${escapeHtml(id)}"${heatmapTripFilter === id ? ' selected' : ''}>${escapeHtml(label)}</option>`).join('')}
       </select>
-    </label>
-  </div>`;
+    </label>`;
 
-  const filterHtml = speciesFilterHtml + tripFilterHtml;
+  // 魚種フィルタ（プルダウン）
+  const allSpecies = [...new Set(withTime.map(x => x.c.species).filter(Boolean))].sort();
+  const speciesFilterHtml = `
+    <label class="hm-select-label">魚種
+      <select class="hm-species-select">
+        <option value=""${!heatmapSpeciesFilter ? ' selected' : ''}>全魚種</option>
+        ${allSpecies.map(s => `<option value="${escapeHtml(s)}"${heatmapSpeciesFilter === s ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+      </select>
+    </label>`;
+
+  const filterHtml = `<div class="heatmap-filter-row">${tripFilterHtml}${speciesFilterHtml}</div>`;
 
   if (!withTime.length) {
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">釣果データがありません。</p>';
