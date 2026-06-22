@@ -1104,6 +1104,13 @@ function resolveKantoLocation(area) {
 
 // エリア分析で選択可能な都道府県（市町村レベルのデータが揃っているもののみ）。
 const AREA_PREF_OPTIONS = ['神奈川', '千葉', '静岡'];
+
+// 地図上にうっすら表示する、各都道府県の代表的な都市（位置の目印用）。
+const AREA_MAJOR_CITIES = {
+  '神奈川': ['横浜', '川崎', '横須賀', '鎌倉', '小田原'],
+  '千葉':   ['千葉', '船橋', '木更津', '館山', '銚子'],
+  '静岡':   ['静岡', '浜松', '沼津', '熱海', '下田'],
+};
 let selectedAreaPref = '神奈川';
 
 // 神奈川県内の主要な釣り場の緯度経度（簡易版・網羅的ではない・市町村レベルより精密）。
@@ -1203,10 +1210,17 @@ function renderAreaMap() {
     .join(' ');
   const landShape = `<polygon points="${landPoints}" class="kanto-pref-land"><title>${escapeHtml(selectedAreaPref)}</title></polygon>`;
 
+  const cityLabels = (AREA_MAJOR_CITIES[selectedAreaPref] || []).map(name => {
+    const c = KANTO_CITY_COORDS[name];
+    if (!c) return '';
+    const { x, y } = project(c.lat, c.lon);
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" class="kanto-city-label" text-anchor="middle">${escapeHtml(name)}</text>`;
+  }).join('');
+
   const max = Math.max(1, ...[...spotCounts.values()].map(e => e.count));
   const dots = [...spotCounts.values()].map(({ spot, count }) => {
     const { x, y } = project(spot.lat, spot.lon);
-    const r = (10 + (count / max) * 10).toFixed(1);
+    const r = (7 + (count / max) * 6).toFixed(1);
     const dim = (0.7 + (count / max) * 0.3).toFixed(2);
     const approxCls = spot.precise ? '' : ' kanto-dot-group-approx';
     const title = spot.precise ? `${spot.key}: ${count}回` : `${spot.key}（おおよその位置）: ${count}回`;
@@ -1240,7 +1254,7 @@ function renderAreaMap() {
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${landShape}${dots}</svg>
+    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${landShape}${cityLabels}${dots}</svg>
     <p class="kanto-map-caption">※ ${AREA_PREF_OPTIONS.map(escapeHtml).join('・')}のみ対応の簡易版です</p>
     ${rankHtml}
     ${unresolvedHtml}`;

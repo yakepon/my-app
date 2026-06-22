@@ -988,9 +988,8 @@ form > textarea { margin-bottom: 0.6rem; }
 .ec-date { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; color: var(--ink-muted); display: block; margin-bottom: 0.25rem; }
 .ec-spot-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.55rem; }
 .ec-spot { font-size: 1.08rem; font-weight: 900; color: var(--ink); flex: 1; min-width: 0; }
-.ec-catch-stat { text-align: center; flex-shrink: 0; }
+.ec-catch-stat { display: flex; align-items: baseline; gap: 0.2rem; flex-shrink: 0; }
 .ec-catch-stat-value {
-  display: block;
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 900;
@@ -998,12 +997,10 @@ form > textarea { margin-bottom: 0.6rem; }
   line-height: 1;
 }
 .ec-catch-stat-label {
-  display: block;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--ink-faint);
-  margin-top: 0.15rem;
 }
 .ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; }
 .ec-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.3rem; }
@@ -1670,9 +1667,16 @@ form > textarea { margin-bottom: 0.6rem; }
 .kanto-svg { width: 100%; height: auto; display: block; }
 .kanto-pref-land {
   fill: #e7e6eb;
-  stroke: #c7c5cf;
-  stroke-width: 1.3;
+  stroke: none;
   stroke-linejoin: round;
+}
+.kanto-city-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--ink-faint);
+  opacity: 0.55;
+  pointer-events: none;
 }
 .kanto-map-caption {
   font-size: 0.66rem;
@@ -1685,16 +1689,14 @@ form > textarea { margin-bottom: 0.6rem; }
 .kanto-dot-group.is-active { opacity: 1 !important; }
 .kanto-dot {
   fill: url(#kantoDotGrad);
-  stroke: #fff;
-  stroke-width: 1.6;
+  stroke: none;
   filter: drop-shadow(0 3px 6px rgba(45, 10, 70, 0.35));
   transition: stroke-width 0.15s;
 }
-.kanto-dot-group.is-active .kanto-dot { stroke-width: 2.6; }
-.kanto-dot-group-approx .kanto-dot { stroke-dasharray: 3 2; }
+.kanto-dot-group.is-active .kanto-dot { stroke: #fff; stroke-width: 2; }
 .kanto-dot-count {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 900;
   fill: #fff;
   pointer-events: none;
