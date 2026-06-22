@@ -664,7 +664,7 @@ function renderEventsList(expanded = false) {
   const hiddenCount = sorted.length - EVENTS_INITIAL;
 
   const today = todayStr();
-  els.eventsList.innerHTML = visible.map(ev => {
+  const cardsHtml = visible.map(ev => {
     const catches   = currentCatches.filter(c => c.eventId === ev.id);
     const species   = [...new Set(catches.map(c => c.species).filter(Boolean))];
     const totalCatch = catches.reduce((sum, c) => sum + (Number(c.count) || 1), 0);
@@ -746,6 +746,8 @@ function renderEventsList(expanded = false) {
         </div>
       </article>`;
   }).join('');
+
+  els.eventsList.innerHTML = `<div class="event-cards-row">${cardsHtml}</div>`;
 
   if (hiddenCount > 0) {
     els.eventsList.innerHTML += `
