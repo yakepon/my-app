@@ -1117,6 +1117,27 @@ function resolveKanagawaSpot(spotName) {
   return null;
 }
 
+// 市町村名のみ（施設名なし）の場合、KANTO_CITY_COORDS（市町村レベル）から該当都県のものだけを拾う。
+function resolveCityOnly(text, pref) {
+  if (!text) return null;
+  for (const name in KANTO_CITY_COORDS) {
+    const c = KANTO_CITY_COORDS[name];
+    if (c.pref === pref && text.indexOf(name) !== -1) return { key: name, ...c };
+  }
+  return null;
+}
+
+// 釣り場名でピンポイントに判定できなければ、釣り場名→エリア名の順に市町村レベルでも判定する。
+function resolveKanagawaLocation(ev) {
+  const spot = resolveKanagawaSpot(ev.spot);
+  if (spot) return { ...spot, precise: true };
+  const cityFromSpot = resolveCityOnly(ev.spot, SELECTED_PREF);
+  if (cityFromSpot) return { ...cityFromSpot, precise: false };
+  const cityFromArea = resolveCityOnly(ev.area, SELECTED_PREF);
+  if (cityFromArea) return { ...cityFromArea, precise: false };
+  return null;
+}
+
 function renderAreaMap() {
   const events = filteredEvents();
   if (!events.length) {
@@ -1124,12 +1145,12 @@ function renderAreaMap() {
     return;
   }
 
-  // 釣り場名から判定できたものはピンポイントで集計し、判定できなかった釣り場名は
-  // （エリア欄の内容に関わらず）そのまま一覧表示し、登録漏れに気づけるようにする。
+  // 釣り場名でピンポイントに判定できたものを優先し、できなければ市町村レベルで
+  // おおまかな位置を表示する。どちらも判定できなかった釣り場名は一覧表示する。
   const spotCounts = new Map(); // key -> { spot, count }
   const unresolvedNames = new Map(); // 入力された釣り場名 -> 件数
   events.forEach(ev => {
-    const spot = resolveKanagawaSpot(ev.spot);
+    const spot = resolveKanagawaLocation(ev);
     if (spot) {
       const entry = spotCounts.get(spot.key) || { spot, count: 0 };
       entry.count++;
@@ -1145,13 +1166,9 @@ function renderAreaMap() {
 
   const defs = `
     <defs>
-      <linearGradient id="kantoSeaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#eef7fb"/>
-        <stop offset="100%" stop-color="#c3cdf0"/>
-      </linearGradient>
       <linearGradient id="kantoLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#fbfaf6"/>
-        <stop offset="100%" stop-color="#efeae0"/>
+        <stop offset="0%" stop-color="#f3f1f8"/>
+        <stop offset="100%" stop-color="#e3def2"/>
       </linearGradient>
       <radialGradient id="kantoDotGrad" cx="35%" cy="30%" r="75%">
         <stop offset="0%" stop-color="#ff62b3"/>
@@ -1159,8 +1176,6 @@ function renderAreaMap() {
         <stop offset="100%" stop-color="#6C3FE0"/>
       </radialGradient>
     </defs>`;
-
-  const seaRect = `<rect class="kanto-sea" x="0" y="0" width="${view.w}" height="${view.h}"></rect>`;
 
   const landPoints = KANTO_PREF_POLYGONS[SELECTED_PREF]
     .map(([lat, lon]) => { const { x, y } = project(lat, lon); return `${x.toFixed(1)},${y.toFixed(1)}`; })
@@ -1187,9 +1202,11 @@ function renderAreaMap() {
     const { x, y } = project(spot.lat, spot.lon);
     const r = (10 + (count / max) * 10).toFixed(1);
     const dim = (0.7 + (count / max) * 0.3).toFixed(2);
+    const approxCls = spot.precise ? '' : ' kanto-dot-group-approx';
+    const title = spot.precise ? `${spot.key}: ${count}回` : `${spot.key}（市町村レベル・おおよその位置）: ${count}回`;
     return `
-      <g class="kanto-dot-group" data-spot-key="${escapeHtml(spot.key)}" style="opacity:${dim}">
-        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot"><title>${escapeHtml(spot.key)}: ${count}回</title></circle>
+      <g class="kanto-dot-group${approxCls}" data-spot-key="${escapeHtml(spot.key)}" style="opacity:${dim}">
+        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot"><title>${escapeHtml(title)}</title></circle>
         <text x="${x}" y="${y}" class="kanto-dot-count" text-anchor="middle" dominant-baseline="central">${count}</text>
       </g>`;
   }).join('');
@@ -1200,7 +1217,7 @@ function renderAreaMap() {
         ${ranked.map(({ spot, count }) => `
           <li data-spot-key="${escapeHtml(spot.key)}">
             <span class="kanto-rank-dot"></span>
-            <span class="kanto-rank-pref">${escapeHtml(spot.key)}</span>
+            <span class="kanto-rank-pref">${escapeHtml(spot.key)}${spot.precise ? '' : '<span class="kanto-rank-sub">（市町村レベル）</span>'}</span>
             <span class="kanto-rank-count">${count}回</span>
           </li>`).join('')}
       </ol>`
@@ -1208,7 +1225,7 @@ function renderAreaMap() {
 
   const unresolvedHtml = unresolvedNames.size
     ? `<div class="kanto-unresolved">
-        <p>※ 地図上の位置が分からない釣り場があります。座標を追加すれば表示できます。</p>
+        <p>※ 釣り場名・エリア名のどちらからも位置が分からない釣行があります。座標を追加すれば表示できます。</p>
         <ul class="kanto-unresolved-list">
           ${[...unresolvedNames.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) =>
             `<li>${escapeHtml(name)}<span class="kanto-unresolved-count">${n}件</span></li>`).join('')}
@@ -1217,7 +1234,7 @@ function renderAreaMap() {
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${seaRect}${landShape}${scaleBar}${dots}</svg>
+    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${landShape}${scaleBar}${dots}</svg>
     <p class="kanto-map-caption">※ ${escapeHtml(SELECTED_PREF)}県のみ対応の簡易版です（都道府県の選択は今後対応予定）</p>
     ${rankHtml}
     ${unresolvedHtml}`;

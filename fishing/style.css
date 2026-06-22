@@ -1696,7 +1696,6 @@ form > textarea { margin-bottom: 0.6rem; }
   border-radius: var(--radius);
 }
 .kanto-svg { width: 100%; height: auto; display: block; }
-.kanto-sea { fill: url(#kantoSeaGrad); }
 .kanto-pref-land {
   fill: url(#kantoLandGrad);
   stroke: rgba(108, 63, 224, 0.45);
@@ -1729,6 +1728,7 @@ form > textarea { margin-bottom: 0.6rem; }
   transition: stroke-width 0.15s;
 }
 .kanto-dot-group.is-active .kanto-dot { stroke-width: 2.6; }
+.kanto-dot-group-approx .kanto-dot { stroke-dasharray: 3 2; }
 .kanto-dot-count {
   font-family: var(--font-display);
   font-size: 11px;
