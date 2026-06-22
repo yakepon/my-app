@@ -1599,8 +1599,38 @@ form > textarea { margin-bottom: 0.6rem; }
 #catchesList .catch-row { padding: 0.58rem 0; border-bottom: 1px solid var(--border); }
 #catchesList .catch-row:last-child { border-bottom: none; }
 
-/* ── Heatmap species filter ─────────────────────────────────── */
-.heatmap-filter,
+/* ── Heatmap filters ───────────────────────────────────────── */
+.heatmap-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 860px;
+  margin: 0 auto 0.7rem;
+  padding: 0 1rem;
+}
+.hm-select-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+.hm-species-select,
+.hm-trip-select {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  max-width: 220px;
+}
+.hm-species-select:focus,
+.hm-trip-select:focus { outline: none; border-color: var(--accent-2); }
+
 .style-filter {
   display: flex;
   flex-wrap: wrap;
@@ -1609,7 +1639,6 @@ form > textarea { margin-bottom: 0.6rem; }
   margin: 0 auto 1rem;
   padding: 0 1rem;
 }
-.heatmap-filter { padding: 0; margin-bottom: 0.9rem; }
 
 .hm-chip {
   font-family: var(--font-body);
@@ -1628,49 +1657,6 @@ form > textarea { margin-bottom: 0.6rem; }
 .hm-chip:hover  { border-color: var(--accent-2); color: var(--accent-2); background: #fff; transform: translateY(-1px); }
 .hm-chip.hm-chip-active { background: var(--gradient); border-color: transparent; color: #fff; }
 .hm-chip.hm-chip-active:hover { color: #fff; }
-
-.heatmap-filter-spot { margin-bottom: 0.6rem; }
-
-.heatmap-date-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-  max-width: 860px;
-  margin: 0 auto 0.9rem;
-  padding: 0 1rem;
-}
-.hm-date-label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--ink-muted);
-}
-.hm-date-input {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  padding: 0.26rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--ink);
-}
-.hm-date-input:focus { outline: none; border-color: var(--accent-2); }
-.hm-date-clear {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.24rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 99px;
-  background: transparent;
-  color: var(--accent);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.hm-date-clear:hover { border-color: var(--accent); background: #fff; }
 
 .heatmap-wrap-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 

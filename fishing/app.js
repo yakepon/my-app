@@ -151,8 +151,7 @@ let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let gearTab        = 'rod'; // 'rod' | 'reel'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
-let heatmapSpotFilter    = ''; // '' = 全釣り場
-let heatmapDateFilter    = ''; // '' = 日付指定なし (YYYY-MM-DD)
+let heatmapTripFilter    = ''; // '' = すべての釣行 / それ以外はイベントID（日付＋釣り場名で一意な釣行）
 let styleFilter = ''; // '' = すべての釣り方
 
 function filteredEvents() {
@@ -1351,40 +1350,43 @@ function renderHeatmap() {
     .map(c => ({ c, ev: events.find(e => e.id === c.eventId) }))
     .filter(x => x.ev);
 
-  // 魚種フィルタチップ
+  // 魚種フィルタ（プルダウン）
   const allSpecies = [...new Set(withTime.map(x => x.c.species).filter(Boolean))].sort();
-  const speciesFilterHtml = `<div class="heatmap-filter">
-    <button class="hm-chip${!heatmapSpeciesFilter ? ' hm-chip-active' : ''}" data-species="">全魚種</button>
-    ${allSpecies.map(s => `<button class="hm-chip${heatmapSpeciesFilter === s ? ' hm-chip-active' : ''}" data-species="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}
-  </div>`;
-
-  // 釣り場名フィルタチップ
-  const allSpots = [...new Set(withTime.map(x => x.ev.spot).filter(Boolean))].sort();
-  const spotFilterHtml = `<div class="heatmap-filter heatmap-filter-spot">
-    <button class="hm-chip${!heatmapSpotFilter ? ' hm-chip-active' : ''}" data-spot="">全釣り場</button>
-    ${allSpots.map(s => `<button class="hm-chip${heatmapSpotFilter === s ? ' hm-chip-active' : ''}" data-spot="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}
-  </div>`;
-
-  // 日付フィルタ
-  const dateFilterHtml = `<div class="heatmap-date-filter">
-    <label class="hm-date-label">日付
-      <input type="date" class="hm-date-input" value="${escapeHtml(heatmapDateFilter)}">
+  const speciesFilterHtml = `<div class="heatmap-filter-row">
+    <label class="hm-select-label">魚種
+      <select class="hm-species-select">
+        <option value=""${!heatmapSpeciesFilter ? ' selected' : ''}>全魚種</option>
+        ${allSpecies.map(s => `<option value="${escapeHtml(s)}"${heatmapSpeciesFilter === s ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+      </select>
     </label>
-    ${heatmapDateFilter ? '<button type="button" class="hm-date-clear">日付条件をクリア</button>' : ''}
   </div>`;
 
-  const filterHtml = speciesFilterHtml + spotFilterHtml + dateFilterHtml;
+  // 釣行（日付＋釣り場名）フィルタ（プルダウン）
+  const tripMap = new Map();
+  withTime.forEach(({ ev }) => {
+    if (!tripMap.has(ev.id)) tripMap.set(ev.id, `${normDateStr(ev.date)} ${ev.spot || '釣り場不明'}`);
+  });
+  const trips = [...tripMap.entries()].sort((a, b) => b[1].localeCompare(a[1]));
+  const tripFilterHtml = `<div class="heatmap-filter-row">
+    <label class="hm-select-label">釣行
+      <select class="hm-trip-select">
+        <option value=""${!heatmapTripFilter ? ' selected' : ''}>すべての釣行</option>
+        ${trips.map(([id, label]) => `<option value="${escapeHtml(id)}"${heatmapTripFilter === id ? ' selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+      </select>
+    </label>
+  </div>`;
+
+  const filterHtml = speciesFilterHtml + tripFilterHtml;
 
   if (!withTime.length) {
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">釣果データがありません。</p>';
     return;
   }
 
-  // 魚種フィルタ ＆ （日付＋釣り場名）フィルタ は AND 条件で絞り込む
+  // 魚種フィルタ ＆ 釣行（日付＋釣り場名）フィルタ は AND 条件で絞り込む
   const filtered = withTime.filter(({ c, ev }) => {
     if (heatmapSpeciesFilter && c.species !== heatmapSpeciesFilter) return false;
-    if (heatmapSpotFilter && ev.spot !== heatmapSpotFilter) return false;
-    if (heatmapDateFilter && normDateStr(ev.date) !== heatmapDateFilter) return false;
+    if (heatmapTripFilter && ev.id !== heatmapTripFilter) return false;
     return true;
   });
 
@@ -2803,27 +2805,14 @@ function init() {
   els.photoLightboxBackdrop.addEventListener('click', closePhotoLightbox);
   els.photoLightboxDelete.addEventListener('click', deleteLightboxPhoto);
 
-  els.heatmap.addEventListener('click', e => {
-    const dateClear = e.target.closest('.hm-date-clear');
-    if (dateClear) {
-      heatmapDateFilter = '';
-      renderHeatmap();
-      return;
-    }
-    const chip = e.target.closest('.hm-chip');
-    if (!chip) return;
-    if (chip.dataset.spot !== undefined) {
-      heatmapSpotFilter = chip.dataset.spot;
-    } else {
-      heatmapSpeciesFilter = chip.dataset.species;
-    }
-    renderHeatmap();
-  });
-
   els.heatmap.addEventListener('change', e => {
-    if (!e.target.matches('.hm-date-input')) return;
-    heatmapDateFilter = e.target.value || '';
-    renderHeatmap();
+    if (e.target.matches('.hm-species-select')) {
+      heatmapSpeciesFilter = e.target.value;
+      renderHeatmap();
+    } else if (e.target.matches('.hm-trip-select')) {
+      heatmapTripFilter = e.target.value;
+      renderHeatmap();
+    }
   });
 
   els.styleFilter.addEventListener('click', e => {
