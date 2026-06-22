@@ -579,22 +579,7 @@ main, header, footer, section { position: relative; z-index: 2; }
   white-space: nowrap;
 }
 
-.tide-chart-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
-}
-.tide-chart-card-head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.7rem;
-}
-.tide-chart-card-date { font-size: 0.7rem; font-weight: 700; color: var(--ink-muted); flex-shrink: 0; }
-.tide-chart-card-spot { font-size: 0.92rem; font-weight: 900; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tide-chart-card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.tide-chart-card-body > * { min-width: 480px; }
+.tide-chart-card-body { margin-top: 0.3rem; }
 
 /* ── Heatmap ───────────────────────────────────────────────── */
 .heatmap-wrap { }
@@ -1009,25 +994,15 @@ form > textarea { margin-bottom: 0.6rem; }
 .form-actions { display: flex; gap: 0.6rem; align-items: center; }
 
 /* ── History / Event cards ─────────────────────────────────── */
-.ec-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.ec-row:last-child { margin-bottom: 0; }
-.ec-row .event-card { flex: 1 1 420px; min-width: 320px; }
-.ec-row .tide-chart-card { flex: 0 0 360px; }
-
 .event-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  margin-bottom: 1rem;
   transition: border-color 0.2s, box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
 }
+.event-card:last-child { margin-bottom: 0; }
 .event-card:hover {
   border-color: rgba(108, 63, 224, 0.35);
   box-shadow: 0 16px 36px -20px rgba(108, 63, 224, 0.3);
@@ -1710,7 +1685,7 @@ form > textarea { margin-bottom: 0.6rem; }
 .heatmap-wrap-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* ── Kanto area map（緯度経度ベースの簡易散布図） ───────────────── */
-.kanto-map-wrap { max-width: 480px; margin: 0 auto; }
+.kanto-map-wrap { max-width: 640px; margin: 0 auto; }
 .kanto-svg { width: 100%; height: auto; display: block; }
 .kanto-sea { fill: #d6ecf8; }
 .kanto-pref-land {
@@ -1741,7 +1716,7 @@ form > textarea { margin-bottom: 0.6rem; }
 .kanto-dot:hover { opacity: 0.8; }
 .kanto-dot-count {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 900;
   fill: #fff;
   pointer-events: none;

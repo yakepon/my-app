@@ -645,6 +645,7 @@ function renderAll() {
 
 const EVENTS_INITIAL = 2;
 const collapsedMemoIds = new Set();
+const tideViewIds = new Set();
 
 function renderEventsList(expanded = false) {
   const sorted = [...filteredEvents()].sort(
@@ -709,8 +710,9 @@ function renderEventsList(expanded = false) {
         <div class="ec-group-content">${content}</div>
       </div>`;
 
+    const tideActive = tideViewIds.has(ev.id);
+
     return `
-    <div class="ec-row">
       <article class="event-card${isToday ? ' event-card-today' : ''}">
         <div class="event-card-head">
           <div class="ec-head-row">
@@ -727,12 +729,13 @@ function renderEventsList(expanded = false) {
                 </div>` : ''}
                 ${photos.length ? `<div class="ec-photos">${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
               </div>
-              <div class="ec-meta">
+              <div class="ec-meta"${tideActive ? ' hidden' : ''}>
                 ${metaGroupHtml('行程', itineraryGroup)}
                 ${metaGroupHtml('天候', weatherGroup)}
                 ${showCatchGroup ? metaGroupHtml('釣果', catchGroup) : ''}
                 ${showCostGroup  ? metaGroupHtml('コスパ', costGroup) : ''}
               </div>
+              <div class="tide-chart-card-body" data-tide-event-id="${escapeHtml(ev.id)}"${tideActive ? '' : ' hidden'}><p class="empty">読み込み中...</p></div>
             </div>
           </div>
         </div>
@@ -742,19 +745,12 @@ function renderEventsList(expanded = false) {
           <p class="ec-memo"${collapsedMemoIds.has(ev.id) ? ' hidden' : ''}>${escapeHtml(ev.memo)}</p>
         </div>` : ''}
         <div class="event-card-actions">
-          <button type="button" class="btn btn-primary enter-catches-btn" data-id="${escapeHtml(ev.id)}">釣果を入力 <svg class="icon icon-inline"><use href="#icon-arrow-right"/></svg></button>
-          <button type="button" class="btn btn-sm edit-event-btn" data-id="${escapeHtml(ev.id)}">編集</button>
-          <button type="button" class="btn btn-sm btn-danger delete-event-btn" data-id="${escapeHtml(ev.id)}">削除</button>
+          <button type="button" class="btn btn-primary enter-catches-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">釣果を入力 <svg class="icon icon-inline"><use href="#icon-arrow-right"/></svg></button>
+          <button type="button" class="btn btn-sm tide-toggle-btn" data-id="${escapeHtml(ev.id)}">${tideActive ? '釣行詳細に戻る' : '潮汐グラフ'}</button>
+          <button type="button" class="btn btn-sm edit-event-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">編集</button>
+          <button type="button" class="btn btn-sm btn-danger delete-event-btn ec-action-default"${tideActive ? ' hidden' : ''} data-id="${escapeHtml(ev.id)}">削除</button>
         </div>
-      </article>
-      <div class="tide-chart-card" data-tide-event-id="${escapeHtml(ev.id)}">
-        <div class="tide-chart-card-head">
-          <span class="tide-chart-card-date">${escapeHtml(formatDateLabel(ev.date))}</span>
-          <span class="tide-chart-card-spot">${escapeHtml(ev.spot || '-')}</span>
-        </div>
-        <div class="tide-chart-card-body"><p class="empty">読み込み中...</p></div>
-      </div>
-    </div>`;
+      </article>`;
   }).join('');
 
   if (hiddenCount > 0) {
@@ -775,7 +771,8 @@ function renderEventsList(expanded = false) {
   }
 
   visible.forEach(loadEventWeather);
-  visible.forEach(hydrateTideGroup);
+  // 潮汐グラフは「潮汐グラフ」ボタンを押した時点で読み込む（表示中のカードのみ再読み込み）
+  visible.filter(ev => tideViewIds.has(ev.id)).forEach(hydrateTideGroup);
 }
 
 function renderEventBanner() {
@@ -1031,10 +1028,6 @@ const KANTO_PREF_CENTROID = {
   '静岡':   { lat: 35.020, lon: 138.327 },
 };
 
-const KANTO_MAP_BOUNDS = { latMin: 34.5, latMax: 37.25, lonMin: 137.35, lonMax: 141.0 };
-// 緯度約36度での経度方向の距離縮みを考慮し、実際の地図に近い縦横比になるようviewBoxを設定
-const KANTO_MAP_VIEW = { w: 384, h: 360, margin: 26 };
-
 // 関東1都6県＋山梨・静岡のおおよその輪郭（実際の行政区域データを間引いて簡略化したもの。
 // 出典: https://github.com/dataofjapan/land の japan.geojson を簡略化）。
 const KANTO_PREF_POLYGONS = {
@@ -1049,13 +1042,36 @@ const KANTO_PREF_POLYGONS = {
   '静岡': [[35.644,138.219],[35.516,138.268],[35.332,138.249],[35.305,138.286],[35.317,138.359],[35.200,138.399],[35.178,138.440],[35.168,138.492],[35.202,138.533],[35.314,138.512],[35.411,138.533],[35.446,138.582],[35.358,138.680],[35.399,139.002],[35.330,139.019],[35.236,138.976],[35.151,139.029],[35.141,139.111],[35.057,139.069],[35.046,139.100],[34.976,139.096],[34.936,139.148],[34.768,139.048],[34.743,138.997],[34.658,138.987],[34.674,138.948],[34.601,138.844],[34.690,138.739],[34.752,138.776],[34.819,138.752],[34.884,138.756],[34.908,138.790],[34.963,138.763],[35.017,138.780],[35.017,138.890],[35.048,138.906],[35.107,138.828],[35.145,138.685],[35.101,138.556],[35.032,138.494],[34.986,138.503],[35.013,138.533],[34.983,138.515],[34.915,138.357],[34.771,138.301],[34.670,138.198],[34.595,138.227],[34.658,138.063],[34.674,137.484],[34.811,137.487],[34.892,137.640],[35.035,137.717],[35.105,137.800],[35.211,137.828],[35.371,138.142],[35.448,138.119],[35.470,138.160],[35.555,138.142]],
 };
 
-function kantoLatLonToXY(lat, lon) {
-  const { latMin, latMax, lonMin, lonMax } = KANTO_MAP_BOUNDS;
-  const { w, h, margin } = KANTO_MAP_VIEW;
+function projectLatLon(lat, lon, bounds, view) {
+  const { latMin, latMax, lonMin, lonMax } = bounds;
+  const { w, h, margin } = view;
   return {
     x: margin + (lon - lonMin) / (lonMax - lonMin) * (w - margin * 2),
     y: margin + (latMax - lat) / (latMax - latMin) * (h - margin * 2),
   };
+}
+
+// 都道府県の輪郭ポリゴン（lat/lon配列）から、緯度方向のパディングを加えた表示範囲を求める。
+function computeMapBounds(polygonPoints, latPad, lonPad) {
+  const lats = polygonPoints.map(p => p[0]);
+  const lons = polygonPoints.map(p => p[1]);
+  return {
+    latMin: Math.min(...lats) - latPad,
+    latMax: Math.max(...lats) + latPad,
+    lonMin: Math.min(...lons) - lonPad,
+    lonMax: Math.max(...lons) + lonPad,
+  };
+}
+
+// 緯度による経度方向の距離縮み（cos(緯度)）を考慮し、実際の地図に近い縦横比のviewBoxサイズを求める。
+function computeMapView(bounds, targetH, margin) {
+  const latSpan = bounds.latMax - bounds.latMin;
+  const lonSpan = bounds.lonMax - bounds.lonMin;
+  const latMid = (bounds.latMin + bounds.latMax) / 2;
+  const cosLat = Math.cos(latMid * Math.PI / 180);
+  const drawH = targetH - margin * 2;
+  const drawW = drawH * (lonSpan * cosLat) / latSpan;
+  return { w: Math.round(drawW + margin * 2), h: targetH, margin };
 }
 
 // 「エリア」欄の地名から、市町村レベル→都県レベルの順で関東の位置を判定する。
@@ -1070,6 +1086,37 @@ function resolveKantoLocation(area) {
   return null;
 }
 
+// 神奈川県内の主要な釣り場の緯度経度（簡易版・網羅的ではない）。
+// 「将来的に都道府県を選べるようにする」構想に向けて、まずは神奈川県のみ収録。
+const SELECTED_PREF = '神奈川';
+const KANAGAWA_SPOT_COORDS = {
+  '大黒海釣り公園':     { lat: 35.466, lon: 139.687 },
+  '本牧海づり施設':     { lat: 35.421, lon: 139.668 },
+  '磯子海づり施設':     { lat: 35.408, lon: 139.640 },
+  '海の公園':           { lat: 35.339, lon: 139.648 },
+  '八景島':             { lat: 35.346, lon: 139.654 },
+  '横須賀うみかぜ公園': { lat: 35.288, lon: 139.668 },
+  '観音崎公園':         { lat: 35.260, lon: 139.745 },
+  '走水海岸':           { lat: 35.265, lon: 139.722 },
+  '久里浜港':           { lat: 35.231, lon: 139.696 },
+  '城ヶ島':             { lat: 35.135, lon: 139.616 },
+  '三崎港':             { lat: 35.142, lon: 139.608 },
+  '茅ヶ崎港':           { lat: 35.314, lon: 139.401 },
+  '江の島':             { lat: 35.300, lon: 139.480 },
+  '片瀬漁港':           { lat: 35.302, lon: 139.480 },
+  '小田原港':           { lat: 35.246, lon: 139.149 },
+  '真鶴港':             { lat: 35.156, lon: 139.137 },
+  '東扇島':             { lat: 35.512, lon: 139.741 },
+};
+
+function resolveKanagawaSpot(spotName) {
+  if (!spotName) return null;
+  for (const name in KANAGAWA_SPOT_COORDS) {
+    if (spotName.indexOf(name) !== -1) return { key: name, ...KANAGAWA_SPOT_COORDS[name] };
+  }
+  return null;
+}
+
 function renderAreaMap() {
   const events = filteredEvents();
   if (!events.length) {
@@ -1077,73 +1124,63 @@ function renderAreaMap() {
     return;
   }
 
-  const locCounts = new Map(); // key -> { loc, count }
+  // 釣り場名から判定できたものはピンポイントで集計し、判定できなかった
+  // （が、エリア欄からは選択中の都道府県と判定できる）釣行は件数のみ別途表示する。
+  const spotCounts = new Map(); // key -> { spot, count }
   let unresolved = 0;
   events.forEach(ev => {
+    const spot = resolveKanagawaSpot(ev.spot);
+    if (spot) {
+      const entry = spotCounts.get(spot.key) || { spot, count: 0 };
+      entry.count++;
+      spotCounts.set(spot.key, entry);
+      return;
+    }
     const loc = resolveKantoLocation(ev.area);
-    if (!loc) { if (ev.area) unresolved++; return; }
-    const entry = locCounts.get(loc.key) || { loc, count: 0 };
-    entry.count++;
-    locCounts.set(loc.key, entry);
+    if (loc && loc.pref === SELECTED_PREF) unresolved++;
   });
 
-  const max = Math.max(1, ...[...locCounts.values()].map(e => e.count));
+  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[SELECTED_PREF], 0.07, 0.09);
+  const view = computeMapView(bounds, 420, 30);
+  const project = (lat, lon) => projectLatLon(lat, lon, bounds, view);
 
-  // 都県ごとの合計釣行数（背景ポリゴンの濃淡に使う）
-  const prefTotals = {};
-  locCounts.forEach(({ loc, count }) => {
-    prefTotals[loc.pref] = (prefTotals[loc.pref] || 0) + count;
-  });
-  const prefMax = Math.max(1, ...Object.values(prefTotals));
+  const seaRect = `<rect class="kanto-sea" x="0" y="0" width="${view.w}" height="${view.h}"></rect>`;
 
-  // 海（背景）
-  const seaRect = `<rect class="kanto-sea" x="0" y="0" width="${KANTO_MAP_VIEW.w}" height="${KANTO_MAP_VIEW.h}"></rect>`;
+  const landPoints = KANTO_PREF_POLYGONS[SELECTED_PREF]
+    .map(([lat, lon]) => { const { x, y } = project(lat, lon); return `${x.toFixed(1)},${y.toFixed(1)}`; })
+    .join(' ');
+  const landShape = `<polygon points="${landPoints}" class="kanto-pref-land"><title>${escapeHtml(SELECTED_PREF)}</title></polygon>`;
 
-  // 陸地（都県の簡易輪郭）。未訪問でも陸地として塗り、訪問数に応じてピンクを重ねる。
-  const prefShapes = KANTO_PREFECTURES.map(pref => {
-    const n = prefTotals[pref] || 0;
-    const overlayAlpha = n ? (0.18 + (n / prefMax) * 0.5).toFixed(2) : 0;
-    const points = KANTO_PREF_POLYGONS[pref]
-      .map(([lat, lon]) => { const { x, y } = kantoLatLonToXY(lat, lon); return `${x.toFixed(1)},${y.toFixed(1)}`; })
-      .join(' ');
-    const { x: lx, y: ly } = kantoLatLonToXY(KANTO_PREF_CENTROID[pref].lat, KANTO_PREF_CENTROID[pref].lon);
-    return `
-      <g>
-        <polygon points="${points}" class="kanto-pref-land"><title>${escapeHtml(pref)}: ${n}回</title></polygon>
-        ${n ? `<polygon points="${points}" class="kanto-pref-overlay" style="fill:rgba(255,45,149,${overlayAlpha})"></polygon>` : ''}
-        <text x="${lx}" y="${ly}" class="kanto-pref-label" text-anchor="middle">${escapeHtml(pref)}</text>
-      </g>`;
-  }).join('');
-
-  const dots = [...locCounts.values()].map(({ loc, count }) => {
-    const { x, y } = kantoLatLonToXY(loc.lat, loc.lon);
-    const r = (7 + (count / max) * 7).toFixed(1);
+  const max = Math.max(1, ...[...spotCounts.values()].map(e => e.count));
+  const dots = [...spotCounts.values()].map(({ spot, count }) => {
+    const { x, y } = project(spot.lat, spot.lon);
+    const r = (9 + (count / max) * 10).toFixed(1);
     const alpha = (0.55 + (count / max) * 0.45).toFixed(2);
     return `
       <g>
-        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(loc.key)}: ${count}回</title></circle>
+        <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(spot.key)}: ${count}回</title></circle>
         <text x="${x}" y="${y}" class="kanto-dot-count" text-anchor="middle" dominant-baseline="central">${count}</text>
       </g>`;
   }).join('');
 
-  const ranked = [...locCounts.values()].sort((a, b) => b.count - a.count);
+  const ranked = [...spotCounts.values()].sort((a, b) => b.count - a.count);
   const rankHtml = ranked.length
     ? `<ol class="kanto-rank-list">
-        ${ranked.map(({ loc, count }) => `
+        ${ranked.map(({ spot, count }) => `
           <li>
-            <span class="kanto-rank-pref">${escapeHtml(loc.key)}${loc.key !== loc.pref ? `<span class="kanto-rank-sub">（${escapeHtml(loc.pref)}）</span>` : ''}</span>
+            <span class="kanto-rank-pref">${escapeHtml(spot.key)}</span>
             <span class="kanto-rank-count">${count}回</span>
           </li>`).join('')}
       </ol>`
-    : '<p class="empty" style="margin-top:0.8rem">エリアが記録された釣行がありません。</p>';
+    : '<p class="empty" style="margin-top:0.8rem">登録済みの釣り場が見つかりませんでした。</p>';
 
   const unresolvedHtml = unresolved
-    ? `<p class="kanto-unresolved">※ エリア欄の地名から場所を判定できなかった釣行が${unresolved}件あります。</p>`
+    ? `<p class="kanto-unresolved">※ 釣り場名から地図上の位置を判定できなかった${escapeHtml(SELECTED_PREF)}の釣行が${unresolved}件あります。</p>`
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${KANTO_MAP_VIEW.w} ${KANTO_MAP_VIEW.h}" xmlns="http://www.w3.org/2000/svg">${seaRect}${prefShapes}${dots}</svg>
-    <p class="kanto-map-caption">※ 県境は実際の行政区域データを簡略化したものです（市は地名のみで判定し、点で表示）</p>
+    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${seaRect}${landShape}${dots}</svg>
+    <p class="kanto-map-caption">※ ${escapeHtml(SELECTED_PREF)}県のみ対応の簡易版です（都道府県の選択は今後対応予定）</p>
     ${rankHtml}
     ${unresolvedHtml}`;
 }
@@ -1365,11 +1402,11 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
   `;
 }
 
-// 釣行一覧の各カードの横に並ぶ「潮汐カード」へ、非同期で取得したグラフを差し込む。
+// 釣行カード内の「潮汐グラフ」表示へ、非同期で取得したグラフを差し込む。
 async function hydrateTideGroup(ev) {
   const dateStr = normDateStr(ev.date);
   const hours = await fetchTideCached(ev.area, dateStr);
-  const inner = document.querySelector(`.tide-chart-card[data-tide-event-id="${cssEscape(ev.id)}"] .tide-chart-card-body`);
+  const inner = document.querySelector(`.tide-chart-card-body[data-tide-event-id="${cssEscape(ev.id)}"]`);
   if (!inner) return; // 再描画でDOMが入れ替わっている場合
 
   if (!hours) {
@@ -2766,6 +2803,24 @@ async function handleEventsClick(e) {
       memoEl.hidden = !memoEl.hidden;
       btn.textContent = memoEl.hidden ? '+' : '−';
       if (memoEl.hidden) collapsedMemoIds.add(id); else collapsedMemoIds.delete(id);
+    }
+    return;
+  }
+
+  if (btn.classList.contains('tide-toggle-btn')) {
+    const card = btn.closest('.event-card');
+    const meta = card.querySelector('.ec-meta');
+    const tideBody = card.querySelector('.tide-chart-card-body');
+    const showTide = tideBody.hidden; // 表示切替前の状態から、これから表示する側を判定
+    meta.hidden = showTide;
+    tideBody.hidden = !showTide;
+    card.querySelectorAll('.ec-action-default').forEach(b => { b.hidden = showTide; });
+    btn.textContent = showTide ? '釣行詳細に戻る' : '潮汐グラフ';
+    if (showTide) {
+      tideViewIds.add(id);
+      hydrateTideGroup(currentEvents.find(e => e.id === id));
+    } else {
+      tideViewIds.delete(id);
     }
     return;
   }
