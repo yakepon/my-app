@@ -2196,10 +2196,10 @@ function renderRodLengthRuler(rods) {
   }
 
   const maxLength = Math.max(...withLength.map(g => Number(g.rodLength)));
-  const niceMax = Math.ceil(maxLength / 50) * 50;
+  const niceMax = Math.ceil(maxLength / 100) * 100;
   const unitPerCm = 1000 / niceMax;
   const ticks = [];
-  for (let t = 0; t <= niceMax; t += 50) ticks.push(t);
+  for (let t = 0; t <= niceMax; t += 100) ticks.push(t);
 
   // 錘負荷の上限値（号換算）から、登録されているロッドの中での相対的な強さ(0〜1)を求める。
   // 未入力のロッドは中間的な太さで描き、極端に細く/太く見えないようにする。
@@ -2216,7 +2216,7 @@ function renderRodLengthRuler(rods) {
     </div>`;
 
   const minorTicks = [];
-  for (let t = 25; t < niceMax; t += 25) if (t % 50 !== 0) minorTicks.push(t);
+  for (let t = 50; t < niceMax; t += 50) if (t % 100 !== 0) minorTicks.push(t);
   const gridlines = `
     <div class="rod-ruler-gridlines">
       ${minorTicks.map(t => `<span class="rod-ruler-gridline rod-ruler-gridline-minor" style="left:${(t / niceMax * 100).toFixed(2)}%"></span>`).join('')}
