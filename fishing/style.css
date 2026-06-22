@@ -579,14 +579,22 @@ main, header, footer, section { position: relative; z-index: 2; }
   white-space: nowrap;
 }
 
-.ec-tide-group { display: flex; align-items: flex-start; gap: 0.6rem; margin-top: 0.5rem; }
-.tide-scroll-wrap {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.tide-chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
 }
-.tide-scroll-inner { min-width: 560px; }
+.tide-chart-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+.tide-chart-card-date { font-size: 0.7rem; font-weight: 700; color: var(--ink-muted); flex-shrink: 0; }
+.tide-chart-card-spot { font-size: 0.92rem; font-weight: 900; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tide-chart-card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tide-chart-card-body > * { min-width: 480px; }
 
 /* ── Heatmap ───────────────────────────────────────────────── */
 .heatmap-wrap { }
@@ -1001,12 +1009,23 @@ form > textarea { margin-bottom: 0.6rem; }
 .form-actions { display: flex; gap: 0.6rem; align-items: center; }
 
 /* ── History / Event cards ─────────────────────────────────── */
+.ec-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ec-row:last-child { margin-bottom: 0; }
+.ec-row .event-card { flex: 1 1 420px; min-width: 320px; }
+.ec-row .tide-chart-card { flex: 0 0 360px; }
+
 .event-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  margin-bottom: 1rem;
   transition: border-color 0.2s, box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
 }
 .event-card:hover {
@@ -1014,7 +1033,6 @@ form > textarea { margin-bottom: 0.6rem; }
   box-shadow: 0 16px 36px -20px rgba(108, 63, 224, 0.3);
   transform: translateY(-2px);
 }
-.event-card:last-child { margin-bottom: 0; }
 
 .event-card-head { padding: 1.05rem 1.15rem 0.85rem; border-bottom: 1px solid var(--border); }
 .ec-date { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; color: var(--ink-muted); display: block; margin-bottom: 0.25rem; }

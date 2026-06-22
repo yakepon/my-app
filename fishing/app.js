@@ -710,6 +710,7 @@ function renderEventsList(expanded = false) {
       </div>`;
 
     return `
+    <div class="ec-row">
       <article class="event-card${isToday ? ' event-card-today' : ''}">
         <div class="event-card-head">
           <div class="ec-head-row">
@@ -732,12 +733,6 @@ function renderEventsList(expanded = false) {
                 ${showCatchGroup ? metaGroupHtml('釣果', catchGroup) : ''}
                 ${showCostGroup  ? metaGroupHtml('コスパ', costGroup) : ''}
               </div>
-              <div class="ec-tide-group">
-                <span class="ec-group-label">潮汐</span>
-                <div class="tide-scroll-wrap" data-tide-event-id="${escapeHtml(ev.id)}">
-                  <div class="tide-scroll-inner"><p class="empty">読み込み中...</p></div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -751,7 +746,15 @@ function renderEventsList(expanded = false) {
           <button type="button" class="btn btn-sm edit-event-btn" data-id="${escapeHtml(ev.id)}">編集</button>
           <button type="button" class="btn btn-sm btn-danger delete-event-btn" data-id="${escapeHtml(ev.id)}">削除</button>
         </div>
-      </article>`;
+      </article>
+      <div class="tide-chart-card" data-tide-event-id="${escapeHtml(ev.id)}">
+        <div class="tide-chart-card-head">
+          <span class="tide-chart-card-date">${escapeHtml(formatDateLabel(ev.date))}</span>
+          <span class="tide-chart-card-spot">${escapeHtml(ev.spot || '-')}</span>
+        </div>
+        <div class="tide-chart-card-body"><p class="empty">読み込み中...</p></div>
+      </div>
+    </div>`;
   }).join('');
 
   if (hiddenCount > 0) {
@@ -1362,12 +1365,11 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
   `;
 }
 
-// 釣行一覧の各カードに埋め込んだ「潮汐」グループへ、非同期で取得したグラフを差し込む。
-// グラフ自体は24時間分の幅を持つため、カードが狭い場合はグラフ部分のみ横スクロールする。
+// 釣行一覧の各カードの横に並ぶ「潮汐カード」へ、非同期で取得したグラフを差し込む。
 async function hydrateTideGroup(ev) {
   const dateStr = normDateStr(ev.date);
   const hours = await fetchTideCached(ev.area, dateStr);
-  const inner = document.querySelector(`.tide-scroll-wrap[data-tide-event-id="${cssEscape(ev.id)}"] .tide-scroll-inner`);
+  const inner = document.querySelector(`.tide-chart-card[data-tide-event-id="${cssEscape(ev.id)}"] .tide-chart-card-body`);
   if (!inner) return; // 再描画でDOMが入れ替わっている場合
 
   if (!hours) {
