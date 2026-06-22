@@ -1160,16 +1160,12 @@ function renderAreaMap() {
     }
   });
 
-  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[SELECTED_PREF], 0.07, 0.09);
-  const view = computeMapView(bounds, 420, 30);
+  const bounds = computeMapBounds(KANTO_PREF_POLYGONS[SELECTED_PREF], 0.04, 0.05);
+  const view = computeMapView(bounds, 420, 20);
   const project = (lat, lon) => projectLatLon(lat, lon, bounds, view);
 
   const defs = `
     <defs>
-      <linearGradient id="kantoLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#f3f1f8"/>
-        <stop offset="100%" stop-color="#e3def2"/>
-      </linearGradient>
       <radialGradient id="kantoDotGrad" cx="35%" cy="30%" r="75%">
         <stop offset="0%" stop-color="#ff62b3"/>
         <stop offset="55%" stop-color="#ff2d95"/>
@@ -1182,28 +1178,13 @@ function renderAreaMap() {
     .join(' ');
   const landShape = `<polygon points="${landPoints}" class="kanto-pref-land"><title>${escapeHtml(SELECTED_PREF)}</title></polygon>`;
 
-  // 距離スケールバー（経度1度あたりの距離をこの緯度のcos補正で概算）
-  const latMid = (bounds.latMin + bounds.latMax) / 2;
-  const kmPerDegLon = 111.32 * Math.cos(latMid * Math.PI / 180);
-  const pxPerDegLon = (project(latMid, bounds.lonMin + 1).x - project(latMid, bounds.lonMin).x);
-  const scaleKm = 10;
-  const scalePx = Math.abs(pxPerDegLon) * (scaleKm / kmPerDegLon);
-  const scaleX = view.margin, scaleY = view.h - 14;
-  const scaleBar = `
-    <g class="kanto-scale-bar">
-      <line x1="${scaleX}" y1="${scaleY}" x2="${(scaleX + scalePx).toFixed(1)}" y2="${scaleY}"></line>
-      <line x1="${scaleX}" y1="${scaleY - 4}" x2="${scaleX}" y2="${scaleY + 4}"></line>
-      <line x1="${(scaleX + scalePx).toFixed(1)}" y1="${scaleY - 4}" x2="${(scaleX + scalePx).toFixed(1)}" y2="${scaleY + 4}"></line>
-      <text x="${(scaleX + scalePx / 2).toFixed(1)}" y="${scaleY - 7}" text-anchor="middle">${scaleKm}km</text>
-    </g>`;
-
   const max = Math.max(1, ...[...spotCounts.values()].map(e => e.count));
   const dots = [...spotCounts.values()].map(({ spot, count }) => {
     const { x, y } = project(spot.lat, spot.lon);
     const r = (10 + (count / max) * 10).toFixed(1);
     const dim = (0.7 + (count / max) * 0.3).toFixed(2);
     const approxCls = spot.precise ? '' : ' kanto-dot-group-approx';
-    const title = spot.precise ? `${spot.key}: ${count}回` : `${spot.key}（市町村レベル・おおよその位置）: ${count}回`;
+    const title = spot.precise ? `${spot.key}: ${count}回` : `${spot.key}（おおよその位置）: ${count}回`;
     return `
       <g class="kanto-dot-group${approxCls}" data-spot-key="${escapeHtml(spot.key)}" style="opacity:${dim}">
         <circle cx="${x}" cy="${y}" r="${r}" class="kanto-dot"><title>${escapeHtml(title)}</title></circle>
@@ -1217,7 +1198,7 @@ function renderAreaMap() {
         ${ranked.map(({ spot, count }) => `
           <li data-spot-key="${escapeHtml(spot.key)}">
             <span class="kanto-rank-dot"></span>
-            <span class="kanto-rank-pref">${escapeHtml(spot.key)}${spot.precise ? '' : '<span class="kanto-rank-sub">（市町村レベル）</span>'}</span>
+            <span class="kanto-rank-pref">${escapeHtml(spot.key)}</span>
             <span class="kanto-rank-count">${count}回</span>
           </li>`).join('')}
       </ol>`
@@ -1234,7 +1215,7 @@ function renderAreaMap() {
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${landShape}${scaleBar}${dots}</svg>
+    <svg class="kanto-svg" viewBox="0 0 ${view.w} ${view.h}" xmlns="http://www.w3.org/2000/svg">${defs}${landShape}${dots}</svg>
     <p class="kanto-map-caption">※ ${escapeHtml(SELECTED_PREF)}県のみ対応の簡易版です（都道府県の選択は今後対応予定）</p>
     ${rankHtml}
     ${unresolvedHtml}`;
@@ -1297,22 +1278,6 @@ async function fetchTide(area, dateStr) {
   }
 }
 
-// 隣接する時間と比較して、潮汐カーブの山（満潮）・谷（干潮）を検出する
-function findTideExtrema(hours) {
-  const valid = hours.map((v, h) => ({ h, v })).filter(p => p.v != null);
-  const extrema = [];
-  for (let i = 0; i < valid.length; i++) {
-    const prev = valid[i - 1];
-    const cur  = valid[i];
-    const next = valid[i + 1];
-    if (prev && next) {
-      if (cur.v >= prev.v && cur.v >= next.v && cur.v > prev.v) extrema.push({ ...cur, type: 'high' });
-      else if (cur.v <= prev.v && cur.v <= next.v && cur.v < prev.v) extrema.push({ ...cur, type: 'low' });
-    }
-  }
-  return extrema;
-}
-
 function jstHourFraction(date) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
@@ -1367,15 +1332,6 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
     <span style="top:${toY(mid).toFixed(1)}%">${mid}cm</span>
     <span style="top:${toY(min).toFixed(1)}%">${min}cm</span>
   `;
-
-  const extrema = findTideExtrema(hours);
-  const extremaHtml = extrema.length
-    ? `<div class="tide-extrema">
-        ${extrema.map(e => `<span class="tide-extrema-item tide-extrema-${e.type}">
-          ${e.type === 'high' ? '満潮' : '干潮'} ${e.h}時（${e.v}cm）
-        </span>`).join('')}
-      </div>`
-    : '';
 
   const phaseHtml = tidePhase
     ? `<span class="badge badge-teal tide-phase-badge">${escapeHtml(tidePhase)}</span>`
@@ -1436,7 +1392,7 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
     : '';
 
   return `
-    ${phaseHtml || sunHtml || tripHtml || extremaHtml ? `<div class="tide-chart-meta">${phaseHtml}${sunHtml}${tripHtml}${extremaHtml}</div>` : ''}
+    ${phaseHtml || sunHtml || tripHtml ? `<div class="tide-chart-meta">${phaseHtml}${sunHtml}${tripHtml}</div>` : ''}
     <div class="tide-chart-row">
       <div class="tide-yaxis">${yAxis}</div>
       <div class="tide-chart-body">

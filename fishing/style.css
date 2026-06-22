@@ -431,31 +431,6 @@ main, header, footer, section { position: relative; z-index: 2; }
 
 .tide-phase-badge { font-weight: 900; }
 
-.tide-extrema {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.tide-extrema-item {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 0.2rem 0.55rem;
-  border-radius: 99px;
-  white-space: nowrap;
-}
-.tide-extrema-high {
-  color: var(--accent-2);
-  background: rgba(108, 63, 224, 0.08);
-  border: 1px solid rgba(108, 63, 224, 0.25);
-}
-.tide-extrema-low {
-  color: var(--ink-muted);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-}
-
 .tide-chart-row {
   display: flex;
   gap: 0.4rem;
@@ -478,7 +453,7 @@ main, header, footer, section { position: relative; z-index: 2; }
 
 .tide-chart-body {
   position: relative;
-  height: 110px;
+  height: 230px;
   flex: 1;
   min-width: 0;
 }
@@ -1689,27 +1664,15 @@ form > textarea { margin-bottom: 0.6rem; }
 
 /* ── Kanto area map（緯度経度ベースの簡易散布図） ───────────────── */
 .kanto-map-wrap {
-  max-width: 640px;
+  max-width: 780px;
   margin: 0 auto;
-  padding: 0.9rem;
-  background: var(--surface-2);
-  border-radius: var(--radius);
 }
 .kanto-svg { width: 100%; height: auto; display: block; }
 .kanto-pref-land {
-  fill: url(#kantoLandGrad);
-  stroke: rgba(108, 63, 224, 0.45);
+  fill: #e7e6eb;
+  stroke: #c7c5cf;
   stroke-width: 1.3;
   stroke-linejoin: round;
-  filter: drop-shadow(0 10px 20px rgba(108, 63, 224, 0.22));
-}
-.kanto-scale-bar { stroke: var(--ink-faint); stroke-width: 1; opacity: 0.85; }
-.kanto-scale-bar text {
-  font-family: var(--font-body);
-  font-size: 9px;
-  font-weight: 700;
-  fill: var(--ink-faint);
-  stroke: none;
 }
 .kanto-map-caption {
   font-size: 0.66rem;
