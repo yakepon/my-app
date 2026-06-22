@@ -741,7 +741,7 @@ function renderEventsList(expanded = false) {
           </div>
         </div>
         ${ev.memo ? `
-        <div class="ec-memo-row">
+        <div class="ec-memo-row ec-action-default"${tideActive ? ' hidden' : ''}>
           <button type="button" class="ec-memo-toggle" data-id="${escapeHtml(ev.id)}">${collapsedMemoIds.has(ev.id) ? '+' : '−'}</button>
           <p class="ec-memo"${collapsedMemoIds.has(ev.id) ? ' hidden' : ''}>${escapeHtml(ev.memo)}</p>
         </div>` : ''}
@@ -1740,7 +1740,7 @@ function renderHeatmap() {
   });
 
   const totalCount = filtered.reduce((sum, { c }) => sum + (Number(c.count) || 1), 0);
-  els.heatmapTotalBadge.textContent = `絞り込み結果 ${totalCount}匹`;
+  els.heatmapTotalBadge.innerHTML = `<span class="ec-catch-stat-value">${totalCount}</span><span class="ec-catch-stat-label">匹</span>`;
 
   if (!filtered.length) {
     els.heatmap.innerHTML = filterHtml + '<p class="empty" style="margin-top:0.8rem">該当する釣果データがありません。</p>';
