@@ -579,6 +579,31 @@ main, header, footer, section { position: relative; z-index: 2; }
   white-space: nowrap;
 }
 
+.tide-chart-strip {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding-bottom: 0.4rem;
+}
+.tide-chart-card {
+  flex: 0 0 360px;
+  scroll-snap-align: start;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.tide-chart-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+.tide-chart-card-date { font-size: 0.7rem; font-weight: 700; color: var(--ink-muted); flex-shrink: 0; }
+.tide-chart-card-spot { font-size: 0.92rem; font-weight: 900; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ── Heatmap ───────────────────────────────────────────────── */
 .heatmap-wrap { }
 
@@ -1011,6 +1036,23 @@ form > textarea { margin-bottom: 0.6rem; }
 .ec-date { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; color: var(--ink-muted); display: block; margin-bottom: 0.25rem; }
 .ec-spot-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.55rem; }
 .ec-spot { font-size: 1.08rem; font-weight: 900; color: var(--ink); flex: 1; min-width: 0; }
+.ec-catch-stat { text-align: center; flex-shrink: 0; }
+.ec-catch-stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--accent-2);
+  line-height: 1;
+}
+.ec-catch-stat-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  margin-top: 0.15rem;
+}
 .ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; }
 .ec-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.3rem; }
 .ec-group { display: flex; align-items: baseline; gap: 0.6rem; }
@@ -1076,17 +1118,6 @@ form > textarea { margin-bottom: 0.6rem; }
   padding: 0.15rem 0.55rem;
 }
 .ec-cost .icon { color: var(--danger); }
-
-.ec-total-catch {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--accent);
-  background: rgba(255, 45, 149, 0.08);
-  border: 1px solid rgba(255, 45, 149, 0.25);
-  border-radius: 99px;
-  padding: 0.15rem 0.55rem;
-}
 
 .ec-maxsize { font-family: var(--font-body); font-size: 0.68rem; color: var(--danger); }
 
@@ -1679,14 +1710,21 @@ form > textarea { margin-bottom: 0.6rem; }
 /* ── Kanto area map（緯度経度ベースの簡易散布図） ───────────────── */
 .kanto-map-wrap { max-width: 480px; margin: 0 auto; }
 .kanto-svg { width: 100%; height: auto; display: block; }
-.kanto-pref-bg-label {
+.kanto-pref-shape { stroke: var(--border); stroke-width: 1.5; stroke-linejoin: round; transition: opacity 0.15s; }
+.kanto-pref-shape:hover { opacity: 0.85; }
+.kanto-pref-label {
   font-family: var(--font-body);
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 900;
-  fill: var(--ink-faint);
-  opacity: 0.55;
+  fill: var(--ink-muted);
   letter-spacing: 0.03em;
   pointer-events: none;
+}
+.kanto-map-caption {
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  text-align: center;
+  margin: 0.5rem 0 0;
 }
 .kanto-dot { stroke: #fff; stroke-width: 1.5; transition: opacity 0.15s; }
 .kanto-dot:hover { opacity: 0.8; }

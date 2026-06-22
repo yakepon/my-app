@@ -501,7 +501,6 @@ function showCatchScreen(ev) {
   resetQuickForm();
   renderEventBanner();
   renderEventCatches();
-  renderTideChart();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -643,7 +642,6 @@ function renderAll() {
     activeEvent = currentEvents.find(e => e.id === activeEvent.id) || activeEvent;
     renderEventBanner();
     renderEventCatches();
-    renderTideChart();
   }
 }
 
@@ -659,11 +657,13 @@ function renderEventsList(expanded = false) {
     els.eventsList.innerHTML = styleFilter
       ? '<p class="empty">この釣り方の釣行記録はまだありません。</p>'
       : '<p class="empty">まだ釣行記録がありません。「釣行登録」から登録してみましょう。</p>';
+    renderTideStrip([]);
     return;
   }
 
   const visible = expanded ? sorted : sorted.slice(0, EVENTS_INITIAL);
   const hiddenCount = sorted.length - EVENTS_INITIAL;
+  renderTideStrip(visible);
 
   const today = todayStr();
   els.eventsList.innerHTML = visible.map(ev => {
@@ -696,17 +696,16 @@ function renderEventsList(expanded = false) {
       ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
       <span class="ec-weather-slot" data-id="${escapeHtml(ev.id)}"></span>`;
 
-    const showCatchGroup = ev.target || species.length || totalCatch > 0 || rate != null;
+    const showCatchGroup = ev.target || species.length || rate != null;
     const catchGroup = `
       ${ev.target ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(ev.target)}</span>` : ''}
       ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
-      ${totalCatch > 0 ? `<span class="ec-total-catch">${totalCatch}匹</span>` : ''}
       ${rate != null ? `<span class="ec-rate">${rate.toFixed(1)}匹/時間</span>` : ''}`;
 
     const showCostGroup = ev.cost || totalValue > 0;
     const costGroup = `
-      ${ev.cost ? `<span class="ec-cost"><svg class="icon icon-inline"><use href="#icon-minus-circle"/></svg>−¥${Number(ev.cost).toLocaleString()}</span>` : ''}
-      ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-plus-circle"/></svg>+¥${totalValue.toLocaleString()}</span>` : ''}`;
+      ${ev.cost ? `<span class="ec-cost"><svg class="icon icon-inline"><use href="#icon-minus-circle"/></svg>¥${Number(ev.cost).toLocaleString()}</span>` : ''}
+      ${totalValue > 0 ? `<span class="ec-value"><svg class="icon icon-inline"><use href="#icon-plus-circle"/></svg>¥${totalValue.toLocaleString()}</span>` : ''}`;
 
     const metaGroupHtml = (label, content) => `
       <div class="ec-group">
@@ -725,6 +724,10 @@ function renderEventsList(expanded = false) {
               </div>
               <div class="ec-spot-row">
                 <div class="ec-spot">${escapeHtml(ev.spot || '-')}</div>
+                ${totalCatch > 0 ? `<div class="ec-catch-stat">
+                  <span class="ec-catch-stat-value">${totalCatch}</span>
+                  <span class="ec-catch-stat-label">匹</span>
+                </div>` : ''}
                 ${photos.length ? `<div class="ec-photos">${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
               </div>
               <div class="ec-meta">
@@ -816,7 +819,15 @@ function renderEventBanner() {
 }
 
 // ── Tide chart ────────────────────────────────────────────────
-let tideCache = { key: null, hours: null };
+const tideCacheMap = new Map(); // `${area}|${date}` -> hours配列 | null
+
+async function fetchTideCached(area, dateStr) {
+  const key = `${area || ''}|${dateStr}`;
+  if (tideCacheMap.has(key)) return tideCacheMap.get(key);
+  const hours = await fetchTide(area, dateStr);
+  tideCacheMap.set(key, hours);
+  return hours;
+}
 
 // ── Daily max/min temperature (event list) ─────────────────────
 const weatherCache = {}; // key: `${area}|${date}` -> { max, min } | null
@@ -986,8 +997,19 @@ const KANTO_PREF_CENTROID = {
   '東京':   { lat: 35.65, lon: 139.45 },
 };
 
-const KANTO_MAP_BOUNDS = { latMin: 34.85, latMax: 37.0, lonMin: 138.8, lonMax: 141.0 };
+const KANTO_MAP_BOUNDS = { latMin: 34.85, latMax: 37.0, lonMin: 138.7, lonMax: 141.0 };
 const KANTO_MAP_VIEW = { w: 340, h: 320, margin: 26 };
+
+// 関東1都6県のおおよその輪郭（簡略化した手書きポリゴン。行政区域の正確な境界データではない）。
+const KANTO_PREF_POLYGONS = {
+  '群馬': [[36.95,139.35],[36.80,139.55],[36.55,139.55],[36.30,139.45],[36.10,139.20],[36.05,138.95],[36.25,138.75],[36.55,138.80],[36.80,139.00]],
+  '栃木': [[37.00,139.95],[36.90,140.15],[36.65,140.10],[36.35,139.90],[36.20,139.70],[36.25,139.45],[36.55,139.55],[36.80,139.55]],
+  '茨城': [[36.90,140.50],[36.75,140.75],[36.45,140.80],[36.10,140.70],[35.90,140.65],[35.75,140.45],[35.85,140.20],[36.10,140.15],[36.40,140.15],[36.65,140.25]],
+  '埼玉': [[36.25,139.45],[36.20,139.70],[36.05,139.85],[35.95,139.90],[35.80,139.75],[35.80,139.45],[35.90,139.20],[36.05,139.05],[36.15,139.20]],
+  '千葉': [[35.85,140.15],[35.75,140.85],[35.55,140.80],[35.25,140.45],[34.95,139.95],[34.92,139.80],[35.10,139.78],[35.30,139.80],[35.45,139.95],[35.60,140.05],[35.70,140.00]],
+  '東京': [[35.83,139.30],[35.80,139.60],[35.78,139.80],[35.70,139.90],[35.60,139.85],[35.52,139.70],[35.50,139.50],[35.65,139.30],[35.75,139.20]],
+  '神奈川': [[35.65,139.30],[35.55,139.65],[35.50,139.70],[35.30,139.65],[35.15,139.62],[35.20,139.45],[35.15,139.20],[35.30,139.05],[35.50,139.05],[35.60,139.15]],
+};
 
 function kantoLatLonToXY(lat, lon) {
   const { latMin, latMax, lonMin, lonMax } = KANTO_MAP_BOUNDS;
@@ -1029,10 +1051,26 @@ function renderAreaMap() {
 
   const max = Math.max(1, ...[...locCounts.values()].map(e => e.count));
 
-  // 背景にうっすら都県名を表示し、地図上の目印にする
-  const prefLabels = KANTO_PREFECTURES.map(pref => {
-    const { x, y } = kantoLatLonToXY(KANTO_PREF_CENTROID[pref].lat, KANTO_PREF_CENTROID[pref].lon);
-    return `<text x="${x}" y="${y}" class="kanto-pref-bg-label" text-anchor="middle">${escapeHtml(pref)}</text>`;
+  // 都県ごとの合計釣行数（背景ポリゴンの濃淡に使う）
+  const prefTotals = {};
+  locCounts.forEach(({ loc, count }) => {
+    prefTotals[loc.pref] = (prefTotals[loc.pref] || 0) + count;
+  });
+  const prefMax = Math.max(1, ...Object.values(prefTotals));
+
+  // 背景に都県の簡易輪郭を描き、おおよその県境がわかるようにする
+  const prefShapes = KANTO_PREFECTURES.map(pref => {
+    const n = prefTotals[pref] || 0;
+    const alpha = n ? (0.1 + (n / prefMax) * 0.3).toFixed(2) : 0.05;
+    const points = KANTO_PREF_POLYGONS[pref]
+      .map(([lat, lon]) => { const { x, y } = kantoLatLonToXY(lat, lon); return `${x.toFixed(1)},${y.toFixed(1)}`; })
+      .join(' ');
+    const { x: lx, y: ly } = kantoLatLonToXY(KANTO_PREF_CENTROID[pref].lat, KANTO_PREF_CENTROID[pref].lon);
+    return `
+      <g>
+        <polygon points="${points}" class="kanto-pref-shape" style="fill:rgba(255,45,149,${alpha})"><title>${escapeHtml(pref)}: ${n}回</title></polygon>
+        <text x="${lx}" y="${ly}" class="kanto-pref-label" text-anchor="middle">${escapeHtml(pref)}</text>
+      </g>`;
   }).join('');
 
   const dots = [...locCounts.values()].map(({ loc, count }) => {
@@ -1062,7 +1100,8 @@ function renderAreaMap() {
     : '';
 
   els.kantoMap.innerHTML = `
-    <svg class="kanto-svg" viewBox="0 0 ${KANTO_MAP_VIEW.w} ${KANTO_MAP_VIEW.h}" xmlns="http://www.w3.org/2000/svg">${prefLabels}${dots}</svg>
+    <svg class="kanto-svg" viewBox="0 0 ${KANTO_MAP_VIEW.w} ${KANTO_MAP_VIEW.h}" xmlns="http://www.w3.org/2000/svg">${prefShapes}${dots}</svg>
+    <p class="kanto-map-caption">※ 県境は簡略化したイラストです（市は地名のみで判定し、点で表示）</p>
     ${rankHtml}
     ${unresolvedHtml}`;
 }
@@ -1284,50 +1323,59 @@ function buildTideChartHtml(hours, countByHour, tidePhase, sun, tripRange) {
   `;
 }
 
-async function renderTideChart() {
-  if (!activeEvent) {
+// 釣行一覧に表示中の各釣行について、潮汐と釣果のグラフを横スクロールで並べる。
+function renderTideStrip(events) {
+  if (!events.length) {
     els.tideChartPanel.hidden = true;
+    els.tideChart.innerHTML = '';
     return;
   }
-
-  const dateStr = normDateStr(activeEvent.date);
-  const key = `${activeEvent.area || ''}|${dateStr}`;
-  if (tideCache.key !== key) {
-    tideCache = { key, hours: await fetchTide(activeEvent.area, dateStr) };
-  }
-
-  if (!tideCache.hours) {
-    els.tideChartPanel.hidden = true;
-    return;
-  }
-
-  // activeEventが切り替わっている間にfetchが返ってくる場合があるため再確認
-  if (!activeEvent || `${activeEvent.area || ''}|${normDateStr(activeEvent.date)}` !== key) return;
-
-  const countByHour = Array(24).fill(0);
-  currentCatches
-    .filter(c => c.eventId === activeEvent.id)
-    .forEach(c => {
-      const h = parseHour(c.time);
-      if (!isNaN(h)) countByHour[h] += Number(c.count) || 1;
-    });
 
   els.tideChartPanel.hidden = false;
-  const coords = resolveAreaCoords(activeEvent.area);
-  const sun = coords ? calcSunTimes(coords.lat, coords.lon, dateStr) : null;
-  let tripRange = null;
-  const startH = parseHourFraction(activeEvent.startTime);
-  if (startH != null) {
-    const endH = parseHourFraction(activeEvent.endTime);
-    const now = new Date();
-    tripRange = {
-      start: startH,
-      end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60),
-      ongoing: endH == null,
-    };
-  }
+  els.tideChart.innerHTML = events.map(ev => `
+    <div class="tide-chart-card" data-event-id="${escapeHtml(ev.id)}">
+      <div class="tide-chart-card-head">
+        <span class="tide-chart-card-date">${escapeHtml(formatDateLabel(ev.date))}</span>
+        <span class="tide-chart-card-spot">${escapeHtml(ev.spot || '-')}</span>
+      </div>
+      <div class="tide-chart-card-body"><p class="empty">読み込み中...</p></div>
+    </div>`).join('');
 
-  els.tideChart.innerHTML = buildTideChartHtml(tideCache.hours, countByHour, activeEvent.tide, sun, tripRange);
+  events.forEach(async ev => {
+    const dateStr = normDateStr(ev.date);
+    const hours = await fetchTideCached(ev.area, dateStr);
+    const body = els.tideChart.querySelector(`[data-event-id="${ev.id}"] .tide-chart-card-body`);
+    if (!body) return; // 再描画でDOMが入れ替わっている場合
+
+    if (!hours) {
+      body.innerHTML = '<p class="empty">この釣行のエリアでは潮汐データを取得できませんでした。</p>';
+      return;
+    }
+
+    const countByHour = Array(24).fill(0);
+    currentCatches
+      .filter(c => c.eventId === ev.id)
+      .forEach(c => {
+        const h = parseHour(c.time);
+        if (!isNaN(h)) countByHour[h] += Number(c.count) || 1;
+      });
+
+    const coords = resolveAreaCoords(ev.area);
+    const sun = coords ? calcSunTimes(coords.lat, coords.lon, dateStr) : null;
+    let tripRange = null;
+    const startH = parseHourFraction(ev.startTime);
+    if (startH != null) {
+      const endH = parseHourFraction(ev.endTime);
+      const now = new Date();
+      tripRange = {
+        start: startH,
+        end: endH != null ? endH : (now.getHours() + now.getMinutes() / 60),
+        ongoing: endH == null,
+      };
+    }
+
+    body.innerHTML = buildTideChartHtml(hours, countByHour, ev.tide, sun, tripRange);
+  });
 }
 
 function renderEventCatches() {
