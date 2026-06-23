@@ -2525,21 +2525,21 @@ function renderGearLists() {
 // ルアーのカラー名から塗り色を決める。「銀白」のように色の漢字が2つ含まれる
 // 場合は、その2色の縦じまパターンで表現する（実際の見た目に近づけるため）。
 const LURE_COLOR_HEX = {
-  'シルバー': '#C0C0C0', '銀': '#C0C0C0',
-  'ホワイト': '#FFFFFF', '白': '#FFFFFF',
-  'ゴールド': '#E5C100', '金': '#E5C100',
-  'チャート': '#D4F500',
-  'グロー':   '#CFFA63',
-  'ピンク':   '#FF6FB5',
-  'イワシ':   '#7FA8D9',
-  '赤': '#FF4136',
-  '緑': '#2ECC71',
-  '青': '#2E86FF',
-  '黒': '#3a3a3a',
-  '紫': '#8B5CF6',
-  '黄': '#FFE066',
-  '橙': '#FF9500',
-  'オレンジ': '#FF9500',
+  'シルバー': '#8C8C8C', '銀': '#8C8C8C',
+  'ホワイト': '#C9C9C9', '白': '#C9C9C9',
+  'ゴールド': '#B8910A', '金': '#B8910A',
+  'チャート': '#9FBE00',
+  'グロー':   '#8FC72A',
+  'ピンク':   '#D6347F',
+  'イワシ':   '#3F6BA8',
+  '赤': '#C2241B',
+  '緑': '#1E8449',
+  '青': '#1B5FBF',
+  '黒': '#262626',
+  '紫': '#6C3FE0',
+  '黄': '#D4AC1F',
+  '橙': '#D98300',
+  'オレンジ': '#D98300',
 };
 const LURE_COLOR_KANJI_TOKENS = ['銀', '白', '金', '赤', '緑', '青', '黒', '紫', '黄', '橙'];
 
@@ -2558,7 +2558,7 @@ function createStripePattern(colorA, colorB) {
 }
 
 function resolveLureColorFill(colorKey, fallbackIndex) {
-  if (colorKey === '未設定') return '#d8d8dc';
+  if (colorKey === '未設定') return '#a8a8ad';
   if (LURE_COLOR_HEX[colorKey]) return LURE_COLOR_HEX[colorKey];
 
   const found = [];
@@ -2580,7 +2580,7 @@ function renderLureWeightChart(lures) {
   if (lureWeightChartInst) { lureWeightChartInst.destroy(); lureWeightChartInst = null; }
 
   if (!withWeight.length) {
-    els.lureWeightChartWrap.innerHTML = '<p class="empty">自重(g)を入力したルアーがあると、重さ別の本数を表示できます。</p>';
+    els.lureWeightChartWrap.innerHTML = '<p class="empty">自重(g)を入力したルアーがあると、重量別の本数を表示できます。</p>';
     return;
   }
 
