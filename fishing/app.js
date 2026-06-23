@@ -2526,7 +2526,7 @@ function renderGearLists() {
 // 場合は、その2色の縦じまパターンで表現する（実際の見た目に近づけるため）。
 const LURE_COLOR_HEX = {
   'シルバー': '#8C8C8C', '銀': '#8C8C8C',
-  'ホワイト': '#C9C9C9', '白': '#C9C9C9',
+  'ホワイト': '#F2F2F2', '白': '#F2F2F2',
   'ゴールド': '#B8910A', '金': '#B8910A',
   'チャート': '#9FBE00',
   'グロー':   '#8FC72A',
@@ -2603,8 +2603,8 @@ function renderLureWeightChart(lures) {
     label: key,
     data: colorCounts.get(key),
     backgroundColor: resolveLureColorFill(key, i),
-    borderColor: 'rgba(0,0,0,0.15)',
-    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.3)',
+    borderWidth: 1.5,
     stack: 'lures',
     borderRadius: 4,
     maxBarThickness: 44,
