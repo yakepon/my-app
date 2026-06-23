@@ -61,6 +61,7 @@ const els = {
   customSpeciesInput:  document.getElementById('customSpeciesInput'),
   countBtns:      document.getElementById('countBtns'),
   countInput:     document.getElementById('countInput'),
+  layerInput:     document.getElementById('layerInput'),
   photoInput:     document.getElementById('photoInput'),
   photoPreview:   document.getElementById('photoPreview'),
   photoThumb:     document.getElementById('photoThumb'),
@@ -274,7 +275,7 @@ function mockExec(payload) {
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
-  const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'memo', 'photo', 'photoId'];
+  const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
   const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
@@ -728,7 +729,6 @@ function renderEventsList(expanded = false) {
                   <span class="ec-catch-stat-value">${totalCatch}</span>
                   <span class="ec-catch-stat-label">匹</span>
                 </div>` : ''}
-                ${photos.length ? `<div class="ec-photos">${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
               </div>
               <div class="ec-meta"${tideActive ? ' hidden' : ''}>
                 ${metaGroupHtml('行程', itineraryGroup)}
@@ -736,6 +736,7 @@ function renderEventsList(expanded = false) {
                 ${showCatchGroup ? metaGroupHtml('釣果', catchGroup) : ''}
                 ${showCostGroup  ? metaGroupHtml('コスパ', costGroup) : ''}
               </div>
+              ${photos.length ? `<div class="ec-photos"${tideActive ? ' hidden' : ''}>${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
               <div class="tide-chart-card-body" data-tide-event-id="${escapeHtml(ev.id)}"${tideActive ? '' : ' hidden'}><p class="empty">読み込み中...</p></div>
             </div>
           </div>
@@ -1533,6 +1534,7 @@ function renderEventCatches() {
         ${value > 0 ? `<span class="cr-value">¥${value.toLocaleString()}</span>` : ''}
         ${c.size ? `<span class="cr-size">${escapeHtml(String(c.size))} cm</span>` : ''}
         ${c.lure ? `<span class="cr-lure">${escapeHtml(c.lure)}</span>` : ''}
+        ${c.layer ? `<span class="cr-layer">${escapeHtml(c.layer)}</span>` : ''}
         ${c.memo ? `<span class="cr-memo">${escapeHtml(c.memo)}</span>` : ''}
         ${photo ? `<img src="${escapeHtml(photo)}" class="catch-thumb" data-catch-id="${escapeHtml(c.id)}" alt="釣果写真">` : ''}
         <div class="cr-actions">
@@ -1936,6 +1938,7 @@ function resetQuickForm() {
   els.customSpeciesInput.value = '';
   resetCountSelection();
   clearPhotoInput();
+  els.layerInput.value = '';
   updateSubmitState();
 }
 
@@ -1956,6 +1959,7 @@ async function onQuickCatchSubmit(e) {
     weight:  '',
     lure:    '',
     point:   '',
+    layer:   els.layerInput.value,
     memo:    '',
     photo:   '',
     photoId: '',
@@ -1984,6 +1988,7 @@ async function onQuickCatchSubmit(e) {
     setStatus(`${selectedSpecies} ${selectedCount}匹 を記録しました！ (${nowTime()})`, 'ok');
     resetCountSelection();
     clearPhotoInput();
+    els.layerInput.value = '';
     updateSubmitState();
   }
 
@@ -2690,6 +2695,7 @@ function openCatchModal(c) {
   f.elements['weight'].value  = c.weight  || '';
   f.elements['lure'].value    = c.lure    || '';
   f.elements['point'].value   = c.point   || '';
+  f.elements['layer'].value   = c.layer   || '';
   f.elements['memo'].value    = c.memo    || '';
 
   resetEditPhotoState();
@@ -2775,6 +2781,7 @@ async function onCatchEditSubmit(e) {
     weight:  fd.get('weight'),
     lure:    fd.get('lure'),
     point:   fd.get('point'),
+    layer:   fd.get('layer'),
     memo:    fd.get('memo'),
   };
 

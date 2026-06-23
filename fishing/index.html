@@ -326,10 +326,9 @@
                 <option>晴れ</option>
                 <option>曇り</option>
                 <option>雨</option>
-                <option>強風</option>
               </select>
             </label>
-            <label>潮
+            <label>潮回り
               <select name="tide">
                 <option value="">選択...</option>
                 <option>大潮</option>
@@ -449,6 +448,16 @@
             <input type="number" name="count" id="countInput" class="count-input"
                    min="1" max="99" inputmode="numeric" placeholder="匹" required>
           </div>
+
+          <label>タナ（任意）
+            <select name="layer" id="layerInput">
+              <option value="">選択...</option>
+              <option>表層</option>
+              <option>中層</option>
+              <option>宙層</option>
+              <option>低層</option>
+            </select>
+          </label>
 
           <label class="photo-label">
             <input type="file" id="photoInput" accept="image/*" class="photo-file-input">
@@ -709,6 +718,15 @@
           </label>
           <label>ポイント
             <input type="text" name="point">
+          </label>
+          <label>タナ
+            <select name="layer">
+              <option value="">選択...</option>
+              <option>表層</option>
+              <option>中層</option>
+              <option>宙層</option>
+              <option>低層</option>
+            </select>
           </label>
         </div>
         <label class="memo-field">メモ

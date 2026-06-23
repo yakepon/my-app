@@ -991,7 +991,7 @@ form > textarea { margin-bottom: 0.6rem; }
   letter-spacing: 0.06em;
   color: var(--ink-faint);
 }
-.ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; }
+.ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; margin-top: 0.5rem; }
 .ec-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.3rem; }
 .ec-group { display: flex; align-items: baseline; gap: 0.6rem; }
 .ec-group-label {
@@ -1131,6 +1131,7 @@ form > textarea { margin-bottom: 0.6rem; }
 .cr-size { font-family: var(--font-body); font-size: 0.8rem; font-weight: 700; color: var(--accent-2); min-width: 48px; }
 .cr-value { font-family: var(--font-body); font-size: 0.75rem; font-weight: 700; color: var(--success); }
 .cr-lure { font-size: 0.75rem; color: var(--ink-muted); flex: 1; }
+.cr-layer { font-size: 0.75rem; color: var(--ink-muted); }
 .cr-memo { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
 .cr-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
