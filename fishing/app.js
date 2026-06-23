@@ -2462,7 +2462,8 @@ function lureRowHtml(g) {
 function renderGearLists() {
   const rods  = currentGears.filter(g => g.type === 'rod');
   const reels = currentGears.filter(g => g.type === 'reel');
-  const lures = currentGears.filter(g => g.type === 'lure');
+  const lures = currentGears.filter(g => g.type === 'lure')
+    .sort((a, b) => (Number(b.selfWeight) || -1) - (Number(a.selfWeight) || -1));
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
   els.lureList.innerHTML = lures.length ? lures.map(lureRowHtml).join('') : '<p class="empty">登録されたルアーはありません。</p>';
