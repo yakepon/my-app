@@ -61,6 +61,7 @@ const els = {
   customSpeciesInput:  document.getElementById('customSpeciesInput'),
   countBtns:      document.getElementById('countBtns'),
   countInput:     document.getElementById('countInput'),
+  layerBtns:      document.getElementById('layerBtns'),
   layerInput:     document.getElementById('layerInput'),
   photoInput:     document.getElementById('photoInput'),
   photoPreview:   document.getElementById('photoPreview'),
@@ -89,6 +90,7 @@ const els = {
   kantoMap:     document.getElementById('kantoMap'),
   areaPrefTabs: document.getElementById('areaPrefTabs'),
   styleFilter:  document.getElementById('styleFilter'),
+  yearFilter:   document.getElementById('yearFilter'),
   eventForm:       document.getElementById('eventForm'),
   eventFormTitle:  document.getElementById('eventFormTitle'),
   eventSubmitBtn:  document.getElementById('eventSubmitBtn'),
@@ -161,9 +163,15 @@ let heatmapSpeciesFilter = ''; // '' = 全魚種
 let heatmapTripFilter    = ''; // '' = すべての釣行 / それ以外はイベントID（日付＋釣り場名で一意な釣行）
 let heatmapTideFilter    = ''; // '' = すべての潮
 let styleFilter = ''; // '' = すべての釣り方
+let yearFilter  = ''; // '' = すべて / 'this' = 今年 / 'last' = 昨年
 
 function filteredEvents() {
-  return styleFilter ? currentEvents.filter(ev => ev.style === styleFilter) : currentEvents;
+  let list = styleFilter ? currentEvents.filter(ev => ev.style === styleFilter) : currentEvents;
+  if (yearFilter) {
+    const targetYear = new Date().getFullYear() - (yearFilter === 'last' ? 1 : 0);
+    list = list.filter(ev => Number(normDateStr(ev.date).slice(0, 4)) === targetYear);
+  }
+  return list;
 }
 
 function filteredCatches(events) {
@@ -625,8 +633,17 @@ function renderStyleFilter() {
   `;
 }
 
+function renderYearFilter() {
+  els.yearFilter.innerHTML = `
+    <button class="hm-chip${!yearFilter ? ' hm-chip-active' : ''}" data-year="">すべて</button>
+    <button class="hm-chip${yearFilter === 'this' ? ' hm-chip-active' : ''}" data-year="this">今年</button>
+    <button class="hm-chip${yearFilter === 'last' ? ' hm-chip-active' : ''}" data-year="last">昨年</button>
+  `;
+}
+
 function renderAll() {
   renderStyleFilter();
+  renderYearFilter();
   renderEventsList();
   renderStats();
   renderCharts();
@@ -655,8 +672,8 @@ function renderEventsList(expanded = false) {
   );
 
   if (!sorted.length) {
-    els.eventsList.innerHTML = styleFilter
-      ? '<p class="empty">この釣り方の釣行記録はまだありません。</p>'
+    els.eventsList.innerHTML = (styleFilter || yearFilter)
+      ? '<p class="empty">この条件に合う釣行記録はまだありません。</p>'
       : '<p class="empty">まだ釣行記録がありません。「釣行登録」から登録してみましょう。</p>';
     return;
   }
@@ -1922,6 +1939,11 @@ function resetCountSelection() {
   els.countInput.value = '';
 }
 
+function resetLayerSelection() {
+  els.layerInput.value = '';
+  document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('selected'));
+}
+
 function clearPhotoInput() {
   pendingPhotoDataUrl = null;
   els.photoInput.value = '';
@@ -1938,7 +1960,7 @@ function resetQuickForm() {
   els.customSpeciesInput.value = '';
   resetCountSelection();
   clearPhotoInput();
-  els.layerInput.value = '';
+  resetLayerSelection();
   updateSubmitState();
 }
 
@@ -1988,7 +2010,7 @@ async function onQuickCatchSubmit(e) {
     setStatus(`${selectedSpecies} ${selectedCount}匹 を記録しました！ (${nowTime()})`, 'ok');
     resetCountSelection();
     clearPhotoInput();
-    els.layerInput.value = '';
+    resetLayerSelection();
     updateSubmitState();
   }
 
@@ -2884,9 +2906,11 @@ async function handleEventsClick(e) {
   if (btn.classList.contains('tide-toggle-btn')) {
     const card = btn.closest('.event-card');
     const meta = card.querySelector('.ec-meta');
+    const photos = card.querySelector('.ec-photos');
     const tideBody = card.querySelector('.tide-chart-card-body');
     const showTide = tideBody.hidden; // 表示切替前の状態から、これから表示する側を判定
     meta.hidden = showTide;
+    if (photos) photos.hidden = showTide;
     tideBody.hidden = !showTide;
     card.querySelectorAll('.ec-action-default').forEach(b => { b.hidden = showTide; });
     btn.textContent = showTide ? '元に戻る' : '潮汐グラフ';
@@ -3093,6 +3117,21 @@ function init() {
     updateSubmitState();
   });
 
+  // Layer (タナ) quick-tap buttons — optional, tap again to deselect
+  els.layerBtns.addEventListener('click', e => {
+    const btn = e.target.closest('.layer-btn');
+    if (!btn) return;
+    const layer = btn.dataset.layer;
+    const alreadySelected = btn.classList.contains('selected');
+    document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('selected'));
+    if (alreadySelected) {
+      els.layerInput.value = '';
+    } else {
+      btn.classList.add('selected');
+      els.layerInput.value = layer;
+    }
+  });
+
   // Photo capture
   els.photoInput.addEventListener('change', async () => {
     const file = els.photoInput.files[0];
@@ -3241,6 +3280,13 @@ function init() {
     const chip = e.target.closest('.hm-chip');
     if (!chip) return;
     styleFilter = chip.dataset.style;
+    renderAll();
+  });
+
+  els.yearFilter.addEventListener('click', e => {
+    const chip = e.target.closest('.hm-chip');
+    if (!chip) return;
+    yearFilter = chip.dataset.year;
     renderAll();
   });
 
