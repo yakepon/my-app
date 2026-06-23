@@ -1663,6 +1663,38 @@ form > textarea { margin-bottom: 0.6rem; }
 .hm-trip-select:focus,
 .hm-tide-select:focus { outline: none; border-color: var(--accent-2); }
 
+.global-filter-bar {
+  max-width: 860px;
+  margin: 1.4rem auto 0;
+  padding: 1rem 1rem 0.2rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.global-filter-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+.global-filter-head .icon { font-size: 0.95rem; color: var(--accent-2); align-self: center; }
+.global-filter-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+.global-filter-hint {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+}
+.global-filter-bar .filter-group {
+  max-width: none;
+  margin: 0 0 0.8rem;
+  padding: 0;
+}
+.global-filter-bar .filter-group:last-of-type { margin-bottom: 0.8rem; }
+
 .filter-group {
   max-width: 860px;
   margin: 0 auto 0.6rem;

@@ -166,6 +166,10 @@
         <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
       </symbol>
 
+      <symbol id="icon-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+      </symbol>
+
       <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 12h14M13 6l6 6-6 6"/>
       </symbol>
@@ -239,20 +243,26 @@
     <!-- ══ 釣行一覧 Screen ══════════════════════════════════════ -->
     <div id="eventsScreen" class="screen">
 
+      <!-- Global filter (このページ全体の表示に適用される) -->
+      <div class="global-filter-bar">
+        <div class="global-filter-head">
+          <svg class="icon"><use href="#icon-filter"/></svg>
+          <span class="global-filter-title">表示フィルター</span>
+          <span class="global-filter-hint">このページ全体に適用されます</span>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-label">期間</span>
+          <div class="style-filter" id="yearFilter"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-label">釣り方</span>
+          <div class="style-filter" id="styleFilter"></div>
+        </div>
+      </div>
+
       <div class="section-label">
         <span class="ghost-label" aria-hidden="true">OVERVIEW</span>
         <span class="label-text">釣果サマリー</span>
-      </div>
-
-      <!-- Year filter (全体フィルタ) -->
-      <div class="filter-group">
-        <span class="filter-group-label">期間</span>
-        <div class="style-filter" id="yearFilter"></div>
-      </div>
-      <!-- Style filter (全体フィルタ) -->
-      <div class="filter-group">
-        <span class="filter-group-label">釣り方</span>
-        <div class="style-filter" id="styleFilter"></div>
       </div>
 
       <!-- Stats -->
