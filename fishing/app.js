@@ -3263,6 +3263,7 @@ function init() {
   els.cancelGearEdit.addEventListener('click', closeGearForm);
   els.rodList.addEventListener('click', handleGearListClick);
   els.reelList.addEventListener('click', handleGearListClick);
+  els.lureList.addEventListener('click', handleGearListClick);
   els.catchEditForm.addEventListener('submit', onCatchEditSubmit);
   els.catchModalClose.addEventListener('click', closeCatchModal);
   els.modalBackdrop.addEventListener('click', closeCatchModal);
