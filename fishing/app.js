@@ -50,6 +50,7 @@ const els = {
   navShowGear:     document.getElementById('navShowGear'),
   navShowRodForm:  document.getElementById('navShowRodForm'),
   navShowReelForm: document.getElementById('navShowReelForm'),
+  navShowLureForm: document.getElementById('navShowLureForm'),
   eventsScreen:   document.getElementById('eventsScreen'),
   catchScreen:    document.getElementById('catchScreen'),
   gearScreen:     document.getElementById('gearScreen'),
@@ -128,14 +129,18 @@ const els = {
   gearPhotoInput:    document.getElementById('gearPhotoInput'),
   gearPhotoSlots:    document.getElementById('gearPhotoSlots'),
   gearPhotoAddLabel: document.getElementById('gearPhotoAddLabel'),
+  gearPhotoTrigger:  document.getElementById('gearPhotoTrigger'),
   rodList:  document.getElementById('rodList'),
   reelList: document.getElementById('reelList'),
+  lureList: document.getElementById('lureList'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
   gearTabRod:   document.getElementById('gearTabRod'),
   gearTabReel:  document.getElementById('gearTabReel'),
+  gearTabLure:  document.getElementById('gearTabLure'),
   gearRodPanel: document.getElementById('gearRodPanel'),
   gearReelPanel: document.getElementById('gearReelPanel'),
+  gearLurePanel: document.getElementById('gearLurePanel'),
   rodOnlyFields:  document.getElementById('rodOnlyFields'),
   reelOnlyFields: document.getElementById('reelOnlyFields'),
   styleLabelText: document.getElementById('styleLabelText'),
@@ -157,7 +162,7 @@ let selectedSpecies = '';
 let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
-let gearTab        = 'rod'; // 'rod' | 'reel'
+let gearTab        = 'rod'; // 'rod' | 'reel' | 'lure'
 let analysisTab    = 'trip'; // 'trip' | 'catch'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let heatmapTripFilter    = ''; // '' = すべての釣行 / それ以外はイベントID（日付＋釣り場名で一意な釣行）
@@ -274,6 +279,8 @@ function buildSampleData() {
         reelType: 'スピニング', retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
       { id: uid(), type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'C2000', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
         reelType: 'スピニング', retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
+      { id: uid(), type: 'lure', name: 'アジアダー',     style: 'ワーム',     maker: 'アジング職人', memo: 'アジング定番',  photo: '', photoId: '', selfWeight: '1.5', purchaseDate: '2025-11-02', purchasePrice: '550' },
+      { id: uid(), type: 'lure', name: 'コルトスナイパー', style: 'メタルジグ', maker: 'デュオ',       memo: '青物用',        photo: '', photoId: '', selfWeight: '30',  purchaseDate: '2025-06-10', purchasePrice: '1800' },
     ],
   };
 }
@@ -492,6 +499,7 @@ function showEventsScreen() {
   els.navShowGear.hidden  = false;
   els.navShowRodForm.hidden  = true;
   els.navShowReelForm.hidden = true;
+  els.navShowLureForm.hidden = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -506,6 +514,7 @@ function showCatchScreen(ev) {
   els.navShowGear.hidden  = true;
   els.navShowRodForm.hidden  = true;
   els.navShowReelForm.hidden = true;
+  els.navShowLureForm.hidden = true;
   resetQuickForm();
   renderEventBanner();
   renderEventCatches();
@@ -522,18 +531,22 @@ function showGearScreen() {
   els.navShowGear.hidden  = true;
   els.navShowRodForm.hidden  = false;
   els.navShowReelForm.hidden = false;
+  els.navShowLureForm.hidden = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// タックル管理画面の「ロッド」「リール」タブ切り替え。
+// タックル管理画面の「ロッド」「リール」「ルアー」タブ切り替え。
 function setGearTab(tab) {
   gearTab = tab;
   els.gearTabRod.classList.toggle('gear-tab-active', tab === 'rod');
   els.gearTabReel.classList.toggle('gear-tab-active', tab === 'reel');
+  els.gearTabLure.classList.toggle('gear-tab-active', tab === 'lure');
   els.gearTabRod.setAttribute('aria-selected', String(tab === 'rod'));
   els.gearTabReel.setAttribute('aria-selected', String(tab === 'reel'));
+  els.gearTabLure.setAttribute('aria-selected', String(tab === 'lure'));
   els.gearRodPanel.hidden  = tab !== 'rod';
   els.gearReelPanel.hidden = tab !== 'reel';
+  els.gearLurePanel.hidden = tab !== 'lure';
 }
 
 // 分析画面の「釣行分析」「釣果分析」タブ切り替え。
@@ -2163,8 +2176,13 @@ async function onEventSubmit(e) {
 // 編集中の写真スロット（最大3枚）。各要素: { field, idField, url, id, pendingDataUrl, removed }
 let gearPhotoState = [];
 
-function makeEmptyGearPhotoState() {
-  return GEAR_PHOTO_SUFFIXES.map(suffix => {
+// ルアーは1枚、ロッド・リールは最大3枚まで。
+function gearPhotoSuffixesForType(type) {
+  return type === 'lure' ? GEAR_PHOTO_SUFFIXES.slice(0, 1) : GEAR_PHOTO_SUFFIXES;
+}
+
+function makeEmptyGearPhotoState(type) {
+  return gearPhotoSuffixesForType(type).map(suffix => {
     const { field, idField } = gearPhotoFieldNames(suffix);
     return { field, idField, url: '', id: '', pendingDataUrl: null, removed: false };
   });
@@ -2184,8 +2202,14 @@ function renderGearPhotoSlots() {
   els.gearPhotoAddLabel.hidden = filled.length >= gearPhotoState.length;
 }
 
-function resetGearPhotoState() {
-  gearPhotoState = makeEmptyGearPhotoState();
+function applyGearPhotoLabelForType(type) {
+  const max = gearPhotoSuffixesForType(type).length;
+  els.gearPhotoTrigger.lastChild.textContent = ` 写真を撮る / 選択（最大${max}枚・任意）`;
+}
+
+function resetGearPhotoState(type) {
+  gearPhotoState = makeEmptyGearPhotoState(type);
+  applyGearPhotoLabelForType(type);
   els.gearPhotoInput.value = '';
   renderGearPhotoSlots();
 }
@@ -2198,6 +2222,10 @@ function applyStyleFieldForType(type) {
     els.styleLabelText.textContent = 'スタイル（リールサイズ番号）';
     els.styleInput.placeholder = '例: C3000 / 4000 / 2500HG';
     els.styleInput.removeAttribute('list');
+  } else if (type === 'lure') {
+    els.styleLabelText.textContent = 'スタイル（ルアーの種類）';
+    els.styleInput.placeholder = '例: ミノー / メタルジグ / ワーム';
+    els.styleInput.setAttribute('list', 'lureStyleList');
   } else {
     els.styleLabelText.textContent = 'スタイル';
     els.styleInput.placeholder = '例: アジング';
@@ -2209,17 +2237,17 @@ function resetGearForm(type) {
   els.gearForm.reset();
   els.gearForm.elements['id'].value   = '';
   els.gearForm.elements['type'].value = type;
-  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : 'ロッドを登録';
+  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : type === 'lure' ? 'ルアーを登録' : 'ロッドを登録';
   els.gearSubmitBtn.textContent  = '登録する';
   els.rodOnlyFields.hidden  = type !== 'rod';
   els.reelOnlyFields.hidden = type !== 'reel';
   applyStyleFieldForType(type);
-  resetGearPhotoState();
+  resetGearPhotoState(type);
 }
 
 function openGearForm(type) {
   resetGearForm(type);
-  setGearTab(type === 'reel' ? 'reel' : 'rod');
+  setGearTab(type);
   const section = document.getElementById('gear-form');
   section.hidden = false;
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2251,13 +2279,14 @@ function enterGearEditMode(g) {
   els.gearForm.elements['lineType'].value           = g.lineType           || '';
   els.gearForm.elements['lineSize'].value           = g.lineSize           || '';
   els.gearForm.elements['lastLineChangeDate'].value = normDateStr(g.lastLineChangeDate);
-  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : 'ロッド') + 'を編集';
+  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : g.type === 'lure' ? 'ルアー' : 'ロッド') + 'を編集';
   els.gearSubmitBtn.textContent = '更新する';
   els.rodOnlyFields.hidden  = g.type !== 'rod';
   els.reelOnlyFields.hidden = g.type !== 'reel';
-  setGearTab(g.type === 'reel' ? 'reel' : 'rod');
+  setGearTab(g.type);
 
-  gearPhotoState = makeEmptyGearPhotoState();
+  applyGearPhotoLabelForType(g.type);
+  gearPhotoState = makeEmptyGearPhotoState(g.type);
   gearPhotoState.forEach(slot => {
     slot.url = g[slot.field]   || '';
     slot.id  = g[slot.idField] || '';
@@ -2391,8 +2420,10 @@ function gearRowHtml(g) {
 function renderGearLists() {
   const rods  = currentGears.filter(g => g.type === 'rod');
   const reels = currentGears.filter(g => g.type === 'reel');
+  const lures = currentGears.filter(g => g.type === 'lure');
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
+  els.lureList.innerHTML = lures.length ? lures.map(gearRowHtml).join('') : '<p class="empty">登録されたルアーはありません。</p>';
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
 }
@@ -3028,8 +3059,10 @@ function init() {
   els.navShowGear.addEventListener('click', showGearScreen);
   els.navShowRodForm.addEventListener('click', () => openGearForm('rod'));
   els.navShowReelForm.addEventListener('click', () => openGearForm('reel'));
+  els.navShowLureForm.addEventListener('click', () => openGearForm('lure'));
   els.gearTabRod.addEventListener('click', () => setGearTab('rod'));
   els.gearTabReel.addEventListener('click', () => setGearTab('reel'));
+  els.gearTabLure.addEventListener('click', () => setGearTab('lure'));
   setGearTab(gearTab);
 
   els.analysisTabTrip.addEventListener('click', () => setAnalysisTab('trip'));
