@@ -92,6 +92,9 @@ const els = {
   areaPrefTabs: document.getElementById('areaPrefTabs'),
   styleFilter:  document.getElementById('styleFilter'),
   yearFilter:   document.getElementById('yearFilter'),
+  globalFilterToggle:  document.getElementById('globalFilterToggle'),
+  globalFilterBody:    document.getElementById('globalFilterBody'),
+  globalFilterSummary: document.getElementById('globalFilterSummary'),
   eventForm:       document.getElementById('eventForm'),
   eventFormTitle:  document.getElementById('eventFormTitle'),
   eventSubmitBtn:  document.getElementById('eventSubmitBtn'),
@@ -655,9 +658,19 @@ function renderYearFilter() {
   `;
 }
 
+// 折りたたみ時でも現在の絞り込み状態がひと目でわかるよう要約を表示する。
+function renderGlobalFilterSummary() {
+  const yearLabel  = yearFilter === 'this' ? '今年' : yearFilter === 'last' ? '昨年' : '';
+  const parts = [yearLabel, styleFilter].filter(Boolean);
+  els.globalFilterSummary.textContent = parts.length
+    ? `絞り込み中: ${parts.join(' / ')}`
+    : 'このページ全体に適用されます';
+}
+
 function renderAll() {
   renderStyleFilter();
   renderYearFilter();
+  renderGlobalFilterSummary();
   renderEventsList();
   renderStats();
   renderCharts();
@@ -3330,6 +3343,12 @@ function init() {
     if (!item) return;
     const key = item.dataset.spotKey;
     els.kantoMap.querySelectorAll(`[data-spot-key="${cssEscape(key)}"]`).forEach(el => el.classList.remove('is-active'));
+  });
+
+  els.globalFilterToggle.addEventListener('click', () => {
+    const expanded = els.globalFilterToggle.getAttribute('aria-expanded') === 'true';
+    els.globalFilterToggle.setAttribute('aria-expanded', String(!expanded));
+    els.globalFilterBody.hidden = expanded;
   });
 
   els.styleFilter.addEventListener('click', e => {
