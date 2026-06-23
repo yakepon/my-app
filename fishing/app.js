@@ -141,6 +141,8 @@ const els = {
   reelList: document.getElementById('reelList'),
   lureList: document.getElementById('lureList'),
   lureWeightChartWrap: document.getElementById('lureWeightChartWrap'),
+  lureColorFilterChips:  document.getElementById('lureColorFilterChips'),
+  lureWeightFilterChips: document.getElementById('lureWeightFilterChips'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
   gearTabRod:   document.getElementById('gearTabRod'),
@@ -172,6 +174,8 @@ let selectedCount   = 0;
 let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let gearTab        = 'rod'; // 'rod' | 'reel' | 'lure'
+let lureColorFilter  = ''; // '' = すべて / それ以外は色名そのもの（'未設定'含む）
+let lureWeightFilter = ''; // '' = すべて / binのインデックス文字列 / 'unset' = 重さ未入力
 let analysisTab    = 'trip'; // 'trip' | 'catch'
 let heatmapSpeciesFilter = ''; // '' = 全魚種
 let heatmapTripFilter    = ''; // '' = すべての釣行 / それ以外はイベントID（日付＋釣り場名で一意な釣行）
@@ -2459,6 +2463,48 @@ function lureRowHtml(g) {
     </div>`;
 }
 
+// 自重(g)を10g単位のbinインデックスに変換する。未入力/不正値はnull。
+function lureWeightBin(g) {
+  const w = Number(g.selfWeight);
+  if (g.selfWeight === '' || g.selfWeight == null || isNaN(w) || w < 0) return null;
+  return Math.floor(w / 10);
+}
+
+function lureColorKey(g) {
+  return (g.color || '').trim() || '未設定';
+}
+
+function renderLureColorFilter(lures) {
+  const colors = [...new Set(lures.map(lureColorKey))]
+    .sort((a, b) => a === '未設定' ? 1 : b === '未設定' ? -1 : a.localeCompare(b, 'ja'));
+  els.lureColorFilterChips.innerHTML = `
+    <button class="hm-chip${!lureColorFilter ? ' hm-chip-active' : ''}" data-color="">すべて</button>
+    ${colors.map(c => `<button class="hm-chip${lureColorFilter === c ? ' hm-chip-active' : ''}" data-color="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('')}
+  `;
+}
+
+function renderLureWeightFilter(lures) {
+  const bins = [...new Set(lures.map(lureWeightBin).filter(b => b != null))].sort((a, b) => a - b);
+  const hasUnset = lures.some(g => lureWeightBin(g) == null);
+  els.lureWeightFilterChips.innerHTML = `
+    <button class="hm-chip${!lureWeightFilter ? ' hm-chip-active' : ''}" data-bin="">すべて</button>
+    ${bins.map(b => `<button class="hm-chip${lureWeightFilter === String(b) ? ' hm-chip-active' : ''}" data-bin="${b}">${b * 10}-${b * 10 + 9}g</button>`).join('')}
+    ${hasUnset ? `<button class="hm-chip${lureWeightFilter === 'unset' ? ' hm-chip-active' : ''}" data-bin="unset">未設定</button>` : ''}
+  `;
+}
+
+function filteredLures(lures) {
+  return lures.filter(g => {
+    if (lureColorFilter && lureColorKey(g) !== lureColorFilter) return false;
+    if (lureWeightFilter) {
+      const bin = lureWeightBin(g);
+      if (lureWeightFilter === 'unset') { if (bin != null) return false; }
+      else if (String(bin) !== lureWeightFilter) return false;
+    }
+    return true;
+  });
+}
+
 function renderGearLists() {
   const rods  = currentGears.filter(g => g.type === 'rod');
   const reels = currentGears.filter(g => g.type === 'reel');
@@ -2466,7 +2512,10 @@ function renderGearLists() {
     .sort((a, b) => (Number(b.selfWeight) || -1) - (Number(a.selfWeight) || -1));
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
-  els.lureList.innerHTML = lures.length ? lures.map(lureRowHtml).join('') : '<p class="empty">登録されたルアーはありません。</p>';
+  renderLureColorFilter(lures);
+  renderLureWeightFilter(lures);
+  const visibleLures = filteredLures(lures);
+  els.lureList.innerHTML = visibleLures.length ? visibleLures.map(lureRowHtml).join('') : '<p class="empty">該当するルアーはありません。</p>';
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
   renderLureWeightChart(lures);
@@ -3224,6 +3273,18 @@ function init() {
   els.gearTabRod.addEventListener('click', () => setGearTab('rod'));
   els.gearTabReel.addEventListener('click', () => setGearTab('reel'));
   els.gearTabLure.addEventListener('click', () => setGearTab('lure'));
+  els.lureColorFilterChips.addEventListener('click', e => {
+    const chip = e.target.closest('.hm-chip');
+    if (!chip) return;
+    lureColorFilter = chip.dataset.color;
+    renderGearLists();
+  });
+  els.lureWeightFilterChips.addEventListener('click', e => {
+    const chip = e.target.closest('.hm-chip');
+    if (!chip) return;
+    lureWeightFilter = chip.dataset.bin;
+    renderGearLists();
+  });
   setGearTab(gearTab);
 
   els.analysisTabTrip.addEventListener('click', () => setAnalysisTab('trip'));
