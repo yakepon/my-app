@@ -2448,8 +2448,41 @@ function gearRowHtml(g) {
 }
 
 // ルアー一覧は写真を名前の下に大きく表示し、補足情報は自重のみに絞る。
+// 錘負荷の範囲にルアーの自重(g)が収まるロッドを「対応ロッド」とする。
+function compatibleRodNames(lureWeight) {
+  return currentGears
+    .filter(r => r.type === 'rod')
+    .filter(r => {
+      const range = sinkerWeightRangeGrams(r.sinkerWeight);
+      return range && lureWeight >= range.min && lureWeight <= range.max;
+    })
+    .map(r => r.name || '-');
+}
+
+// 巻かれているラインの号数・タイプから推定した適合重量レンジに、ルアーの
+// 自重(g)が収まるリールを「対応リール」とする（リール自体に重量上限データが
+// ないため、ライン号数早見表で代替）。
+function compatibleReelNames(lureWeight) {
+  return currentGears
+    .filter(r => r.type === 'reel')
+    .filter(r => {
+      const range = reelLureWeightRange(r);
+      return range && lureWeight >= range.min && lureWeight <= range.max;
+    })
+    .map(r => r.name || '-');
+}
+
 function lureRowHtml(g) {
-  const photo = gearPhotoSlots(g)[0];
+  const photo  = gearPhotoSlots(g)[0];
+  const weight = g.selfWeight !== '' && g.selfWeight != null ? Number(g.selfWeight) : null;
+  const hasWeight = weight != null && !isNaN(weight);
+
+  const compatHtml = hasWeight ? `
+    <div class="lure-compat">
+      <div class="lure-compat-row"><span class="lure-compat-label">対応ロッド</span><span class="lure-compat-value">${compatibleRodNames(weight).map(escapeHtml).join('、') || 'なし'}</span></div>
+      <div class="lure-compat-row"><span class="lure-compat-label">対応リール</span><span class="lure-compat-value">${compatibleReelNames(weight).map(escapeHtml).join('、') || 'なし'}</span></div>
+    </div>` : `<p class="lure-compat-hint">自重を入力すると対応タックルが分かります。</p>`;
+
   return `
     <div class="lure-row">
       <div class="lure-row-head">
@@ -2459,8 +2492,11 @@ function lureRowHtml(g) {
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>
       </div>
-      ${g.selfWeight ? `<span class="gear-spec">自重${escapeHtml(g.selfWeight)}g</span>` : ''}
-      ${photo ? `<img src="${escapeHtml(photo.url)}" class="gear-thumb lure-photo" data-gear-id="${escapeHtml(g.id)}" data-photo-field="${photo.field}" alt="${escapeHtml(g.name || '')}">` : ''}
+      ${hasWeight ? `<span class="gear-spec">自重${escapeHtml(g.selfWeight)}g</span>` : ''}
+      <div class="lure-row-body">
+        ${photo ? `<img src="${escapeHtml(photo.url)}" class="gear-thumb lure-photo" data-gear-id="${escapeHtml(g.id)}" data-photo-field="${photo.field}" alt="${escapeHtml(g.name || '')}">` : ''}
+        ${compatHtml}
+      </div>
     </div>`;
 }
 
@@ -2689,6 +2725,60 @@ function sinkerWeightToGo(str) {
   }
   // 数値に単位が直接付いていない場合は、号数とみなして数値の最大値を使う。
   return parseMaxNumber(s);
+}
+
+// 錘負荷の文字列（例: "0.5-7g", "20-30号", "21g"）から [最小g, 最大g] を抽出する。
+// 号表記は1号=3.75gとして換算する。数値が見つからなければnull。
+function sinkerWeightRangeGrams(str) {
+  const s = String(str || '').trim();
+  if (!s) return null;
+  const nums = s.match(/[\d.]+/g);
+  if (!nums || !nums.length) return null;
+  // "0.5-7g" のように単位は末尾に一度だけ書かれる前提で、末尾の単位を採用する。
+  // 単位が見つからない場合は号数とみなす（他の錘負荷パース処理と同じ規則）。
+  const isGram = /g\s*$/i.test(s);
+  const values = nums.map(Number).map(n => isGram ? n : n * GRAM_PER_GO);
+  return { min: Math.min(...values), max: Math.max(...values) };
+}
+
+// ライン号数(PE/ナイロン・フロロ)から適合ルアー重量(g)の目安レンジを引く早見表。
+// 「ライン号数・ルアー重さ早見表」モーダルと同じ値。
+const PE_LINE_LURE_WEIGHT_TABLE = [
+  { go: 0.3, min: 0.5,  max: 4 },
+  { go: 0.4, min: 1,    max: 6 },
+  { go: 0.6, min: 3,    max: 10 },
+  { go: 0.8, min: 5,    max: 15 },
+  { go: 1,   min: 7,    max: 20 },
+  { go: 1.5, min: 10,   max: 30 },
+  { go: 2,   min: 15,   max: 40 },
+  { go: 3,   min: 30,   max: 60 },
+  { go: 4,   min: 40,   max: 80 },
+  { go: 5,   min: 60,   max: 120 },
+];
+const NYLON_LINE_LURE_WEIGHT_TABLE = [
+  { go: 0.8, min: 1,  max: 5 },
+  { go: 1,   min: 1,  max: 6 },
+  { go: 1.5, min: 2,  max: 8 },
+  { go: 2,   min: 3,  max: 10 },
+  { go: 3,   min: 7,  max: 20 },
+  { go: 4,   min: 10, max: 30 },
+  { go: 5,   min: 15, max: 40 },
+  { go: 6,   min: 20, max: 50 },
+  { go: 8,   min: 30, max: 70 },
+  { go: 10,  min: 40, max: 100 },
+];
+
+// リールに巻かれているライン号数・タイプから、適合ルアー重量レンジを推定する。
+// ラインの太さ自体に重量制限はないが、号数は釣り方の規模（=扱うルアー重量帯）の
+// 目安になるため、早見表の最も近い号数の行を採用する。
+function reelLureWeightRange(reel) {
+  const goNum = parseLeadingNumber(reel.lineSize);
+  if (goNum == null) return null;
+  const isPe = /pe/i.test(reel.lineType || '');
+  const isNylonFamily = /ナイロン|フロロ|エステル|nylon/i.test(reel.lineType || '');
+  if (!isPe && !isNylonFamily) return null;
+  const table = isPe ? PE_LINE_LURE_WEIGHT_TABLE : NYLON_LINE_LURE_WEIGHT_TABLE;
+  return table.reduce((best, row) => Math.abs(row.go - goNum) < Math.abs(best.go - goNum) ? row : best, table[0]);
 }
 
 // 最新ライン交換日からの経過日数（未入力なら null）。
