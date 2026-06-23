@@ -140,6 +140,7 @@ const els = {
   rodList:  document.getElementById('rodList'),
   reelList: document.getElementById('reelList'),
   lureList: document.getElementById('lureList'),
+  lureWeightChartWrap: document.getElementById('lureWeightChartWrap'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
   gearTabRod:   document.getElementById('gearTabRod'),
@@ -195,6 +196,7 @@ function filteredCatches(events) {
 let trendChartInst   = null;
 let speciesChartInst = null;
 let spotChartInst    = null;
+let lureWeightChartInst = null;
 
 // ── Mock / Demo mode ──────────────────────────────────────────
 function isMockMode() { return !getGasUrl(); }
@@ -555,6 +557,7 @@ function setGearTab(tab) {
   els.gearRodPanel.hidden  = tab !== 'rod';
   els.gearReelPanel.hidden = tab !== 'reel';
   els.gearLurePanel.hidden = tab !== 'lure';
+  if (tab === 'lure' && lureWeightChartInst) lureWeightChartInst.resize();
 }
 
 // 分析画面の「釣行分析」「釣果分析」タブ切り替え。
@@ -2465,6 +2468,43 @@ function renderGearLists() {
   els.lureList.innerHTML = lures.length ? lures.map(lureRowHtml).join('') : '<p class="empty">登録されたルアーはありません。</p>';
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
+  renderLureWeightChart(lures);
+}
+
+// 自重(g)を10g単位のbinに分け、bin毎のルアー数を棒グラフで表示する。
+function renderLureWeightChart(lures) {
+  const weights = lures
+    .map(g => g.selfWeight)
+    .filter(w => w !== '' && w != null)
+    .map(Number)
+    .filter(w => !isNaN(w) && w >= 0);
+
+  if (lureWeightChartInst) { lureWeightChartInst.destroy(); lureWeightChartInst = null; }
+
+  if (!weights.length) {
+    els.lureWeightChartWrap.innerHTML = '<p class="empty">自重(g)を入力したルアーがあると、重さ別の本数を表示できます。</p>';
+    return;
+  }
+
+  if (!els.lureWeightChartWrap.querySelector('canvas')) {
+    els.lureWeightChartWrap.innerHTML = '<canvas id="lureWeightChart"></canvas>';
+  }
+
+  const binCount = Math.floor(Math.max(...weights) / 10) + 1;
+  const counts = new Array(binCount).fill(0);
+  weights.forEach(w => counts[Math.floor(w / 10)]++);
+  const labels = counts.map((_, i) => `${i * 10}-${i * 10 + 9}g`);
+
+  lureWeightChartInst = new Chart(document.getElementById('lureWeightChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'ルアー数', data: counts,
+        backgroundColor: labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]),
+        borderRadius: 6, maxBarThickness: 44 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: chartAxisOpts() },
+  });
 }
 
 // 文字列先頭の数値部分を取り出す（"C3000" → 3000, "0.6号" → 0.6 など）。
