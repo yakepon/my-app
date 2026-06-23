@@ -113,6 +113,10 @@ const els = {
   lineInfoModal:    document.getElementById('lineInfoModal'),
   lineInfoClose:    document.getElementById('lineInfoClose'),
   lineInfoBackdrop: document.getElementById('lineInfoBackdrop'),
+  lureLineInfoBtn:      document.getElementById('lureLineInfoBtn'),
+  lureLineInfoModal:    document.getElementById('lureLineInfoModal'),
+  lureLineInfoClose:    document.getElementById('lureLineInfoClose'),
+  lureLineInfoBackdrop: document.getElementById('lureLineInfoBackdrop'),
   spotList:   document.getElementById('spotList'),
   targetList: document.getElementById('targetList'),
   demoNotice: document.getElementById('demoNotice'),
@@ -2813,6 +2817,16 @@ function closeLineInfoModal() {
   document.body.style.overflow = '';
 }
 
+function openLureLineInfoModal() {
+  els.lureLineInfoModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLureLineInfoModal() {
+  els.lureLineInfoModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
 let lightboxTarget = null; // { type: 'catch' | 'event', id, photoField }
 
 function openPhotoLightbox(src, type, id, photoField = 'photo') {
@@ -3305,6 +3319,9 @@ function init() {
   els.lineInfoBtn.addEventListener('click', openLineInfoModal);
   els.lineInfoClose.addEventListener('click', closeLineInfoModal);
   els.lineInfoBackdrop.addEventListener('click', closeLineInfoModal);
+  els.lureLineInfoBtn.addEventListener('click', openLureLineInfoModal);
+  els.lureLineInfoClose.addEventListener('click', closeLureLineInfoModal);
+  els.lureLineInfoBackdrop.addEventListener('click', closeLureLineInfoModal);
 
   els.catchesList.addEventListener('click', e => {
     const thumb = e.target.closest('.catch-thumb');

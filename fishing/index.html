@@ -694,6 +694,15 @@
       <div id="gearLurePanel" hidden>
         <button type="button" class="btn btn-primary gear-register-btn" id="navShowLureForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> ルアーを登録</button>
 
+        <!-- Line size & lure weight reference -->
+        <section class="panel chart-panel">
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-lure"/></svg> ライン号数・ルアー重さ早見表</h2>
+            <button type="button" class="icon-btn" id="lureLineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> 早見表</button>
+          </div>
+          <p class="hint">使っているライン（PE / ナイロン・フロロ）の号数から、扱いやすいルアーの重さの目安が分かります。</p>
+        </section>
+
         <!-- Gear list (ルアー一覧) -->
         <section class="panel records-panel">
           <div class="section-header">
@@ -886,6 +895,54 @@
     </div>
   </div>
 
+  <!-- Lure Line Info Modal (ライン号数 / ルアー重さ 早見表) -->
+  <div id="lureLineInfoModal" class="modal" hidden>
+    <div class="modal-backdrop" id="lureLineInfoBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">ライン号数・ルアー重さ早見表（参考情報）</h3>
+      <p class="hint">メーカーやロッドのバランス、釣り方によって差があります。あくまで目安としてご利用ください。</p>
+
+      <div class="line-info-tables-2col">
+        <table class="line-info-table">
+          <caption>PEライン</caption>
+          <thead><tr><th>号数</th><th>適合ルアー重さ目安</th></tr></thead>
+          <tbody>
+            <tr><td>0.3号</td><td>0.5〜4g</td></tr>
+            <tr><td>0.4号</td><td>1〜6g</td></tr>
+            <tr><td>0.6号</td><td>3〜10g</td></tr>
+            <tr><td>0.8号</td><td>5〜15g</td></tr>
+            <tr><td>1号</td><td>7〜20g</td></tr>
+            <tr><td>1.5号</td><td>10〜30g</td></tr>
+            <tr><td>2号</td><td>15〜40g</td></tr>
+            <tr><td>3号</td><td>30〜60g</td></tr>
+            <tr><td>4号</td><td>40〜80g</td></tr>
+            <tr><td>5号</td><td>60〜120g</td></tr>
+          </tbody>
+        </table>
+        <table class="line-info-table">
+          <caption>ナイロン / フロロライン</caption>
+          <thead><tr><th>号数</th><th>適合ルアー重さ目安</th></tr></thead>
+          <tbody>
+            <tr><td>0.8号</td><td>1〜5g</td></tr>
+            <tr><td>1号</td><td>1〜6g</td></tr>
+            <tr><td>1.5号</td><td>2〜8g</td></tr>
+            <tr><td>2号</td><td>3〜10g</td></tr>
+            <tr><td>3号</td><td>7〜20g</td></tr>
+            <tr><td>4号</td><td>10〜30g</td></tr>
+            <tr><td>5号</td><td>15〜40g</td></tr>
+            <tr><td>6号</td><td>20〜50g</td></tr>
+            <tr><td>8号</td><td>30〜70g</td></tr>
+            <tr><td>10号</td><td>40〜100g</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="lureLineInfoClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Photo Lightbox -->
   <div id="photoLightbox" class="modal photo-lightbox" hidden>
     <div class="modal-backdrop" id="photoLightboxBackdrop"></div>
@@ -897,6 +954,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=202606237"></script>
+  <script src="app.js?v=202606238"></script>
 </body>
 </html>
