@@ -589,6 +589,11 @@
               <input type="date" name="lastLineChangeDate">
             </label>
           </div>
+          <div class="form-grid" id="lureOnlyFields">
+            <label>カラー
+              <input type="text" name="color" list="lureColorList" placeholder="例: グロー / ピンク / イワシ">
+            </label>
+          </div>
           <datalist id="gearStyleList">
             <option value="アジング">
             <option value="エギング">
@@ -610,6 +615,15 @@
             <option value="ワーム">
             <option value="スプーン">
             <option value="ポッパー">
+          </datalist>
+          <datalist id="lureColorList">
+            <option value="グロー">
+            <option value="ピンク">
+            <option value="ホワイト">
+            <option value="チャート">
+            <option value="ゴールド">
+            <option value="シルバー">
+            <option value="イワシ">
           </datalist>
 
           <div id="gearPhotoSlots" class="photo-slots"></div>
@@ -876,6 +890,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=202606234"></script>
+  <script src="app.js?v=202606236"></script>
 </body>
 </html>

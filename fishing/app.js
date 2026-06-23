@@ -143,6 +143,7 @@ const els = {
   gearLurePanel: document.getElementById('gearLurePanel'),
   rodOnlyFields:  document.getElementById('rodOnlyFields'),
   reelOnlyFields: document.getElementById('reelOnlyFields'),
+  lureOnlyFields: document.getElementById('lureOnlyFields'),
   styleLabelText: document.getElementById('styleLabelText'),
   styleInput: document.getElementById('styleInput'),
   analysisTabTrip:    document.getElementById('analysisTabTrip'),
@@ -279,8 +280,8 @@ function buildSampleData() {
         reelType: 'スピニング', retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
       { id: uid(), type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'C2000', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
         reelType: 'スピニング', retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
-      { id: uid(), type: 'lure', name: 'アジアダー',     style: 'ワーム',     maker: 'アジング職人', memo: 'アジング定番',  photo: '', photoId: '', selfWeight: '1.5', purchaseDate: '2025-11-02', purchasePrice: '550' },
-      { id: uid(), type: 'lure', name: 'コルトスナイパー', style: 'メタルジグ', maker: 'デュオ',       memo: '青物用',        photo: '', photoId: '', selfWeight: '30',  purchaseDate: '2025-06-10', purchasePrice: '1800' },
+      { id: uid(), type: 'lure', name: 'アジアダー',     style: 'ワーム',     maker: 'アジング職人', memo: 'アジング定番',  photo: '', photoId: '', selfWeight: '1.5', purchaseDate: '2025-11-02', purchasePrice: '550',  color: 'グロー' },
+      { id: uid(), type: 'lure', name: 'コルトスナイパー', style: 'メタルジグ', maker: 'デュオ',       memo: '青物用',        photo: '', photoId: '', selfWeight: '30',  purchaseDate: '2025-06-10', purchasePrice: '1800', color: 'イワシ' },
     ],
   };
 }
@@ -291,7 +292,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'color'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -2241,6 +2242,7 @@ function resetGearForm(type) {
   els.gearSubmitBtn.textContent  = '登録する';
   els.rodOnlyFields.hidden  = type !== 'rod';
   els.reelOnlyFields.hidden = type !== 'reel';
+  els.lureOnlyFields.hidden = type !== 'lure';
   applyStyleFieldForType(type);
   resetGearPhotoState(type);
 }
@@ -2279,10 +2281,12 @@ function enterGearEditMode(g) {
   els.gearForm.elements['lineType'].value           = g.lineType           || '';
   els.gearForm.elements['lineSize'].value           = g.lineSize           || '';
   els.gearForm.elements['lastLineChangeDate'].value = normDateStr(g.lastLineChangeDate);
+  els.gearForm.elements['color'].value              = g.color || '';
   els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : g.type === 'lure' ? 'ルアー' : 'ロッド') + 'を編集';
   els.gearSubmitBtn.textContent = '更新する';
   els.rodOnlyFields.hidden  = g.type !== 'rod';
   els.reelOnlyFields.hidden = g.type !== 'reel';
+  els.lureOnlyFields.hidden = g.type !== 'lure';
   setGearTab(g.type);
 
   applyGearPhotoLabelForType(g.type);
@@ -2327,6 +2331,7 @@ async function onGearSubmit(e) {
     lineType:           type === 'reel' ? fd.get('lineType')           : '',
     lineSize:           type === 'reel' ? fd.get('lineSize')           : '',
     lastLineChangeDate: type === 'reel' ? fd.get('lastLineChangeDate') : '',
+    color:              type === 'lure' ? fd.get('color')              : '',
   };
 
   els.gearSubmitBtn.disabled = true;
