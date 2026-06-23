@@ -143,6 +143,7 @@ const els = {
   lureWeightChartWrap: document.getElementById('lureWeightChartWrap'),
   lureColorFilterChips:  document.getElementById('lureColorFilterChips'),
   lureWeightFilterChips: document.getElementById('lureWeightFilterChips'),
+  lureCountBadge: document.getElementById('lureCountBadge'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
   gearTabRod:   document.getElementById('gearTabRod'),
@@ -2516,6 +2517,7 @@ function renderGearLists() {
   renderLureWeightFilter(lures);
   const visibleLures = filteredLures(lures);
   els.lureList.innerHTML = visibleLures.length ? visibleLures.map(lureRowHtml).join('') : '<p class="empty">該当するルアーはありません。</p>';
+  els.lureCountBadge.innerHTML = `<span class="ec-catch-stat-value">${visibleLures.length}</span><span class="ec-catch-stat-label">個</span>`;
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
   renderLureWeightChart(lures);
