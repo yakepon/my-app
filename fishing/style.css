@@ -1187,7 +1187,7 @@ form > textarea { margin-bottom: 0.6rem; }
 .gear-name  { font-size: 0.86rem; font-weight: 700; color: var(--ink); }
 .gear-maker { font-family: var(--font-body); font-size: 0.75rem; color: var(--ink-muted); }
 .gear-spec  { font-family: var(--font-body); font-size: 0.72rem; color: var(--ink-muted); }
-.gear-memo  { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
+.gear-memo  { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1 1 100%; }
 .gear-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
 /* ── Lure list（写真を名前の下に大きく表示） ───────────────────── */
