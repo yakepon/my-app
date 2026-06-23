@@ -1190,6 +1190,26 @@ form > textarea { margin-bottom: 0.6rem; }
 .gear-memo  { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
 .gear-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
+/* ── Lure list（写真を名前の下に大きく表示） ───────────────────── */
+.lure-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.7rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.lure-row:hover { background: var(--surface-2); }
+.lure-row:last-child { border-bottom: none; }
+.lure-row-head { display: flex; align-items: center; gap: 0.5rem; }
+.lure-row-head .gear-actions { margin-left: auto; }
+.lure-photo.gear-thumb {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
 /* ── Rod length ruler (全長比較) ─────────────────────────────── */
 .rod-ruler { position: relative; }
 /* 目盛りグリッド線は全行を貫く別レイヤーとして敷き、行ごとのグリッド計算

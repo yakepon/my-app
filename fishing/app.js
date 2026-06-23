@@ -2417,13 +2417,30 @@ function gearRowHtml(g) {
     </div>`;
 }
 
+// ルアー一覧は写真を名前の下に大きく表示し、補足情報は自重のみに絞る。
+function lureRowHtml(g) {
+  const photo = gearPhotoSlots(g)[0];
+  return `
+    <div class="lure-row">
+      <div class="lure-row-head">
+        <span class="gear-name">${escapeHtml(g.name || '-')}</span>
+        <div class="gear-actions">
+          <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
+          <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
+        </div>
+      </div>
+      ${g.selfWeight ? `<span class="gear-spec">自重${escapeHtml(g.selfWeight)}g</span>` : ''}
+      ${photo ? `<img src="${escapeHtml(photo.url)}" class="gear-thumb lure-photo" data-gear-id="${escapeHtml(g.id)}" data-photo-field="${photo.field}" alt="${escapeHtml(g.name || '')}">` : ''}
+    </div>`;
+}
+
 function renderGearLists() {
   const rods  = currentGears.filter(g => g.type === 'rod');
   const reels = currentGears.filter(g => g.type === 'reel');
   const lures = currentGears.filter(g => g.type === 'lure');
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
-  els.lureList.innerHTML = lures.length ? lures.map(gearRowHtml).join('') : '<p class="empty">登録されたルアーはありません。</p>';
+  els.lureList.innerHTML = lures.length ? lures.map(lureRowHtml).join('') : '<p class="empty">登録されたルアーはありません。</p>';
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
 }
