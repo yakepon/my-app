@@ -2543,6 +2543,30 @@ const LURE_COLOR_HEX = {
 };
 const LURE_COLOR_KANJI_TOKENS = ['銀', '白', '金', '赤', '緑', '青', '黒', '紫', '黄', '橙'];
 
+// hex色を指定割合だけ明るくする（グラデーションの明側に使う）。
+function lightenHex(hex, amt) {
+  const c = hex.replace('#', '');
+  const full = c.length === 3 ? c.split('').map(x => x + x).join('') : c;
+  const num = parseInt(full, 16);
+  let r = (num >> 16) & 0xff, g = (num >> 8) & 0xff, b = num & 0xff;
+  r = Math.min(255, Math.round(r + (255 - r) * amt));
+  g = Math.min(255, Math.round(g + (255 - g) * amt));
+  b = Math.min(255, Math.round(b + (255 - b) * amt));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+// バー全体の高さに沿って「明→暗」の縦グラデーションを作る（Chart.jsのscriptable color）。
+function lureColorGradient(hex) {
+  return (context) => {
+    const { ctx, chartArea } = context.chart;
+    if (!chartArea) return hex;
+    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    gradient.addColorStop(0, lightenHex(hex, 0.5));
+    gradient.addColorStop(1, hex);
+    return gradient;
+  };
+}
+
 // 2色を交互に並べたタイルを作り、繰り返しパターンとして使うことで縦じまを表現する。
 function createStripePattern(colorA, colorB) {
   const size = 12;
@@ -2599,16 +2623,18 @@ function renderLureWeightChart(lures) {
     colorCounts.get(key)[Math.floor(w / 10)]++;
   });
 
-  const datasets = colorOrder.map((key, i) => ({
-    label: key,
-    data: colorCounts.get(key),
-    backgroundColor: resolveLureColorFill(key, i),
-    borderColor: 'rgba(0,0,0,0.3)',
-    borderWidth: 1.5,
-    stack: 'lures',
-    borderRadius: 4,
-    maxBarThickness: 44,
-  }));
+  const datasets = colorOrder.map((key, i) => {
+    const fill = resolveLureColorFill(key, i);
+    return {
+      label: key,
+      data: colorCounts.get(key),
+      backgroundColor: typeof fill === 'string' ? lureColorGradient(fill) : fill,
+      borderWidth: 0,
+      stack: 'lures',
+      borderRadius: 4,
+      maxBarThickness: 44,
+    };
+  });
 
   const axisOpts = chartAxisOpts();
   lureWeightChartInst = new Chart(document.getElementById('lureWeightChart'), {
