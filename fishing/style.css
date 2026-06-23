@@ -1663,13 +1663,23 @@ form > textarea { margin-bottom: 0.6rem; }
 .hm-trip-select:focus,
 .hm-tide-select:focus { outline: none; border-color: var(--accent-2); }
 
+.filter-group {
+  max-width: 860px;
+  margin: 0 auto 0.6rem;
+  padding: 0 1rem;
+}
+.filter-group:last-of-type { margin-bottom: 1rem; }
+.filter-group-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  margin-bottom: 0.35rem;
+}
 .style-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  max-width: 860px;
-  margin: 0 auto 1rem;
-  padding: 0 1rem;
 }
 
 .hm-chip {
