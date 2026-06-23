@@ -2472,16 +2472,64 @@ function renderGearLists() {
 }
 
 // 自重(g)を10g単位のbinに分け、bin毎のルアー数を棒グラフで表示する。
+// ルアーのカラー名から塗り色を決める。「銀白」のように色の漢字が2つ含まれる
+// 場合は、その2色の縦じまパターンで表現する（実際の見た目に近づけるため）。
+const LURE_COLOR_HEX = {
+  'シルバー': '#C0C0C0', '銀': '#C0C0C0',
+  'ホワイト': '#FFFFFF', '白': '#FFFFFF',
+  'ゴールド': '#E5C100', '金': '#E5C100',
+  'チャート': '#D4F500',
+  'グロー':   '#CFFA63',
+  'ピンク':   '#FF6FB5',
+  'イワシ':   '#7FA8D9',
+  '赤': '#FF4136',
+  '緑': '#2ECC71',
+  '青': '#2E86FF',
+  '黒': '#3a3a3a',
+  '紫': '#8B5CF6',
+  '黄': '#FFE066',
+  '橙': '#FF9500',
+  'オレンジ': '#FF9500',
+};
+const LURE_COLOR_KANJI_TOKENS = ['銀', '白', '金', '赤', '緑', '青', '黒', '紫', '黄', '橙'];
+
+// 2色を交互に並べたタイルを作り、繰り返しパターンとして使うことで縦じまを表現する。
+function createStripePattern(colorA, colorB) {
+  const size = 12;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = colorA;
+  ctx.fillRect(0, 0, size / 2, size);
+  ctx.fillStyle = colorB;
+  ctx.fillRect(size / 2, 0, size / 2, size);
+  return ctx.createPattern(canvas, 'repeat');
+}
+
+function resolveLureColorFill(colorKey, fallbackIndex) {
+  if (colorKey === '未設定') return '#d8d8dc';
+  if (LURE_COLOR_HEX[colorKey]) return LURE_COLOR_HEX[colorKey];
+
+  const found = [];
+  LURE_COLOR_KANJI_TOKENS.forEach(tok => {
+    if (colorKey.includes(tok) && !found.includes(tok)) found.push(tok);
+  });
+  if (found.length >= 2) return createStripePattern(LURE_COLOR_HEX[found[0]], LURE_COLOR_HEX[found[1]]);
+  if (found.length === 1) return LURE_COLOR_HEX[found[0]];
+
+  return CHART_PALETTE[fallbackIndex % CHART_PALETTE.length];
+}
+
+// 重さ(g)を10g単位のbinに分け、登録時のカラーごとに積み上げ棒グラフで表示する。
 function renderLureWeightChart(lures) {
-  const weights = lures
-    .map(g => g.selfWeight)
-    .filter(w => w !== '' && w != null)
-    .map(Number)
-    .filter(w => !isNaN(w) && w >= 0);
+  const withWeight = lures
+    .map(g => ({ g, w: Number(g.selfWeight) }))
+    .filter(({ g, w }) => g.selfWeight !== '' && g.selfWeight != null && !isNaN(w) && w >= 0);
 
   if (lureWeightChartInst) { lureWeightChartInst.destroy(); lureWeightChartInst = null; }
 
-  if (!weights.length) {
+  if (!withWeight.length) {
     els.lureWeightChartWrap.innerHTML = '<p class="empty">自重(g)を入力したルアーがあると、重さ別の本数を表示できます。</p>';
     return;
   }
@@ -2490,20 +2538,43 @@ function renderLureWeightChart(lures) {
     els.lureWeightChartWrap.innerHTML = '<canvas id="lureWeightChart"></canvas>';
   }
 
-  const binCount = Math.floor(Math.max(...weights) / 10) + 1;
-  const counts = new Array(binCount).fill(0);
-  weights.forEach(w => counts[Math.floor(w / 10)]++);
-  const labels = counts.map((_, i) => `${i * 10}-${i * 10 + 9}g`);
+  const binCount = Math.floor(Math.max(...withWeight.map(x => x.w)) / 10) + 1;
+  const labels = Array.from({ length: binCount }, (_, i) => `${i * 10}-${i * 10 + 9}g`);
 
+  const colorOrder = [];
+  const colorCounts = new Map();
+  withWeight.forEach(({ g, w }) => {
+    const key = (g.color || '').trim() || '未設定';
+    if (!colorCounts.has(key)) { colorCounts.set(key, new Array(binCount).fill(0)); colorOrder.push(key); }
+    colorCounts.get(key)[Math.floor(w / 10)]++;
+  });
+
+  const datasets = colorOrder.map((key, i) => ({
+    label: key,
+    data: colorCounts.get(key),
+    backgroundColor: resolveLureColorFill(key, i),
+    borderColor: 'rgba(0,0,0,0.15)',
+    borderWidth: 1,
+    stack: 'lures',
+    borderRadius: 4,
+    maxBarThickness: 44,
+  }));
+
+  const axisOpts = chartAxisOpts();
   lureWeightChartInst = new Chart(document.getElementById('lureWeightChart'), {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{ label: 'ルアー数', data: counts,
-        backgroundColor: labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]),
-        borderRadius: 6, maxBarThickness: 44 }],
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#8b8b8b', boxWidth: 14, font: { family: 'Lato', size: 11 } } },
+      },
+      scales: {
+        x: { ...axisOpts.x, stacked: true },
+        y: { ...axisOpts.y, stacked: true },
+      },
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: chartAxisOpts() },
   });
 }
 
