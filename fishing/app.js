@@ -2448,26 +2448,27 @@ function gearRowHtml(g) {
 }
 
 // ルアー一覧は写真を名前の下に大きく表示し、補足情報は自重のみに絞る。
-// 錘負荷の範囲にルアーの自重(g)が収まるロッドを「対応ロッド」とする。
+// 錘負荷の最大値(g換算)以下のルアーであれば「対応ロッド」とする（軽いルアーを
+// 太いロッドで使うのは問題ないため、下限はチェックしない）。
 function compatibleRodNames(lureWeight) {
   return currentGears
     .filter(r => r.type === 'rod')
     .filter(r => {
       const range = sinkerWeightRangeGrams(r.sinkerWeight);
-      return range && lureWeight >= range.min && lureWeight <= range.max;
+      return range && lureWeight <= range.max;
     })
     .map(r => r.name || '-');
 }
 
-// 巻かれているラインの号数・タイプから推定した適合重量レンジに、ルアーの
-// 自重(g)が収まるリールを「対応リール」とする（リール自体に重量上限データが
-// ないため、ライン号数早見表で代替）。
+// 巻かれているラインの号数・タイプから推定した適合重量の最大値以下のルアーで
+// あれば「対応リール」とする（リール自体に重量上限データがないため、ライン号数
+// 早見表で代替。ロッドと同様に下限はチェックしない）。
 function compatibleReelNames(lureWeight) {
   return currentGears
     .filter(r => r.type === 'reel')
     .filter(r => {
       const range = reelLureWeightRange(r);
-      return range && lureWeight >= range.min && lureWeight <= range.max;
+      return range && lureWeight <= range.max;
     })
     .map(r => r.name || '-');
 }
