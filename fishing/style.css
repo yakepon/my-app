@@ -1335,7 +1335,8 @@ form > textarea { margin-bottom: 0.6rem; }
 .tackle-combo-rod-body-unknown { fill: var(--ink-faint); }
 .tackle-combo-reel-foot { stroke: var(--ink-muted); stroke-width: 3; }
 .tackle-combo-reel-body { fill: var(--surface); stroke: var(--accent-2); stroke-width: 2; }
-.tackle-combo-reel-inner { fill: none; stroke: var(--border); stroke-width: 1; }
+.tackle-combo-reel-spool { stroke: var(--border); stroke-width: 1; }
+.tackle-combo-reel-spool-unknown { fill: var(--ink-faint); }
 .tackle-combo-reel-axle { fill: var(--accent); stroke: none; }
 .tackle-combo-reel-empty { fill: var(--surface); stroke: var(--ink-faint); stroke-width: 1.6; stroke-dasharray: 3 2; }
 .tackle-combo-reel-empty-mark { stroke: var(--ink-faint); stroke-width: 1.6; stroke-linecap: round; }
