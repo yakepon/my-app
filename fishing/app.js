@@ -3148,9 +3148,9 @@ function rodBlankSvg(g, lenCm, unitPerCm, powerRatio) {
     <svg class="rod-blank-svg" style="width:${(lenCm * unitPerCm / 10).toFixed(2)}%" viewBox="0 0 ${barUnits.toFixed(1)} ${H}" preserveAspectRatio="none">
       <defs>
         <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#6C3FE0"/>
-          <stop offset="80%" stop-color="#ff2d95"/>
-          <stop offset="100%" stop-color="#ff2d95"/>
+          <stop offset="0%" stop-color="#9a9aa2"/>
+          <stop offset="80%" stop-color="#4a4a52"/>
+          <stop offset="100%" stop-color="#4a4a52"/>
         </linearGradient>
       </defs>
       <rect class="rod-blank-grip" x="0" y="${(cy - buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
