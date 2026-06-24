@@ -3102,18 +3102,23 @@ function renderTackleCombo(rods, reels) {
     ].join('');
     const sinkerG = sinkerWeightRangeGrams(rod.sinkerWeight);
     const fmtG = n => (Number.isInteger(n) ? n : n.toFixed(1));
+    const fmtGRange = range => (range.min === range.max ? `${fmtG(range.min)}g` : `${fmtG(range.min)}-${fmtG(range.max)}g`);
     const loadInfo = sinkerG
       ? `錘負荷${fmtG(sinkerG.min / GRAM_PER_GO)}-${fmtG(sinkerG.max / GRAM_PER_GO)}号(${fmtG(sinkerG.min)}-${fmtG(sinkerG.max)}g)`
       : '錘負荷: 不明';
+    const rodPowerLabel = sinkerG ? `ロッド強度:${fmtGRange(sinkerG)}` : '';
     const lineLabel = lineTypeSizeLabel(reel);
+    const lureRange = reel ? reelLureWeightRange(reel) : null;
+    const lureEstLabel = lureRange ? `ライン強度:${fmtGRange(lureRange)}` : '';
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel, maxLenCm)}
         <div class="tackle-combo-labels">
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
-          <span class="tackle-combo-rod-len">${rod.rodLength ? escapeHtml(rod.rodLength) + 'cm' : ''}</span>
+          <span class="tackle-combo-rod-len">${escapeHtml(rodPowerLabel)}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
           ${lineLabel ? `<span class="tackle-combo-line-label">${escapeHtml(lineLabel)}</span>` : ''}
+          ${lureEstLabel ? `<span class="tackle-combo-lure-est">${escapeHtml(lureEstLabel)}</span>` : ''}
         </div>
       </div>`;
   }).join('');
