@@ -2948,6 +2948,16 @@ function lineColorStops(reel) {
   return null;
 }
 
+// ラインの種類・号数を「PE0.6号」のような短い表記にまとめる。情報が無ければnull。
+function lineTypeSizeLabel(reel) {
+  if (!reel) return null;
+  const isPe = /pe/i.test(reel.lineType || '');
+  const isNylon = /ナイロン|フロロ|エステル|nylon/i.test(reel.lineType || '');
+  const typeShort = isPe ? 'PE' : isNylon ? 'ナイロン' : (reel.lineType || '');
+  const label = [typeShort, reel.lineSize].filter(Boolean).join('');
+  return label || null;
+}
+
 // ロッド1本を、釣り上げる構えのように斜めに傾けたイラストとして描く。横に並べた
 // ときの占有幅を抑えるため、グリップ（支点）を中心に一定角度だけ回転させる。
 // カード間で同じcm→px換算（maxLenCmが最大表示幅になる比率）を使うことで、
@@ -3090,12 +3100,13 @@ function renderTackleCombo(rods, reels) {
     const loadInfo = sinkerG
       ? `錘負荷${fmtG(sinkerG.min / GRAM_PER_GO)}-${fmtG(sinkerG.max / GRAM_PER_GO)}号(${fmtG(sinkerG.min)}-${fmtG(sinkerG.max)}g)`
       : '錘負荷: 不明';
+    const lineLabel = lineTypeSizeLabel(reel);
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel, maxLenCm)}
         <div class="tackle-combo-labels">
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
-          <span class="tackle-combo-rod-len">${rod.rodLength ? escapeHtml(rod.rodLength) + 'cm' : ''}</span>
+          <span class="tackle-combo-rod-len">${rod.rodLength ? escapeHtml(rod.rodLength) + 'cm' : ''}${lineLabel ? ' / ' + escapeHtml(lineLabel) : ''}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
         </div>
       </div>`;
