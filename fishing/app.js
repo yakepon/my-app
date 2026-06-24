@@ -2499,7 +2499,7 @@ function lureRowHtml(g) {
   const compatHtml = hasWeight ? `
     <div class="lure-compat">
       <div class="lure-compat-row"><span class="lure-compat-label">対応ロッド</span><span class="lure-compat-value">${compatibleRodNames(weight).map(escapeHtml).join('、') || 'なし'}</span></div>
-      <div class="lure-compat-row"><span class="lure-compat-label">対応リール</span><span class="lure-compat-value">${compatibleReelNames(weight).map(escapeHtml).join('、') || 'なし'}</span></div>
+      <div class="lure-compat-row"><span class="lure-compat-label">対応リール/ライン</span><span class="lure-compat-value">${compatibleReelNames(weight).map(escapeHtml).join('、') || 'なし'}</span></div>
     </div>` : `<p class="lure-compat-hint">自重を入力すると対応タックルが分かります。</p>`;
 
   return `
