@@ -1214,10 +1214,9 @@ form > textarea { margin-bottom: 0.6rem; }
 .lure-compat { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; padding-top: 0.1rem; }
 .lure-compat-row { font-size: 0.72rem; line-height: 1.4; }
 .lure-compat-label {
-  display: inline-block;
+  display: block;
   font-weight: 700;
   color: var(--ink);
-  margin-right: 0.4rem;
 }
 .lure-compat-value { color: var(--ink-muted); }
 .lure-compat-hint { font-size: 0.7rem; color: var(--ink-faint); }
