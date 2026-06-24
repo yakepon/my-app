@@ -146,6 +146,8 @@ const els = {
   lureCountBadge: document.getElementById('lureCountBadge'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
+  tackleCombo: document.getElementById('tackleCombo'),
+  pairedReelSelect: document.getElementById('pairedReelSelect'),
   gearTabRod:   document.getElementById('gearTabRod'),
   gearTabReel:  document.getElementById('gearTabReel'),
   gearTabLure:  document.getElementById('gearTabLure'),
@@ -287,16 +289,19 @@ function buildSampleData() {
       { species: 'ブリ',     price: 1200 },
       { species: 'タチウオ', price: 350 },
     ],
-    gears: [
-      { id: uid(), type: 'rod',  name: '月下美人 AGS 76L-SMT', style: 'アジング', maker: 'ダイワ', memo: 'お気に入りの軽量ロッド', photo: '', photoId: '', rodLength: '231', selfWeight: '68', sinkerWeight: '0.5-7g',  purchaseDate: '2024-03-10', purchasePrice: '28000' },
-      { id: uid(), type: 'rod',  name: 'セフィア BB S706ML',   style: 'エギング', maker: 'シマノ', memo: '',           photo: '', photoId: '', rodLength: '213', selfWeight: '102', sinkerWeight: '3-21g',  purchaseDate: '2023-09-02', purchasePrice: '19800' },
-      { id: uid(), type: 'reel', name: '22ソルティガ 4000',    style: '4000', maker: 'ダイワ', memo: '',               photo: '', photoId: '', selfWeight: '600', purchaseDate: '2023-05-20', purchasePrice: '78000',
-        reelType: 'スピニング', retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
-      { id: uid(), type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'C2000', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
-        reelType: 'スピニング', retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
-      { id: uid(), type: 'lure', name: 'アジアダー',     style: 'ワーム',     maker: 'アジング職人', memo: 'アジング定番',  photo: '', photoId: '', selfWeight: '1.5', purchaseDate: '2025-11-02', purchasePrice: '550',  color: 'グロー' },
-      { id: uid(), type: 'lure', name: 'コルトスナイパー', style: 'メタルジグ', maker: 'デュオ',       memo: '青物用',        photo: '', photoId: '', selfWeight: '30',  purchaseDate: '2025-06-10', purchasePrice: '1800', color: 'イワシ' },
-    ],
+    gears: (() => {
+      const reel1 = uid(), reel2 = uid();
+      return [
+        { id: uid(), type: 'rod',  name: '月下美人 AGS 76L-SMT', style: 'アジング', maker: 'ダイワ', memo: 'お気に入りの軽量ロッド', photo: '', photoId: '', rodLength: '231', selfWeight: '68', sinkerWeight: '0.5-7g',  purchaseDate: '2024-03-10', purchasePrice: '28000', pairedReelId: reel2 },
+        { id: uid(), type: 'rod',  name: 'セフィア BB S706ML',   style: 'エギング', maker: 'シマノ', memo: '',           photo: '', photoId: '', rodLength: '213', selfWeight: '102', sinkerWeight: '3-21g',  purchaseDate: '2023-09-02', purchasePrice: '19800', pairedReelId: '' },
+        { id: reel1, type: 'reel', name: '22ソルティガ 4000',    style: '4000', maker: 'ダイワ', memo: '',               photo: '', photoId: '', selfWeight: '600', purchaseDate: '2023-05-20', purchasePrice: '78000',
+          reelType: 'スピニング', retrieveLength: '94', gearRatio: '5.7:1', nylonCapacity: '16lb-300m', peCapacity: '3号-400m', maxDrag: '13', lineType: 'PEライン', lineSize: '3号', lastLineChangeDate: '2026-04-01' },
+        { id: reel2, type: 'reel', name: '21ヴァンフォード C2000SSPG', style: 'C2000', maker: 'シマノ', memo: '', photo: '', photoId: '', selfWeight: '180', purchaseDate: '2022-11-03', purchasePrice: '24000',
+          reelType: 'スピニング', retrieveLength: '68', gearRatio: '5.3:1', nylonCapacity: '3lb-150m', peCapacity: '0.6号-200m', maxDrag: '4', lineType: 'PEライン', lineSize: '0.6号', lastLineChangeDate: '2026-02-15' },
+        { id: uid(), type: 'lure', name: 'アジアダー',     style: 'ワーム',     maker: 'アジング職人', memo: 'アジング定番',  photo: '', photoId: '', selfWeight: '1.5', purchaseDate: '2025-11-02', purchasePrice: '550',  color: 'グロー' },
+        { id: uid(), type: 'lure', name: 'コルトスナイパー', style: 'メタルジグ', maker: 'デュオ',       memo: '青物用',        photo: '', photoId: '', selfWeight: '30',  purchaseDate: '2025-06-10', purchasePrice: '1800', color: 'イワシ' },
+      ];
+    })(),
   };
 }
 
@@ -306,7 +311,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'color'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'color', 'pairedReelId'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -2259,6 +2264,16 @@ function applyStyleFieldForType(type) {
   }
 }
 
+// ロッド登録フォームの「装着しているリール」選択肢を、現在登録済みのリール一覧から作る。
+function populatePairedReelSelect(selectedId) {
+  const reels = currentGears.filter(g => g.type === 'reel');
+  els.pairedReelSelect.innerHTML = [
+    '<option value="">未装着</option>',
+    ...reels.map(r => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name || '-')}</option>`),
+  ].join('');
+  els.pairedReelSelect.value = reels.some(r => r.id === selectedId) ? selectedId : '';
+}
+
 function resetGearForm(type) {
   els.gearForm.reset();
   els.gearForm.elements['id'].value   = '';
@@ -2270,6 +2285,7 @@ function resetGearForm(type) {
   els.lureOnlyFields.hidden = type !== 'lure';
   applyStyleFieldForType(type);
   resetGearPhotoState(type);
+  if (type === 'rod') populatePairedReelSelect('');
 }
 
 function openGearForm(type) {
@@ -2297,6 +2313,7 @@ function enterGearEditMode(g) {
   els.gearForm.elements['purchasePrice'].value  = g.purchasePrice  || '';
   els.gearForm.elements['rodLength'].value      = g.rodLength      || '';
   els.gearForm.elements['sinkerWeight'].value   = g.sinkerWeight   || '';
+  if (g.type === 'rod') populatePairedReelSelect(g.pairedReelId);
   els.gearForm.elements['reelType'].value           = g.reelType           || '';
   els.gearForm.elements['retrieveLength'].value     = g.retrieveLength     || '';
   els.gearForm.elements['gearRatio'].value          = g.gearRatio          || '';
@@ -2347,6 +2364,7 @@ async function onGearSubmit(e) {
     purchasePrice: fd.get('purchasePrice'),
     rodLength:     type === 'rod' ? fd.get('rodLength')     : '',
     sinkerWeight:  type === 'rod' ? fd.get('sinkerWeight')  : '',
+    pairedReelId:  type === 'rod' ? fd.get('pairedReelId')  : '',
     reelType:           type === 'reel' ? fd.get('reelType')           : '',
     retrieveLength:     type === 'reel' ? fd.get('retrieveLength')     : '',
     gearRatio:          type === 'reel' ? fd.get('gearRatio')          : '',
@@ -2558,6 +2576,7 @@ function renderGearLists() {
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
   renderLureWeightChart(lures);
+  renderTackleCombo(rods, reels);
 }
 
 // 自重(g)を10g単位のbinに分け、bin毎のルアー数を棒グラフで表示する。
@@ -2920,6 +2939,89 @@ function renderReelSizeChart(reels) {
   els.reelSizeChart.innerHTML = rows;
 }
 
+// ロッド1本を、グリップ脇にリールを吊り下げたイラストとして描く。実寸の長さ比較は
+// 下の「全長比較」が担うため、ここでは全ロッドを同じ表示幅に正規化し、組み合わせの
+// 一覧性を優先する。リール未装着の場合は破線の空リールで表す。
+function tackleComboSvg(rod, reel) {
+  const H = 72, cy = 30;
+  const lenCm = Number(rod.rodLength) || 200;
+  const TARGET_W = 220;
+  const unitPerCm = TARGET_W / lenCm;
+  const power = sinkerWeightToGo(rod.sinkerWeight);
+  const powerRatio = power != null ? Math.min(1, power / 30) : 0.45;
+  const buttHalf = 7 + powerRatio * 9;
+  const tipHalf  = 1.4 + powerRatio * 2;
+  const barUnits = lenCm * unitPerCm;
+  const gripUnits = Math.min(22, lenCm * 0.16) * unitPerCm;
+  const ctrlX = gripUnits + (barUnits - gripUnits) * 0.55;
+  const gradId = `comboGrad-${rod.id}`;
+
+  const nGuides = 3;
+  const guides = Array.from({ length: nGuides }, (_, i) => {
+    const f = Math.pow((i + 1) / nGuides, 1.5);
+    const x = gripUnits + f * (barUnits - gripUnits);
+    const half = buttHalf + (tipHalf - buttHalf) * f;
+    return `<ellipse class="rod-blank-guide" cx="${x.toFixed(1)}" cy="${cy}" rx="1.4" ry="${(half + 2.6).toFixed(1)}" />`;
+  }).join('');
+
+  const reelCx = gripUnits + 12;
+  const reelCy = cy + buttHalf + 11;
+  const reelR  = 13;
+  const reelMount = reel
+    ? `
+      <line x1="${reelCx.toFixed(1)}" y1="${(cy + buttHalf - 1).toFixed(1)}" x2="${reelCx.toFixed(1)}" y2="${(reelCy - reelR + 3).toFixed(1)}" class="tackle-combo-reel-foot" />
+      <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="${reelR}" class="tackle-combo-reel-body" />
+      <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="${(reelR - 4).toFixed(1)}" class="tackle-combo-reel-inner" />
+      <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="2" class="tackle-combo-reel-axle" />`
+    : `
+      <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="${reelR}" class="tackle-combo-reel-empty" />
+      <line x1="${(reelCx - 5).toFixed(1)}" y1="${reelCy.toFixed(1)}" x2="${(reelCx + 5).toFixed(1)}" y2="${reelCy.toFixed(1)}" class="tackle-combo-reel-empty-mark" />`;
+
+  return `
+    <svg class="tackle-combo-svg" viewBox="0 0 ${(barUnits + 16).toFixed(1)} ${H}">
+      <defs>
+        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#6C3FE0"/>
+          <stop offset="80%" stop-color="#ff2d95"/>
+          <stop offset="100%" stop-color="#ff2d95"/>
+        </linearGradient>
+      </defs>
+      <rect class="rod-blank-grip" x="0" y="${(cy - buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
+      <path class="rod-blank-body" fill="url(#${gradId})" d="M ${gripUnits.toFixed(1)} ${(cy - buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(cy - buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(cy - tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${(cy + tipHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(cy + buttHalf).toFixed(1)} ${gripUnits.toFixed(1)} ${(cy + buttHalf).toFixed(1)} Z"/>
+      ${guides}
+      <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="${cy}" r="3"/>
+      ${reelMount}
+    </svg>`;
+}
+
+// ロッド×リールの組み合わせを、グリップにリールを吊り下げたイラストのカードで一覧表示する。
+// カード内のセレクトから直接、装着するリールを変更できる。
+function renderTackleCombo(rods, reels) {
+  if (rods.length === 0) {
+    els.tackleCombo.innerHTML = '<p class="empty">ロッドを登録すると、組み合わせを設定できます。</p>';
+    return;
+  }
+
+  const reelById = new Map(reels.map(r => [r.id, r]));
+  const cards = rods.map(rod => {
+    const reel = reelById.get(rod.pairedReelId) || null;
+    const options = [
+      `<option value="">未装着</option>`,
+      ...reels.map(r => `<option value="${escapeHtml(r.id)}"${r.id === rod.pairedReelId ? ' selected' : ''}>${escapeHtml(r.name || '-')}</option>`),
+    ].join('');
+    return `
+      <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}">
+        ${tackleComboSvg(rod, reel)}
+        <div class="tackle-combo-labels">
+          <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
+          <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
+        </div>
+      </div>`;
+  }).join('');
+
+  els.tackleCombo.innerHTML = `<div class="tackle-combo-row">${cards}</div>`;
+}
+
 // 1本のロッドを、グリップ・テーパーするブランク・ガイドリング・トップガイドを持つ
 // SVGシルエットとして描く。ロッドの長さに比例した実寸スケールで描くため、グリップや
 // ガイドの太さ・間隔は行ごとに変わらず一貫した見た目になる。
@@ -3040,6 +3142,17 @@ async function handleGearListClick(e) {
     for (const p of gearPhotoSlots(g)) await deleteDrivePhoto(p.id);
     await loadAll();
   }
+}
+
+// タックル組み合わせイラストのセレクトから、ロッドに装着するリールを直接変更する。
+async function onTackleComboReelChange(e) {
+  const select = e.target.closest('.tackle-combo-reel-select');
+  if (!select) return;
+  const rod = currentGears.find(g => g.id === select.dataset.rodId);
+  if (!rod) return;
+  select.disabled = true;
+  await sendAction({ ...rod, action: 'updateGear', pairedReelId: select.value });
+  await loadAll();
 }
 
 // ── Catch edit modal ──────────────────────────────────────────
@@ -3605,6 +3718,7 @@ function init() {
   els.rodList.addEventListener('click', handleGearListClick);
   els.reelList.addEventListener('click', handleGearListClick);
   els.lureList.addEventListener('click', handleGearListClick);
+  els.tackleCombo.addEventListener('change', onTackleComboReelChange);
   els.catchEditForm.addEventListener('submit', onCatchEditSubmit);
   els.catchModalClose.addEventListener('click', closeCatchModal);
   els.modalBackdrop.addEventListener('click', closeCatchModal);

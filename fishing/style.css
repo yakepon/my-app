@@ -1309,6 +1309,56 @@ form > textarea { margin-bottom: 0.6rem; }
 .reel-spool-flange { fill: none; stroke: var(--ink-faint); stroke-width: 1.2; opacity: 0.55; }
 .reel-spool-inner-rim { fill: none; stroke: var(--border); stroke-width: 1; opacity: 0.8; }
 
+/* ── Tackle combo (ロッド×リール組み合わせイラスト) ─────────────── */
+.tackle-combo-row {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+}
+.tackle-combo-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 13rem;
+  padding: 0.9rem 0.8rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tackle-combo-card-empty { border-style: dashed; }
+.tackle-combo-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tackle-combo-reel-foot { stroke: var(--ink-muted); stroke-width: 3; }
+.tackle-combo-reel-body { fill: var(--surface); stroke: var(--accent-2); stroke-width: 2; }
+.tackle-combo-reel-inner { fill: none; stroke: var(--border); stroke-width: 1; }
+.tackle-combo-reel-axle { fill: var(--accent); stroke: none; }
+.tackle-combo-reel-empty { fill: var(--surface); stroke: var(--ink-faint); stroke-width: 1.6; stroke-dasharray: 3 2; }
+.tackle-combo-reel-empty-mark { stroke: var(--ink-faint); stroke-width: 1.6; stroke-linecap: round; }
+.tackle-combo-labels { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; width: 100%; }
+.tackle-combo-rod-name {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.tackle-combo-reel-select {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  background: var(--surface);
+  max-width: 100%;
+}
+
 .reel-line-age {
   display: flex;
   flex-direction: column;
