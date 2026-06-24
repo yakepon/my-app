@@ -2971,11 +2971,11 @@ function tackleComboSvg(rod, reel, maxLenCm) {
   const TARGET_MAX_W = 140;
   const ANGLE = -42;
   const ORIGIN_X = 42, ORIGIN_Y = 112;
-  const buttHalf = 9, tipHalf = 2.2;
+  const buttHalf = 6.5, tipHalf = 1.4;
   // 竿先がしなっている様子を出すため、先端の中心線をTIP_BEND分だけブランクの
   // 「腹側」(=ラインが垂れている方向)にずらす。Q曲線のコントロール点はバット側の
   // y座標のまま固定しているため、ずれはt^2に比例して先端付近に集中する。
-  const TIP_BEND = 8;
+  const TIP_BEND = 16;
   const lenCm = Number(rod.rodLength) || 200;
   const unitPerCm = TARGET_MAX_W / (maxLenCm || lenCm);
   const barUnits = unitPerCm * lenCm;
