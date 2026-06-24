@@ -1339,6 +1339,8 @@ form > textarea { margin-bottom: 0.6rem; }
 .tackle-combo-reel-axle { fill: var(--accent); stroke: none; }
 .tackle-combo-reel-empty { fill: var(--surface); stroke: var(--ink-faint); stroke-width: 1.6; stroke-dasharray: 3 2; }
 .tackle-combo-reel-empty-mark { stroke: var(--ink-faint); stroke-width: 1.6; stroke-linecap: round; }
+.tackle-combo-line { fill: none; stroke-width: 1.6; stroke-linecap: round; }
+.tackle-combo-fish { opacity: 0.92; }
 @media (max-width: 480px) {
   .tackle-combo-row { gap: 0.5rem; }
   .tackle-combo-card { width: 6.75rem; padding: 0.6rem 0.4rem 0.5rem; gap: 0.35rem; }
@@ -1356,6 +1358,11 @@ form > textarea { margin-bottom: 0.6rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+.tackle-combo-rod-len {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--ink-muted);
 }
 .tackle-combo-reel-select {
   font-family: var(--font-body);

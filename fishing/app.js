@@ -2950,17 +2950,20 @@ function lineColorStops(reel) {
 
 // ロッド1本を、釣り上げる構えのように斜めに傾けたイラストとして描く。横に並べた
 // ときの占有幅を抑えるため、グリップ（支点）を中心に一定角度だけ回転させる。
-// 太さは全カード共通にし、代わりにブランクの色で巻かれているライン
-// （PE=紫→ピンク／ナイロン系=黄→オレンジ／不明=グレー）を示す。実寸の長さ比較は
-// 下の「全長比較」が担うため、ここでは全ロッドを同じ表示幅に正規化する。
-// リール未装着の場合は破線の空リールで表す。
-function tackleComboSvg(rod, reel) {
-  const TARGET_W = 130;
+// カード間で同じcm→px換算（maxLenCmが最大表示幅になる比率）を使うことで、
+// ロッドの全長差がそのまま見た目の長さ差として伝わるようにする。ブランクの色は
+// 巻かれているライン（PE=紫→ピンク／ナイロン系=黄→オレンジ／不明=グレー）を示す。
+// リールが装着されている場合は、穂先からそのライン色の糸を垂らし、先に魚が
+// 掛かっている様子を加えて「釣れている」イメージを表現する。
+// リール未装着の場合は破線の空リールで表し、糸・魚は描かない。
+function tackleComboSvg(rod, reel, maxLenCm) {
+  const TARGET_MAX_W = 140;
   const ANGLE = -42;
+  const ORIGIN_X = 42, ORIGIN_Y = 112;
   const buttHalf = 9, tipHalf = 2.2;
   const lenCm = Number(rod.rodLength) || 200;
-  const unitPerCm = TARGET_W / lenCm;
-  const barUnits = TARGET_W;
+  const unitPerCm = TARGET_MAX_W / (maxLenCm || lenCm);
+  const barUnits = unitPerCm * lenCm;
   const gripUnits = Math.min(22, lenCm * 0.16) * unitPerCm;
   const ctrlX = gripUnits + (barUnits - gripUnits) * 0.55;
   const gradId = `comboGrad-${rod.id}`;
@@ -2983,7 +2986,6 @@ function tackleComboSvg(rod, reel) {
   const reelLoadRange = reel ? reelLureWeightRange(reel) : null;
   const reelTitleText = reel
     ? [
-        reel.name || '-',
         reel.lineType || reel.lineSize ? `ライン: ${[reel.lineType, reel.lineSize].filter(Boolean).join(' ')}` : 'ライン情報なし',
         reelLoadRange ? `適合ルアー重量目安: ${reelLoadRange.min}-${reelLoadRange.max}g` : '',
       ].filter(Boolean).join('\n')
@@ -3013,23 +3015,47 @@ function tackleComboSvg(rod, reel) {
           <stop offset="100%" stop-color="${stops[1]}"/>
         </linearGradient>` : '';
 
+  // 穂先（ロッド先端）の絶対座標を求め、回転グループの外側にラインと魚を描く。
+  // ラインの糸自体は、回転に関わらず常に下に垂れているように見せたいため。
+  const rad = ANGLE * Math.PI / 180;
+  const tipX = ORIGIN_X + barUnits * Math.cos(rad);
+  const tipY = ORIGIN_Y + barUnits * Math.sin(rad);
+  const lineColor = stops ? stops[1] : reel ? 'var(--ink-faint)' : null;
+  let catchMarkup = '';
+  if (lineColor) {
+    const fishX = tipX + 7;
+    const fishY = tipY + 46;
+    const ctrlLX = (tipX + fishX) / 2 - 5;
+    const ctrlLY = (tipY + fishY) / 2 + 10;
+    catchMarkup = `
+      <path d="M ${tipX.toFixed(1)} ${tipY.toFixed(1)} Q ${ctrlLX.toFixed(1)} ${ctrlLY.toFixed(1)} ${fishX.toFixed(1)} ${fishY.toFixed(1)}" class="tackle-combo-line" stroke="${lineColor}" />
+      <g class="tackle-combo-fish" transform="translate(${fishX.toFixed(1)} ${fishY.toFixed(1)}) rotate(25)" fill="${lineColor}">
+        <polygon points="-11,0 -16,-5 -16,5" />
+        <ellipse cx="0" cy="0" rx="8" ry="4.5" />
+        <circle cx="4.5" cy="-1.2" r="1.1" fill="var(--surface)" />
+      </g>`;
+  }
+
   return `
-    <svg class="tackle-combo-svg" viewBox="0 0 170 150">
+    <svg class="tackle-combo-svg" viewBox="0 0 175 175">
       <defs>${gradDefs}</defs>
-      <g transform="translate(42 118) rotate(${ANGLE})">
+      <g transform="translate(${ORIGIN_X} ${ORIGIN_Y}) rotate(${ANGLE})">
         <rect class="rod-blank-grip" x="0" y="${(-buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
         <path class="tackle-combo-rod-body${bodyClass}" ${bodyFill ? `fill="${bodyFill}"` : ''} d="M ${gripUnits.toFixed(1)} ${(-buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(-buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(-tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${tipHalf.toFixed(1)} Q ${ctrlX.toFixed(1)} ${buttHalf.toFixed(1)} ${gripUnits.toFixed(1)} ${buttHalf.toFixed(1)} Z"/>
         ${guides}
         <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="0" r="3"/>
         ${reelMount}
       </g>
+      ${catchMarkup}
     </svg>`;
 }
 
 // ロッド×リールの組み合わせを、釣り上げる構えのイラストのカードで一覧表示する。
-// カード内のセレクトから直接、装着するリールを変更できる。カードにカーソルを
-// 合わせると、ロッドの錘負荷とリールの最大ドラグ力（耐えられる負荷の目安）を
-// ツールチップで表示する。
+// 全カードで同じcm→px比率（最長ロッドが基準）を使うことで、ロッドの全長差が
+// イラストの長さ差としてそのまま伝わるようにする（cm数値も併記）。
+// カード内のセレクトから直接、装着するリールを変更できる。ロッド部分にカーソルを
+// 合わせると錘負荷（g換算）を、リール部分に合わせるとライン情報と適合ルアー
+// 重量目安をツールチップで表示する。
 function renderTackleCombo(rods, reels) {
   if (rods.length === 0) {
     els.tackleCombo.innerHTML = '<p class="empty">ロッドを登録すると、組み合わせを設定できます。</p>';
@@ -3037,21 +3063,22 @@ function renderTackleCombo(rods, reels) {
   }
 
   const reelById = new Map(reels.map(r => [r.id, r]));
+  const maxLenCm = Math.max(...rods.map(r => Number(r.rodLength) || 200));
   const cards = rods.map(rod => {
     const reel = reelById.get(rod.pairedReelId) || null;
     const options = [
       `<option value="">未装着</option>`,
       ...reels.map(r => `<option value="${escapeHtml(r.id)}"${r.id === rod.pairedReelId ? ' selected' : ''}>${escapeHtml(r.name || '-')}</option>`),
     ].join('');
-    const loadInfo = [
-      `錘負荷: ${rod.sinkerWeight || '不明'}`,
-      reel ? `最大ドラグ力: ${reel.maxDrag ? reel.maxDrag + 'kg' : '不明'}` : 'リール未装着',
-    ].join('\n');
+    const sinkerG = sinkerWeightRangeGrams(rod.sinkerWeight);
+    const fmtG = n => (Number.isInteger(n) ? n : n.toFixed(1));
+    const loadInfo = sinkerG ? `錘負荷: ${fmtG(sinkerG.min)}-${fmtG(sinkerG.max)}g` : '錘負荷: 不明';
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
-        ${tackleComboSvg(rod, reel)}
+        ${tackleComboSvg(rod, reel, maxLenCm)}
         <div class="tackle-combo-labels">
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
+          <span class="tackle-combo-rod-len">${rod.rodLength ? escapeHtml(rod.rodLength) + 'cm' : ''}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
         </div>
       </div>`;
