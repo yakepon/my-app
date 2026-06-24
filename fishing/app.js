@@ -2972,6 +2972,10 @@ function tackleComboSvg(rod, reel, maxLenCm) {
   const ANGLE = -42;
   const ORIGIN_X = 42, ORIGIN_Y = 112;
   const buttHalf = 9, tipHalf = 2.2;
+  // 竿先がしなっている様子を出すため、先端の中心線をTIP_BEND分だけブランクの
+  // 「腹側」(=ラインが垂れている方向)にずらす。Q曲線のコントロール点はバット側の
+  // y座標のまま固定しているため、ずれはt^2に比例して先端付近に集中する。
+  const TIP_BEND = 8;
   const lenCm = Number(rod.rodLength) || 200;
   const unitPerCm = TARGET_MAX_W / (maxLenCm || lenCm);
   const barUnits = unitPerCm * lenCm;
@@ -2984,7 +2988,8 @@ function tackleComboSvg(rod, reel, maxLenCm) {
     const f = Math.pow((i + 1) / nGuides, 1.5);
     const x = gripUnits + f * (barUnits - gripUnits);
     const half = buttHalf + (tipHalf - buttHalf) * f;
-    return `<ellipse class="rod-blank-guide" cx="${x.toFixed(1)}" cy="0" rx="1.4" ry="${(half + 2.6).toFixed(1)}" />`;
+    const y = TIP_BEND * f * f;
+    return `<ellipse class="rod-blank-guide" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="1.4" ry="${(half + 2.6).toFixed(1)}" />`;
   }).join('');
 
   const reelCx = gripUnits + 12;
@@ -3035,8 +3040,8 @@ function tackleComboSvg(rod, reel, maxLenCm) {
   // 穂先（ロッド先端）の絶対座標を求め、回転グループの外側にラインと魚を描く。
   // ラインの糸自体は、回転に関わらず常に下に垂れているように見せたいため。
   const rad = ANGLE * Math.PI / 180;
-  const tipX = ORIGIN_X + barUnits * Math.cos(rad);
-  const tipY = ORIGIN_Y + barUnits * Math.sin(rad);
+  const tipX = ORIGIN_X + barUnits * Math.cos(rad) - TIP_BEND * Math.sin(rad);
+  const tipY = ORIGIN_Y + barUnits * Math.sin(rad) + TIP_BEND * Math.cos(rad);
   const lineColor = stops ? stops[1] : reel ? 'var(--ink-faint)' : null;
   let catchMarkup = '';
   if (lineColor) {
@@ -3058,9 +3063,9 @@ function tackleComboSvg(rod, reel, maxLenCm) {
       <defs>${gradDefs}</defs>
       <g transform="translate(${ORIGIN_X} ${ORIGIN_Y}) rotate(${ANGLE})">
         <rect class="rod-blank-grip" x="0" y="${(-buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
-        <path class="tackle-combo-rod-body${bodyClass}" ${bodyFill ? `fill="${bodyFill}"` : ''} d="M ${gripUnits.toFixed(1)} ${(-buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(-buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(-tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${tipHalf.toFixed(1)} Q ${ctrlX.toFixed(1)} ${buttHalf.toFixed(1)} ${gripUnits.toFixed(1)} ${buttHalf.toFixed(1)} Z"/>
+        <path class="tackle-combo-rod-body${bodyClass}" ${bodyFill ? `fill="${bodyFill}"` : ''} d="M ${gripUnits.toFixed(1)} ${(-buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(-buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(TIP_BEND - tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${(TIP_BEND + tipHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${buttHalf.toFixed(1)} ${gripUnits.toFixed(1)} ${buttHalf.toFixed(1)} Z"/>
         ${guides}
-        <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="0" r="3"/>
+        <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="${TIP_BEND.toFixed(1)}" r="3"/>
         ${reelMount}
       </g>
       ${catchMarkup}
@@ -3106,8 +3111,9 @@ function renderTackleCombo(rods, reels) {
         ${tackleComboSvg(rod, reel, maxLenCm)}
         <div class="tackle-combo-labels">
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
-          <span class="tackle-combo-rod-len">${rod.rodLength ? escapeHtml(rod.rodLength) + 'cm' : ''}${lineLabel ? ' / ' + escapeHtml(lineLabel) : ''}</span>
+          <span class="tackle-combo-rod-len">${rod.rodLength ? escapeHtml(rod.rodLength) + 'cm' : ''}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
+          ${lineLabel ? `<span class="tackle-combo-line-label">${escapeHtml(lineLabel)}</span>` : ''}
         </div>
       </div>`;
   }).join('');
