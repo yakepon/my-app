@@ -2939,19 +2939,28 @@ function renderReelSizeChart(reels) {
   els.reelSizeChart.innerHTML = rows;
 }
 
-// ロッド1本を、グリップ脇にリールを吊り下げたイラストとして描く。実寸の長さ比較は
-// 下の「全長比較」が担うため、ここでは全ロッドを同じ表示幅に正規化し、組み合わせの
-// 一覧性を優先する。リール未装着の場合は破線の空リールで表す。
+// リールに巻かれているラインの種類から、リールスプール比較と同じ配色
+// （PE=紫→ピンク、ナイロン系=黄→オレンジ）を返す。ライン情報が無ければnull。
+function lineColorStops(reel) {
+  if (!reel || !reel.lineType) return null;
+  if (/pe/i.test(reel.lineType)) return ['#6C3FE0', '#ff2d95'];
+  if (/ナイロン|フロロ|エステル|nylon/i.test(reel.lineType)) return ['#fff066', '#ffb300'];
+  return null;
+}
+
+// ロッド1本を、釣り上げる構えのように斜めに傾けたイラストとして描く。横に並べた
+// ときの占有幅を抑えるため、グリップ（支点）を中心に一定角度だけ回転させる。
+// 太さは全カード共通にし、代わりにブランクの色で巻かれているライン
+// （PE=紫→ピンク／ナイロン系=黄→オレンジ／不明=グレー）を示す。実寸の長さ比較は
+// 下の「全長比較」が担うため、ここでは全ロッドを同じ表示幅に正規化する。
+// リール未装着の場合は破線の空リールで表す。
 function tackleComboSvg(rod, reel) {
-  const H = 72, cy = 30;
+  const TARGET_W = 130;
+  const ANGLE = -42;
+  const buttHalf = 9, tipHalf = 2.2;
   const lenCm = Number(rod.rodLength) || 200;
-  const TARGET_W = 220;
   const unitPerCm = TARGET_W / lenCm;
-  const power = sinkerWeightToGo(rod.sinkerWeight);
-  const powerRatio = power != null ? Math.min(1, power / 30) : 0.45;
-  const buttHalf = 7 + powerRatio * 9;
-  const tipHalf  = 1.4 + powerRatio * 2;
-  const barUnits = lenCm * unitPerCm;
+  const barUnits = TARGET_W;
   const gripUnits = Math.min(22, lenCm * 0.16) * unitPerCm;
   const ctrlX = gripUnits + (barUnits - gripUnits) * 0.55;
   const gradId = `comboGrad-${rod.id}`;
@@ -2961,41 +2970,66 @@ function tackleComboSvg(rod, reel) {
     const f = Math.pow((i + 1) / nGuides, 1.5);
     const x = gripUnits + f * (barUnits - gripUnits);
     const half = buttHalf + (tipHalf - buttHalf) * f;
-    return `<ellipse class="rod-blank-guide" cx="${x.toFixed(1)}" cy="${cy}" rx="1.4" ry="${(half + 2.6).toFixed(1)}" />`;
+    return `<ellipse class="rod-blank-guide" cx="${x.toFixed(1)}" cy="0" rx="1.4" ry="${(half + 2.6).toFixed(1)}" />`;
   }).join('');
 
   const reelCx = gripUnits + 12;
-  const reelCy = cy + buttHalf + 11;
+  const reelCy = buttHalf + 11;
   const reelR  = 13;
+  // リール部分にカーソルを合わせたときだけ、そのリールに巻かれているラインの
+  // 号数・タイプから推定した適合ルアー重量（=ラインが耐えられる負荷の目安）を
+  // ネイティブのSVGツールチップとして表示する。カード全体のtitle（ロッド側の
+  // 錘負荷・最大ドラグ力）より内側の要素なので、ホバー中はこちらが優先される。
+  const reelLoadRange = reel ? reelLureWeightRange(reel) : null;
+  const reelTitleText = reel
+    ? [
+        reel.name || '-',
+        reel.lineType || reel.lineSize ? `ライン: ${[reel.lineType, reel.lineSize].filter(Boolean).join(' ')}` : 'ライン情報なし',
+        reelLoadRange ? `適合ルアー重量目安: ${reelLoadRange.min}-${reelLoadRange.max}g` : '',
+      ].filter(Boolean).join('\n')
+    : 'リール未装着';
+  const reelTitle = `<title>${escapeHtml(reelTitleText)}</title>`;
   const reelMount = reel
     ? `
-      <line x1="${reelCx.toFixed(1)}" y1="${(cy + buttHalf - 1).toFixed(1)}" x2="${reelCx.toFixed(1)}" y2="${(reelCy - reelR + 3).toFixed(1)}" class="tackle-combo-reel-foot" />
+      <g>${reelTitle}
+      <line x1="${reelCx.toFixed(1)}" y1="${(buttHalf - 1).toFixed(1)}" x2="${reelCx.toFixed(1)}" y2="${(reelCy - reelR + 3).toFixed(1)}" class="tackle-combo-reel-foot" />
       <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="${reelR}" class="tackle-combo-reel-body" />
       <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="${(reelR - 4).toFixed(1)}" class="tackle-combo-reel-inner" />
-      <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="2" class="tackle-combo-reel-axle" />`
+      <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="2" class="tackle-combo-reel-axle" />
+      </g>`
     : `
+      <g>${reelTitle}
       <circle cx="${reelCx.toFixed(1)}" cy="${reelCy.toFixed(1)}" r="${reelR}" class="tackle-combo-reel-empty" />
-      <line x1="${(reelCx - 5).toFixed(1)}" y1="${reelCy.toFixed(1)}" x2="${(reelCx + 5).toFixed(1)}" y2="${reelCy.toFixed(1)}" class="tackle-combo-reel-empty-mark" />`;
+      <line x1="${(reelCx - 5).toFixed(1)}" y1="${reelCy.toFixed(1)}" x2="${(reelCx + 5).toFixed(1)}" y2="${reelCy.toFixed(1)}" class="tackle-combo-reel-empty-mark" />
+      </g>`;
+
+  const stops = lineColorStops(reel);
+  const bodyFill  = stops ? `url(#${gradId})` : '';
+  const bodyClass = stops ? '' : reel ? ' tackle-combo-rod-body-unknown' : ' tackle-combo-rod-body-none';
+  const gradDefs = stops ? `
+        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="${stops[0]}"/>
+          <stop offset="80%" stop-color="${stops[1]}"/>
+          <stop offset="100%" stop-color="${stops[1]}"/>
+        </linearGradient>` : '';
 
   return `
-    <svg class="tackle-combo-svg" viewBox="0 0 ${(barUnits + 16).toFixed(1)} ${H}">
-      <defs>
-        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#6C3FE0"/>
-          <stop offset="80%" stop-color="#ff2d95"/>
-          <stop offset="100%" stop-color="#ff2d95"/>
-        </linearGradient>
-      </defs>
-      <rect class="rod-blank-grip" x="0" y="${(cy - buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
-      <path class="rod-blank-body" fill="url(#${gradId})" d="M ${gripUnits.toFixed(1)} ${(cy - buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(cy - buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(cy - tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${(cy + tipHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(cy + buttHalf).toFixed(1)} ${gripUnits.toFixed(1)} ${(cy + buttHalf).toFixed(1)} Z"/>
-      ${guides}
-      <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="${cy}" r="3"/>
-      ${reelMount}
+    <svg class="tackle-combo-svg" viewBox="0 0 170 150">
+      <defs>${gradDefs}</defs>
+      <g transform="translate(42 118) rotate(${ANGLE})">
+        <rect class="rod-blank-grip" x="0" y="${(-buttHalf - 4).toFixed(1)}" width="${gripUnits.toFixed(1)}" height="${(buttHalf * 2 + 8).toFixed(1)}" rx="4"/>
+        <path class="tackle-combo-rod-body${bodyClass}" ${bodyFill ? `fill="${bodyFill}"` : ''} d="M ${gripUnits.toFixed(1)} ${(-buttHalf).toFixed(1)} Q ${ctrlX.toFixed(1)} ${(-buttHalf).toFixed(1)} ${barUnits.toFixed(1)} ${(-tipHalf).toFixed(1)} L ${barUnits.toFixed(1)} ${tipHalf.toFixed(1)} Q ${ctrlX.toFixed(1)} ${buttHalf.toFixed(1)} ${gripUnits.toFixed(1)} ${buttHalf.toFixed(1)} Z"/>
+        ${guides}
+        <circle class="rod-blank-tiptop" cx="${barUnits.toFixed(1)}" cy="0" r="3"/>
+        ${reelMount}
+      </g>
     </svg>`;
 }
 
-// ロッド×リールの組み合わせを、グリップにリールを吊り下げたイラストのカードで一覧表示する。
-// カード内のセレクトから直接、装着するリールを変更できる。
+// ロッド×リールの組み合わせを、釣り上げる構えのイラストのカードで一覧表示する。
+// カード内のセレクトから直接、装着するリールを変更できる。カードにカーソルを
+// 合わせると、ロッドの錘負荷とリールの最大ドラグ力（耐えられる負荷の目安）を
+// ツールチップで表示する。
 function renderTackleCombo(rods, reels) {
   if (rods.length === 0) {
     els.tackleCombo.innerHTML = '<p class="empty">ロッドを登録すると、組み合わせを設定できます。</p>';
@@ -3009,8 +3043,12 @@ function renderTackleCombo(rods, reels) {
       `<option value="">未装着</option>`,
       ...reels.map(r => `<option value="${escapeHtml(r.id)}"${r.id === rod.pairedReelId ? ' selected' : ''}>${escapeHtml(r.name || '-')}</option>`),
     ].join('');
+    const loadInfo = [
+      `錘負荷: ${rod.sinkerWeight || '不明'}`,
+      reel ? `最大ドラグ力: ${reel.maxDrag ? reel.maxDrag + 'kg' : '不明'}` : 'リール未装着',
+    ].join('\n');
     return `
-      <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}">
+      <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel)}
         <div class="tackle-combo-labels">
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
