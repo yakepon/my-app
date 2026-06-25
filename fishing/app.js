@@ -2269,13 +2269,19 @@ function applyStyleFieldForType(type) {
 }
 
 // ロッド登録フォームの「装着しているリール」選択肢を、現在登録済みのリール一覧から作る。
-function populatePairedReelSelect(selectedId) {
+// 既に他のロッドに装着済みのリールは、二重装着を防ぐため選択肢から外す
+// （編集中のロッド自身が現在装着しているリールは、選択肢に残す）。
+function populatePairedReelSelect(selectedId, rodId = null) {
   const reels = currentGears.filter(g => g.type === 'reel');
+  const usedElsewhere = new Set(
+    currentGears.filter(g => g.type === 'rod' && g.id !== rodId && g.pairedReelId).map(g => g.pairedReelId)
+  );
+  const selectableReels = reels.filter(r => r.id === selectedId || !usedElsewhere.has(r.id));
   els.pairedReelSelect.innerHTML = [
     '<option value="">未装着</option>',
-    ...reels.map(r => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name || '-')}</option>`),
+    ...selectableReels.map(r => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name || '-')}</option>`),
   ].join('');
-  els.pairedReelSelect.value = reels.some(r => r.id === selectedId) ? selectedId : '';
+  els.pairedReelSelect.value = selectableReels.some(r => r.id === selectedId) ? selectedId : '';
 }
 
 function resetGearForm(type) {
@@ -2317,7 +2323,7 @@ function enterGearEditMode(g) {
   els.gearForm.elements['purchasePrice'].value  = g.purchasePrice  || '';
   els.gearForm.elements['rodLength'].value      = g.rodLength      || '';
   els.gearForm.elements['sinkerWeight'].value   = g.sinkerWeight   || '';
-  if (g.type === 'rod') populatePairedReelSelect(g.pairedReelId);
+  if (g.type === 'rod') populatePairedReelSelect(g.pairedReelId, g.id);
   els.gearForm.elements['reelType'].value           = g.reelType           || '';
   els.gearForm.elements['retrieveLength'].value     = g.retrieveLength     || '';
   els.gearForm.elements['gearRatio'].value          = g.gearRatio          || '';
@@ -3142,6 +3148,11 @@ function renderTackleCombo(rods, reels) {
   }
 
   const reelById = new Map(reels.map(r => [r.id, r]));
+  // 既に他のロッドに装着済みのリールは、二重装着を防ぐため選択肢から外す
+  // （自分自身が現在装着しているリールは、装着解除できるよう選択肢に残す）。
+  const pairedElsewhere = rod => new Set(
+    rods.filter(r => r.id !== rod.id && r.pairedReelId).map(r => r.pairedReelId)
+  );
   const maxLenCm = Math.max(...rods.map(r => Number(r.rodLength) || 200));
   // リールを装着しているロッドを左側に、その中でも全長が長いロッドほど左に来るよう並べる。
   const sortedRods = [...rods].sort((a, b) => {
@@ -3152,13 +3163,14 @@ function renderTackleCombo(rods, reels) {
   });
   const cards = sortedRods.map(rod => {
     const reel = reelById.get(rod.pairedReelId) || null;
+    const usedElsewhere = pairedElsewhere(rod);
+    const selectableReels = reels.filter(r => r.id === rod.pairedReelId || !usedElsewhere.has(r.id));
     const options = [
       `<option value="">未装着</option>`,
-      ...reels.map(r => `<option value="${escapeHtml(r.id)}"${r.id === rod.pairedReelId ? ' selected' : ''}>${escapeHtml(r.name || '-')}</option>`),
+      ...selectableReels.map(r => `<option value="${escapeHtml(r.id)}"${r.id === rod.pairedReelId ? ' selected' : ''}>${escapeHtml(r.name || '-')}</option>`),
     ].join('');
     const sinkerG = sinkerWeightRangeGrams(rod.sinkerWeight);
     const fmtG = n => (Number.isInteger(n) ? n : n.toFixed(1));
-    const fmtGRange = range => (range.min === range.max ? `${fmtG(range.min)}g` : `${fmtG(range.min)}-${fmtG(range.max)}g`);
     const fmtGoRange = range => {
       const minGo = fmtG(range.min / GRAM_PER_GO);
       const maxGo = fmtG(range.max / GRAM_PER_GO);
@@ -3169,8 +3181,6 @@ function renderTackleCombo(rods, reels) {
       : '錘負荷: 不明';
     const rodPowerLabel = sinkerG ? `錘負荷${fmtGoRange(sinkerG)}` : '';
     const lineLabel = lineTypeSizeLabel(reel);
-    const lureRange = reel ? reelLureWeightRange(reel) : null;
-    const lureEstLabel = lureRange ? `ライン強度:${fmtGRange(lureRange)}` : '';
     const lineCompat = reel ? rodReelLineCompatibility(rod, reel) : null;
     const compatInfo = lineCompat ? tackleCompatLabel(lineCompat) : null;
     return `
@@ -3181,7 +3191,6 @@ function renderTackleCombo(rods, reels) {
           <span class="tackle-combo-rod-len">${escapeHtml(rodPowerLabel)}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
           ${lineLabel ? `<span class="tackle-combo-line-label">${escapeHtml(lineLabel)}</span>` : ''}
-          ${lureEstLabel ? `<span class="tackle-combo-lure-est">${escapeHtml(lureEstLabel)}</span>` : ''}
           ${compatInfo ? `<span class="tackle-combo-compat ${compatInfo.cls}" title="${escapeHtml(compatInfo.title)}">${escapeHtml(compatInfo.text)}</span>` : ''}
         </div>
       </div>`;
