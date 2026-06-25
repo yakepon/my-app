@@ -117,6 +117,10 @@ const els = {
   lureLineInfoModal:    document.getElementById('lureLineInfoModal'),
   lureLineInfoClose:    document.getElementById('lureLineInfoClose'),
   lureLineInfoBackdrop: document.getElementById('lureLineInfoBackdrop'),
+  rodLineInfoBtn:      document.getElementById('rodLineInfoBtn'),
+  rodLineInfoModal:    document.getElementById('rodLineInfoModal'),
+  rodLineInfoClose:    document.getElementById('rodLineInfoClose'),
+  rodLineInfoBackdrop: document.getElementById('rodLineInfoBackdrop'),
   spotList:   document.getElementById('spotList'),
   targetList: document.getElementById('targetList'),
   demoNotice: document.getElementById('demoNotice'),
@@ -3103,10 +3107,15 @@ function renderTackleCombo(rods, reels) {
     const sinkerG = sinkerWeightRangeGrams(rod.sinkerWeight);
     const fmtG = n => (Number.isInteger(n) ? n : n.toFixed(1));
     const fmtGRange = range => (range.min === range.max ? `${fmtG(range.min)}g` : `${fmtG(range.min)}-${fmtG(range.max)}g`);
+    const fmtGoRange = range => {
+      const minGo = fmtG(range.min / GRAM_PER_GO);
+      const maxGo = fmtG(range.max / GRAM_PER_GO);
+      return range.min === range.max ? `${minGo}号` : `${minGo}号-${maxGo}号`;
+    };
     const loadInfo = sinkerG
       ? `錘負荷${fmtG(sinkerG.min / GRAM_PER_GO)}-${fmtG(sinkerG.max / GRAM_PER_GO)}号(${fmtG(sinkerG.min)}-${fmtG(sinkerG.max)}g)`
       : '錘負荷: 不明';
-    const rodPowerLabel = sinkerG ? `ロッド強度:${fmtGRange(sinkerG)}` : '';
+    const rodPowerLabel = sinkerG ? `錘負荷${fmtGoRange(sinkerG)}` : '';
     const lineLabel = lineTypeSizeLabel(reel);
     const lureRange = reel ? reelLureWeightRange(reel) : null;
     const lureEstLabel = lureRange ? `ライン強度:${fmtGRange(lureRange)}` : '';
@@ -3321,6 +3330,16 @@ function openLureLineInfoModal() {
 
 function closeLureLineInfoModal() {
   els.lureLineInfoModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function openRodLineInfoModal() {
+  els.rodLineInfoModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRodLineInfoModal() {
+  els.rodLineInfoModal.hidden = true;
   document.body.style.overflow = '';
 }
 
@@ -3832,6 +3851,9 @@ function init() {
   els.lureLineInfoBtn.addEventListener('click', openLureLineInfoModal);
   els.lureLineInfoClose.addEventListener('click', closeLureLineInfoModal);
   els.lureLineInfoBackdrop.addEventListener('click', closeLureLineInfoModal);
+  els.rodLineInfoBtn.addEventListener('click', openRodLineInfoModal);
+  els.rodLineInfoClose.addEventListener('click', closeRodLineInfoModal);
+  els.rodLineInfoBackdrop.addEventListener('click', closeRodLineInfoModal);
 
   els.catchesList.addEventListener('click', e => {
     const thumb = e.target.closest('.catch-thumb');

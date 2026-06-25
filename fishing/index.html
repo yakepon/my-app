@@ -521,7 +521,10 @@
       </div>
 
       <section class="panel tackle-combo-panel">
-        <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド×リール 装備状況</h2>
+        <div class="section-header">
+          <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド×リール 装備状況</h2>
+          <button type="button" class="icon-btn" id="rodLineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> 錘負荷・ライン早見表</button>
+        </div>
         <div id="tackleCombo" class="tackle-combo"></div>
       </section>
 
@@ -961,6 +964,38 @@
 
       <div class="form-actions">
         <button type="button" class="btn" id="lureLineInfoClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rod Line Info Modal (錘負荷 / ライン号数 早見表) -->
+  <div id="rodLineInfoModal" class="modal" hidden>
+    <div class="modal-backdrop" id="rodLineInfoBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">錘負荷・ライン号数早見表（参考情報）</h3>
+      <p class="hint">ロッドの錘負荷（扱えるオモリ・ルアーの重さ）の号数から、組み合わせるラインの号数の目安が分かります。メーカーや釣り方によって差があります。あくまで目安としてご利用ください。</p>
+
+      <table class="line-info-table">
+        <thead><tr><th>錘負荷（号）</th><th>PEライン</th><th>ナイロン / フロロライン</th></tr></thead>
+        <tbody>
+          <tr><td>0.3号</td><td>0.15号-0.3号</td><td>0.6号-0.8号</td></tr>
+          <tr><td>0.5号</td><td>0.2号-0.4号</td><td>0.8号-1号</td></tr>
+          <tr><td>1号</td><td>0.3号-0.6号</td><td>1号-1.5号</td></tr>
+          <tr><td>2号</td><td>0.6号-0.8号</td><td>1.5号-2号</td></tr>
+          <tr><td>3号</td><td>0.8号-1号</td><td>2号-2.5号</td></tr>
+          <tr><td>5号</td><td>1号-1.5号</td><td>2.5号-3号</td></tr>
+          <tr><td>8号</td><td>1.5号-2号</td><td>3号-4号</td></tr>
+          <tr><td>10号</td><td>2号-2.5号</td><td>4号-5号</td></tr>
+          <tr><td>15号</td><td>2.5号-3号</td><td>5号-6号</td></tr>
+          <tr><td>20号</td><td>3号-4号</td><td>6号-8号</td></tr>
+          <tr><td>30号</td><td>4号-5号</td><td>8号-10号</td></tr>
+          <tr><td>40号</td><td>5号-6号</td><td>10号-12号</td></tr>
+          <tr><td>50号</td><td>6号-8号</td><td>12号-14号</td></tr>
+        </tbody>
+      </table>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="rodLineInfoClose">閉じる</button>
       </div>
     </div>
   </div>
