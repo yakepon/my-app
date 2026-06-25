@@ -2805,6 +2805,58 @@ function reelLureWeightRange(reel) {
   return table.reduce((best, row) => Math.abs(row.go - goNum) < Math.abs(best.go - goNum) ? row : best, table[0]);
 }
 
+// ロッドの錘負荷(号)から推奨ライン号数(PE/ナイロン・フロロ)を引く早見表。
+// 「錘負荷・ライン号数早見表」モーダルと同じ値。
+const ROD_SINKER_LINE_TABLE = [
+  { go: 0.3, pe: [0.15, 0.3], nylon: [0.6, 0.8] },
+  { go: 0.5, pe: [0.2,  0.4], nylon: [0.8, 1] },
+  { go: 1,   pe: [0.3,  0.6], nylon: [1,   1.5] },
+  { go: 2,   pe: [0.6,  0.8], nylon: [1.5, 2] },
+  { go: 3,   pe: [0.8,  1],   nylon: [2,   2.5] },
+  { go: 5,   pe: [1,    1.5], nylon: [2.5, 3] },
+  { go: 8,   pe: [1.5,  2],   nylon: [3,   4] },
+  { go: 10,  pe: [2,    2.5], nylon: [4,   5] },
+  { go: 15,  pe: [2.5,  3],   nylon: [5,   6] },
+  { go: 20,  pe: [3,    4],   nylon: [6,   8] },
+  { go: 30,  pe: [4,    5],   nylon: [8,   10] },
+  { go: 40,  pe: [5,    6],   nylon: [10,  12] },
+  { go: 50,  pe: [6,    8],   nylon: [12,  14] },
+];
+
+// ロッドの錘負荷とリールに巻かれているラインの号数が、早見表の目安に対して
+// 適切か（細すぎる/太すぎる）を判定する。ロッドの錘負荷は上限値（太い方の
+// 数値）を代表値とする（他の錘負荷の強さ比較と同じ規則）。
+// ラインの種類(PE/ナイロン系)が判別できない、号数が読めない場合はnullを返す。
+function rodReelLineCompatibility(rod, reel) {
+  if (!reel || !reel.lineSize) return null;
+  const sinkerGo = sinkerWeightToGo(rod.sinkerWeight);
+  const lineGo = parseLeadingNumber(reel.lineSize);
+  if (sinkerGo == null || lineGo == null) return null;
+  const isPe = /pe/i.test(reel.lineType || '');
+  const isNylonFamily = /ナイロン|フロロ|エステル|nylon/i.test(reel.lineType || '');
+  if (!isPe && !isNylonFamily) return null;
+  const row = ROD_SINKER_LINE_TABLE.reduce(
+    (best, r) => Math.abs(r.go - sinkerGo) < Math.abs(best.go - sinkerGo) ? r : best,
+    ROD_SINKER_LINE_TABLE[0]
+  );
+  const [min, max] = isPe ? row.pe : row.nylon;
+  const status = lineGo < min ? 'thin' : lineGo > max ? 'thick' : 'ok';
+  return { status, min, max };
+}
+
+// rodReelLineCompatibilityの判定結果を、タックル組み合わせカードに表示する
+// バッジのテキスト・配色クラス・補足(title)に変換する。
+function tackleCompatLabel(compat) {
+  const rangeText = `${compat.min}号-${compat.max}号`;
+  if (compat.status === 'ok') {
+    return { cls: 'tackle-combo-compat-ok', text: '◎ ライン適合', title: `推奨ライン号数の目安: ${rangeText}` };
+  }
+  if (compat.status === 'thin') {
+    return { cls: 'tackle-combo-compat-warn', text: '△ ラインが細め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが細く、高負荷時に切れやすい可能性があります）` };
+  }
+  return { cls: 'tackle-combo-compat-warn', text: '△ ラインが太め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが太く、感度・遠投性が落ちる可能性があります）` };
+}
+
 // 最新ライン交換日からの経過日数（未入力なら null）。
 function daysSince(dateStr) {
   const s = normDateStr(dateStr);
@@ -3119,6 +3171,8 @@ function renderTackleCombo(rods, reels) {
     const lineLabel = lineTypeSizeLabel(reel);
     const lureRange = reel ? reelLureWeightRange(reel) : null;
     const lureEstLabel = lureRange ? `ライン強度:${fmtGRange(lureRange)}` : '';
+    const lineCompat = reel ? rodReelLineCompatibility(rod, reel) : null;
+    const compatInfo = lineCompat ? tackleCompatLabel(lineCompat) : null;
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel, maxLenCm)}
@@ -3128,6 +3182,7 @@ function renderTackleCombo(rods, reels) {
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
           ${lineLabel ? `<span class="tackle-combo-line-label">${escapeHtml(lineLabel)}</span>` : ''}
           ${lureEstLabel ? `<span class="tackle-combo-lure-est">${escapeHtml(lureEstLabel)}</span>` : ''}
+          ${compatInfo ? `<span class="tackle-combo-compat ${compatInfo.cls}" title="${escapeHtml(compatInfo.title)}">${escapeHtml(compatInfo.text)}</span>` : ''}
         </div>
       </div>`;
   }).join('');

@@ -1384,6 +1384,13 @@ form > textarea { margin-bottom: 0.6rem; }
   font-size: 0.62rem;
   color: var(--ink-faint);
 }
+.tackle-combo-compat {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+.tackle-combo-compat-ok   { color: var(--success); }
+.tackle-combo-compat-warn { color: var(--warn); }
 
 .reel-line-age {
   display: flex;
