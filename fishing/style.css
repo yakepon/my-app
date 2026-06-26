@@ -1387,7 +1387,6 @@ form > textarea { margin-bottom: 0.6rem; }
   color: var(--ink-faint);
 }
 .tackle-line-prefix {
-  font-weight: 700;
   margin-right: 0.1em;
 }
 .tackle-combo-compat {
