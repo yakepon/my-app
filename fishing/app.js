@@ -2472,13 +2472,17 @@ function gearSpecHtml(g) {
 
 function gearRowHtml(g) {
   const photos = gearPhotoSlots(g);
+  const sep = `<span class="gear-sep">/</span>`;
+  const inlineParts = [
+    `<span class="gear-name">${escapeHtml(g.name || '-')}</span>`,
+    g.style ? `<span class="badge badge-outline">${escapeHtml(g.style)}</span>` : '',
+    g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : '',
+    gearSpecHtml(g),
+  ].filter(Boolean);
   return `
     <div class="gear-row">
-      <span class="gear-name">${escapeHtml(g.name || '-')}</span>
-      ${g.style ? `<span class="badge badge-outline">${escapeHtml(g.style)}</span>` : ''}
-      ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
-      ${gearSpecHtml(g)}
-      ${g.memo  ? `<span class="gear-memo">${escapeHtml(g.memo)}</span>`  : ''}
+      ${inlineParts.join(sep)}
+      ${g.memo ? `${sep}<span class="gear-memo">${escapeHtml(g.memo)}</span>` : ''}
       ${photos.length ? photos.map(p => `<img src="${escapeHtml(p.url)}" class="gear-thumb" data-gear-id="${escapeHtml(g.id)}" data-photo-field="${p.field}" alt="${escapeHtml(g.name || '')}">`).join('') : ''}
       <div class="gear-actions">
         <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
