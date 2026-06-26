@@ -3035,6 +3035,7 @@ function renderReelSizeChart(reels) {
       <div class="reel-compare-row">
         <span class="reel-compare-info">
           <span class="reel-compare-name">${escapeHtml(g.name || '-')}</span>
+          ${g.reelType ? `<span class="reel-compare-type">${escapeHtml(g.reelType)}</span>` : ''}
           <span class="reel-compare-size">${escapeHtml(g.style)}</span>
           ${g.retrieveLength ? `<span class="reel-compare-spec">巻取${escapeHtml(g.retrieveLength)}cm</span>` : ''}
           ${g.gearRatio      ? `<span class="reel-compare-spec">ギア比${escapeHtml(g.gearRatio)}</span>`      : ''}

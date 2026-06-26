@@ -1298,6 +1298,7 @@ form > textarea { margin-bottom: 0.6rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.reel-compare-type { align-self: flex-start; font-family: var(--font-body); font-size: 0.68rem; font-weight: 700; color: var(--accent-2); border: 1.2px solid currentColor; border-radius: 3px; padding: 0 0.35em; line-height: 1.5; }
 .reel-compare-size { font-family: var(--font-body); font-size: 0.72rem; color: var(--ink-muted); }
 .reel-compare-spec { font-family: var(--font-body); font-size: 0.68rem; color: var(--ink-faint); }
 .reel-spool-svg { display: block; flex-shrink: 0; justify-self: center; }
