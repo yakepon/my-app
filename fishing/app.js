@@ -3259,7 +3259,7 @@ function renderTackleCombo(rods, reels) {
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
           <span class="tackle-combo-rod-len">${escapeHtml(rodPowerLabel)}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
-          ${lineLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">ラ:</span>${escapeHtml(lineLabel)}</span>` : ''}
+          ${lineLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">ライン:</span>${escapeHtml(lineLabel)}</span>` : ''}
           ${compatInfo ? `<span class="tackle-combo-compat ${compatInfo.cls}" title="${escapeHtml(compatInfo.title)}">${escapeHtml(compatInfo.text)}</span>` : ''}
           ${leaderLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">リ:</span>${escapeHtml(leaderLabel)}</span>` : ''}
           ${leaderCompatInfo ? `<span class="tackle-combo-compat ${leaderCompatInfo.cls}" title="${escapeHtml(leaderCompatInfo.title)}">${escapeHtml(leaderCompatInfo.text)}</span>` : ''}
