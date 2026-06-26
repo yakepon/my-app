@@ -3252,7 +3252,7 @@ function renderTackleCombo(rods, reels) {
     const compatInfo = lineCompat ? tackleCompatLabel(lineCompat) : null;
     const leaderCompat = reel ? rodLeaderCompatibility(rod, reel) : null;
     const leaderCompatInfo = leaderCompat ? leaderCompatLabel(leaderCompat) : null;
-    const leaderLabel = reel && reel.leaderSize ? [reel.leaderType, reel.leaderSize, reel.leaderLength].filter(Boolean).join(' ') : '';
+    const leaderLabel = reel && reel.leaderSize ? [reel.leaderType, reel.leaderSize].filter(Boolean).join(' ') : '';
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel, maxLenCm)}
@@ -3260,9 +3260,9 @@ function renderTackleCombo(rods, reels) {
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
           <span class="tackle-combo-rod-len">${escapeHtml(rodPowerLabel)}</span>
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
-          ${lineLabel ? `<span class="tackle-combo-line-label">${escapeHtml(lineLabel)}</span>` : ''}
+          ${lineLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">ラ:</span>${escapeHtml(lineLabel)}</span>` : ''}
           ${compatInfo ? `<span class="tackle-combo-compat ${compatInfo.cls}" title="${escapeHtml(compatInfo.title)}">${escapeHtml(compatInfo.text)}</span>` : ''}
-          ${leaderLabel ? `<span class="tackle-combo-line-label">リーダー: ${escapeHtml(leaderLabel)}</span>` : ''}
+          ${leaderLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">リ:</span>${escapeHtml(leaderLabel)}</span>` : ''}
           ${leaderCompatInfo ? `<span class="tackle-combo-compat ${leaderCompatInfo.cls}" title="${escapeHtml(leaderCompatInfo.title)}">${escapeHtml(leaderCompatInfo.text)}</span>` : ''}
         </div>
       </div>`;

@@ -1386,6 +1386,11 @@ form > textarea { margin-bottom: 0.6rem; }
   font-size: 0.68rem;
   color: var(--ink-faint);
 }
+.tackle-line-prefix {
+  font-weight: 700;
+  color: var(--ink-muted);
+  margin-right: 0.1em;
+}
 .tackle-combo-compat {
   font-family: var(--font-body);
   font-size: 0.66rem;
