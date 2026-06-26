@@ -2952,7 +2952,8 @@ function renderReelSizeChart(reels) {
   const MIN_STROKE = 2, MAX_STROKE = 10;
   // SVGのキャンバスは全行で固定サイズにし、円は常にキャンバス中心に描く。
   // これにより縦に並べたときにリールサイズが違っても円の中心が揃う。
-  const DIM = 84;
+  // リーダーリング（フランジ外側）を収めるため96pxに設定。
+  const DIM = 96;
   const C = DIM / 2;
 
   const maxSize = Math.max(...withSize.map(x => x.size));
@@ -2983,8 +2984,22 @@ function renderReelSizeChart(reels) {
     }).join('');
 
     // スプールの縁（フランジ）を表す薄いリムを、ライン帯の外側にもう一周描く。
+    const flangeR = r + stroke + 1.3;
     const flange = stroke > 0
-      ? `<circle cx="${C}" cy="${C}" r="${(r + stroke + 1.3).toFixed(1)}" class="reel-spool-flange" />`
+      ? `<circle cx="${C}" cy="${C}" r="${flangeR.toFixed(1)}" class="reel-spool-flange" />`
+      : '';
+
+    // リーダーが登録されている場合、フランジ外側に破線リングを描く。
+    // フロロカーボン=水色系、ナイロン=黄色系、その他=グレーで色分けする。
+    const hasLeader = !!(g.leaderSize || g.leaderType);
+    const isLeaderFluro  = /フロロ/i.test(g.leaderType || '');
+    const isLeaderNylon  = /ナイロン/i.test(g.leaderType || '');
+    const leaderColor    = isLeaderFluro ? '#7fe8ff' : isLeaderNylon ? '#ffe980' : '#a0a0a0';
+    const leaderBaseR    = stroke > 0 ? flangeR : r + 2;
+    const leaderRingR    = leaderBaseR + 3.5;
+    const leaderTitle    = ['リーダー', g.leaderType, g.leaderSize, g.leaderLength].filter(Boolean).join(' ');
+    const leaderRing = hasLeader
+      ? `<circle cx="${C}" cy="${C}" r="${leaderRingR.toFixed(1)}" class="reel-leader-ring" stroke="${leaderColor}"><title>${escapeHtml(leaderTitle)}</title></circle>`
       : '';
 
     // 中心はスプール軸（アーバー）に見立て、本体の中にもう一段小さいリムを描く。
@@ -3023,10 +3038,12 @@ function renderReelSizeChart(reels) {
           <span class="reel-compare-size">${escapeHtml(g.style)}</span>
           ${g.retrieveLength ? `<span class="reel-compare-spec">巻取${escapeHtml(g.retrieveLength)}cm</span>` : ''}
           ${g.gearRatio      ? `<span class="reel-compare-spec">ギア比${escapeHtml(g.gearRatio)}</span>`      : ''}
+          ${hasLeader ? `<span class="reel-compare-spec reel-compare-leader">${escapeHtml([g.leaderType, g.leaderSize, g.leaderLength].filter(Boolean).join(' '))}</span>` : ''}
         </span>
         <svg class="reel-spool-svg" width="${DIM}" height="${DIM}" viewBox="0 0 ${DIM} ${DIM}">
           ${peDefs}
           ${nylonDefs}
+          ${leaderRing}
           ${ring}
           ${windTexture}
           ${flange}
