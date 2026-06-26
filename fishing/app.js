@@ -2890,20 +2890,22 @@ function rodLeaderCompatibility(rod, reel) {
     (best, r) => Math.abs(r.go - sinkerGo) < Math.abs(best.go - sinkerGo) ? r : best,
     ROD_SINKER_LINE_TABLE[0]
   );
-  const [min, max] = row.nylon;
+  const isPe = /PE/i.test(reel.leaderType || '');
+  const [min, max] = isPe ? row.pe : row.nylon;
   const status = leaderGo < min ? 'thin' : leaderGo > max ? 'thick' : 'ok';
-  return { status, min, max };
+  return { status, min, max, isPe };
 }
 
 function leaderCompatLabel(compat) {
+  const lineKind = compat.isPe ? 'PEリーダー' : 'リーダー';
   const rangeText = `${compat.min}号-${compat.max}号`;
   if (compat.status === 'ok') {
-    return { cls: 'tackle-combo-compat-ok', text: '◎ リーダー適合', title: `錘負荷に対する推奨リーダー号数の目安: ${rangeText}` };
+    return { cls: 'tackle-combo-compat-ok', text: '◎ リーダー適合', title: `錘負荷に対する推奨${lineKind}号数の目安: ${rangeText}` };
   }
   if (compat.status === 'thin') {
-    return { cls: 'tackle-combo-compat-warn', text: '△ リーダーが細め', title: `錘負荷に対する推奨リーダー号数の目安: ${rangeText}（リーダーが細く、高負荷時に切れやすい可能性があります）` };
+    return { cls: 'tackle-combo-compat-warn', text: '△ リーダーが細め', title: `錘負荷に対する推奨${lineKind}号数の目安: ${rangeText}（リーダーが細く、高負荷時に切れやすい可能性があります）` };
   }
-  return { cls: 'tackle-combo-compat-warn', text: '△ リーダーが太め', title: `錘負荷に対する推奨リーダー号数の目安: ${rangeText}（リーダーが太く、感度・遠投性が落ちる可能性があります）` };
+  return { cls: 'tackle-combo-compat-warn', text: '△ リーダーが太め', title: `錘負荷に対する推奨${lineKind}号数の目安: ${rangeText}（リーダーが太く、感度・遠投性が落ちる可能性があります）` };
 }
 
 // 最新ライン交換日からの経過日数（未入力なら null）。
