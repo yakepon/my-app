@@ -2448,7 +2448,11 @@ function gearSpecHtml(g) {
   if (g.type === 'reel' && g.gearRatio)      specs.push(`ギア比${escapeHtml(g.gearRatio)}`);
   if (g.type === 'reel' && g.maxDrag)        specs.push(`ドラグ${escapeHtml(g.maxDrag)}kg`);
   if (g.type === 'reel' && (g.nylonCapacity || g.peCapacity)) {
-    specs.push(['糸巻量', escapeHtml(g.nylonCapacity || ''), escapeHtml(g.peCapacity || '')].filter(Boolean).join(' '));
+    const capacityParts = [
+      g.nylonCapacity ? `ナイロン:${escapeHtml(g.nylonCapacity)}` : '',
+      g.peCapacity    ? `PE:${escapeHtml(g.peCapacity)}`          : '',
+    ].filter(Boolean);
+    specs.push(`糸巻量 ${capacityParts.join(' / ')}`);
   }
   if (g.type === 'reel' && (g.lineType || g.lineSize || g.lastLineChangeDate)) {
     const type   = escapeHtml(g.lineType || '');
