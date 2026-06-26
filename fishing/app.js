@@ -315,7 +315,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'color', 'pairedReelId'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'leaderType', 'leaderSize', 'leaderLength', 'color', 'pairedReelId'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -2333,6 +2333,9 @@ function enterGearEditMode(g) {
   els.gearForm.elements['lineType'].value           = g.lineType           || '';
   els.gearForm.elements['lineSize'].value           = g.lineSize           || '';
   els.gearForm.elements['lastLineChangeDate'].value = normDateStr(g.lastLineChangeDate);
+  els.gearForm.elements['leaderType'].value         = g.leaderType   || '';
+  els.gearForm.elements['leaderSize'].value         = g.leaderSize   || '';
+  els.gearForm.elements['leaderLength'].value       = g.leaderLength || '';
   els.gearForm.elements['color'].value              = g.color || '';
   els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : g.type === 'lure' ? 'ルアー' : 'ロッド') + 'を編集';
   els.gearSubmitBtn.textContent = '更新する';
@@ -2384,6 +2387,9 @@ async function onGearSubmit(e) {
     lineType:           type === 'reel' ? fd.get('lineType')           : '',
     lineSize:           type === 'reel' ? fd.get('lineSize')           : '',
     lastLineChangeDate: type === 'reel' ? fd.get('lastLineChangeDate') : '',
+    leaderType:         type === 'reel' ? fd.get('leaderType')         : '',
+    leaderSize:         type === 'reel' ? fd.get('leaderSize')         : '',
+    leaderLength:       type === 'reel' ? fd.get('leaderLength')       : '',
     color:              type === 'lure' ? fd.get('color')              : '',
   };
 
@@ -2449,6 +2455,12 @@ function gearSpecHtml(g) {
     const size   = escapeHtml(g.lineSize || '');
     const date   = g.lastLineChangeDate ? `(${escapeHtml(normDateStr(g.lastLineChangeDate))}交換)` : '';
     specs.push(['現在ライン', [type, size].filter(Boolean).join(' '), date].filter(Boolean).join(' '));
+  }
+  if (g.type === 'reel' && (g.leaderType || g.leaderSize || g.leaderLength)) {
+    const ltype  = escapeHtml(g.leaderType  || '');
+    const lsize  = escapeHtml(g.leaderSize  || '');
+    const llen   = g.leaderLength ? escapeHtml(g.leaderLength) : '';
+    specs.push(['リーダー', [ltype, lsize, llen].filter(Boolean).join(' ')].filter(Boolean).join(' '));
   }
   if (g.purchaseDate || g.purchasePrice) {
     const date  = g.purchaseDate  ? escapeHtml(normDateStr(g.purchaseDate)) : '';

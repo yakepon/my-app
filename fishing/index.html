@@ -605,6 +605,15 @@
             <label>最新ライン交換日
               <input type="date" name="lastLineChangeDate">
             </label>
+            <label>リーダータイプ
+              <input type="text" name="leaderType" list="leaderTypeList" placeholder="例: フロロカーボン">
+            </label>
+            <label>リーダー号数
+              <input type="text" name="leaderSize" placeholder="例: 1.5号">
+            </label>
+            <label>リーダー長さ
+              <input type="text" name="leaderLength" placeholder="例: 1.5m">
+            </label>
           </div>
           <div class="form-grid" id="lureOnlyFields">
             <label>カラー
@@ -624,6 +633,10 @@
             <option value="フロロカーボン">
             <option value="ナイロン">
             <option value="エステル">
+          </datalist>
+          <datalist id="leaderTypeList">
+            <option value="フロロカーボン">
+            <option value="ナイロン">
           </datalist>
           <datalist id="lureStyleList">
             <option value="ミノー">
