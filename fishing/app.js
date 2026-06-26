@@ -2875,6 +2875,34 @@ function tackleCompatLabel(compat) {
   return { cls: 'tackle-combo-compat-warn', text: '△ ラインが太め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが太く、感度・遠投性が落ちる可能性があります）` };
 }
 
+// ロッドの錘負荷とリールに設定されているリーダー号数が適正かを判定する。
+// リーダーはフロロ/ナイロン系が前提なので、早見表のnylon列を使う。
+// リーダー号数または錘負荷が未入力の場合はnullを返す。
+function rodLeaderCompatibility(rod, reel) {
+  if (!reel || !reel.leaderSize) return null;
+  const sinkerGo = sinkerWeightToGo(rod.sinkerWeight);
+  const leaderGo = parseLeadingNumber(reel.leaderSize);
+  if (sinkerGo == null || leaderGo == null) return null;
+  const row = ROD_SINKER_LINE_TABLE.reduce(
+    (best, r) => Math.abs(r.go - sinkerGo) < Math.abs(best.go - sinkerGo) ? r : best,
+    ROD_SINKER_LINE_TABLE[0]
+  );
+  const [min, max] = row.nylon;
+  const status = leaderGo < min ? 'thin' : leaderGo > max ? 'thick' : 'ok';
+  return { status, min, max };
+}
+
+function leaderCompatLabel(compat) {
+  const rangeText = `${compat.min}号-${compat.max}号`;
+  if (compat.status === 'ok') {
+    return { cls: 'tackle-combo-compat-ok', text: '◎ リーダー適合', title: `錘負荷に対する推奨リーダー号数の目安: ${rangeText}` };
+  }
+  if (compat.status === 'thin') {
+    return { cls: 'tackle-combo-compat-warn', text: '△ リーダーが細め', title: `錘負荷に対する推奨リーダー号数の目安: ${rangeText}（リーダーが細く、高負荷時に切れやすい可能性があります）` };
+  }
+  return { cls: 'tackle-combo-compat-warn', text: '△ リーダーが太め', title: `錘負荷に対する推奨リーダー号数の目安: ${rangeText}（リーダーが太く、感度・遠投性が落ちる可能性があります）` };
+}
+
 // 最新ライン交換日からの経過日数（未入力なら null）。
 function daysSince(dateStr) {
   const s = normDateStr(dateStr);
@@ -3195,6 +3223,9 @@ function renderTackleCombo(rods, reels) {
     const lineLabel = lineTypeSizeLabel(reel);
     const lineCompat = reel ? rodReelLineCompatibility(rod, reel) : null;
     const compatInfo = lineCompat ? tackleCompatLabel(lineCompat) : null;
+    const leaderCompat = reel ? rodLeaderCompatibility(rod, reel) : null;
+    const leaderCompatInfo = leaderCompat ? leaderCompatLabel(leaderCompat) : null;
+    const leaderLabel = reel && reel.leaderSize ? [reel.leaderType, reel.leaderSize, reel.leaderLength].filter(Boolean).join(' ') : '';
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel, maxLenCm)}
@@ -3204,6 +3235,8 @@ function renderTackleCombo(rods, reels) {
           <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
           ${lineLabel ? `<span class="tackle-combo-line-label">${escapeHtml(lineLabel)}</span>` : ''}
           ${compatInfo ? `<span class="tackle-combo-compat ${compatInfo.cls}" title="${escapeHtml(compatInfo.title)}">${escapeHtml(compatInfo.text)}</span>` : ''}
+          ${leaderLabel ? `<span class="tackle-combo-line-label">リーダー: ${escapeHtml(leaderLabel)}</span>` : ''}
+          ${leaderCompatInfo ? `<span class="tackle-combo-compat ${leaderCompatInfo.cls}" title="${escapeHtml(leaderCompatInfo.title)}">${escapeHtml(leaderCompatInfo.text)}</span>` : ''}
         </div>
       </div>`;
   }).join('');
