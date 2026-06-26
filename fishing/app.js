@@ -3035,6 +3035,9 @@ function renderReelSizeChart(reels) {
         </text>`
       : `<text x="${C}" y="${C}" text-anchor="middle" dominant-baseline="middle" class="reel-spool-label reel-spool-label-empty">ラインなし</text>`;
 
+    const leaderSizeLabel = hasLeader
+      ? `リーダー: ${escapeHtml([g.leaderType, g.leaderSize].filter(Boolean).join(' '))}`
+      : '';
     return `
       <div class="reel-compare-row">
         <span class="reel-compare-info">
@@ -3043,19 +3046,21 @@ function renderReelSizeChart(reels) {
           <span class="reel-compare-size">${escapeHtml(g.style)}</span>
           ${g.retrieveLength ? `<span class="reel-compare-spec">巻取${escapeHtml(g.retrieveLength)}cm</span>` : ''}
           ${g.gearRatio      ? `<span class="reel-compare-spec">ギア比${escapeHtml(g.gearRatio)}</span>`      : ''}
-          ${hasLeader ? `<span class="reel-compare-spec reel-compare-leader">${escapeHtml([g.leaderType, g.leaderSize, g.leaderLength].filter(Boolean).join(' '))}</span>` : ''}
         </span>
-        <svg class="reel-spool-svg" width="${DIM}" height="${DIM}" viewBox="0 0 ${DIM} ${DIM}">
-          ${peDefs}
-          ${nylonDefs}
-          ${leaderRing}
-          ${ring}
-          ${windTexture}
-          ${flange}
-          <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
-          ${innerRim}
-          ${centerLabel}
-        </svg>
+        <div class="reel-spool-wrap">
+          <svg class="reel-spool-svg" width="${DIM}" height="${DIM}" viewBox="0 0 ${DIM} ${DIM}">
+            ${peDefs}
+            ${nylonDefs}
+            ${leaderRing}
+            ${ring}
+            ${windTexture}
+            ${flange}
+            <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
+            ${innerRim}
+            ${centerLabel}
+          </svg>
+          ${leaderSizeLabel ? `<span class="reel-leader-label">${leaderSizeLabel}</span>` : ''}
+        </div>
         ${lineAgeBadgeHtml(g)}
       </div>`;
   }).join('');
