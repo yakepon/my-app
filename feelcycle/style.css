@@ -279,6 +279,14 @@ main {
   color: var(--text-muted);
 }
 
+.memo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
 .memo-text {
   margin-top: 6px;
   font-size: 14px;

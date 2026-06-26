@@ -399,6 +399,11 @@ function performSearch() {
         ? `<ul class="memo-list">${memoRecords.map((r) => `
           <li class="memo-list-item">
             <span class="memo-date">${formatDate(r.datetime)}</span>
+            <div class="memo-meta">
+              ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
+              ${r.program ? `<span class="badge instructor-badge">${escapeHtml(r.program)}</span>` : ''}
+              ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
+            </div>
             <p class="memo-text">${escapeHtml(r.memo)}</p>
           </li>
         `).join('')}</ul>`
