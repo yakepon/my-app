@@ -354,6 +354,12 @@ function performSearch() {
     return;
   }
 
+  const categories = [...new Set(matches.map((r) => String(r.category || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
+
+  const programs = [...new Set(matches.map((r) => String(r.program || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
+
   const instructors = [...new Set(matches.map((r) => String(r.instructor || '').trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
 
@@ -363,6 +369,22 @@ function performSearch() {
 
   els.searchResult.innerHTML = `
     <p class="search-count">${matches.length}件の記録が見つかりました</p>
+    <div class="search-block">
+      <h3>カテゴリ</h3>
+      <div class="search-instructors">
+        ${categories.length
+          ? categories.map((c) => `<span class="badge">${escapeHtml(c)}</span>`).join('')
+          : '<p class="empty">カテゴリ情報がありません。</p>'}
+      </div>
+    </div>
+    <div class="search-block">
+      <h3>プログラム名</h3>
+      <div class="search-instructors">
+        ${programs.length
+          ? programs.map((p) => `<span class="badge instructor-badge">${escapeHtml(p)}</span>`).join('')
+          : '<p class="empty">プログラム情報がありません。</p>'}
+      </div>
+    </div>
     <div class="search-block">
       <h3>対応インストラクター</h3>
       <div class="search-instructors">
