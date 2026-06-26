@@ -2873,9 +2873,9 @@ function tackleCompatLabel(compat) {
     return { cls: 'tackle-combo-compat-ok', text: '◎ ライン適合', title: `推奨ライン号数の目安: ${rangeText}` };
   }
   if (compat.status === 'thin') {
-    return { cls: 'tackle-combo-compat-warn', text: '△ ラインが細め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが細く、高負荷時に切れやすい可能性があります）` };
+    return { cls: 'tackle-combo-compat-warn', text: '△ライン細め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが細く、高負荷時に切れやすい可能性があります）` };
   }
-  return { cls: 'tackle-combo-compat-warn', text: '△ ラインが太め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが太く、感度・遠投性が落ちる可能性があります）` };
+  return { cls: 'tackle-combo-compat-warn', text: '▲ライン太め', title: `推奨ライン号数の目安: ${rangeText}（ロッドの錘負荷に対してラインが太く、感度・遠投性が落ちる可能性があります）` };
 }
 
 // ロッドの錘負荷とリールに設定されているリーダー号数が適正かを判定する。
