@@ -2966,49 +2966,70 @@ function renderReelSizeChart(reels) {
   const maxLineNum = lineNums.length ? Math.max(...lineNums) : 1;
 
   const rows = withSize.map(({ g, size }) => {
-    const r = MIN_R + (size / maxSize) * (MAX_R - MIN_R);
+    const isBait = /ベイト/i.test(g.reelType || '');
+    // ベイトリールはスピニング2500番手相当の固定サイズで表示する。
+    const effectiveSize = isBait ? 2500 : size;
+    const r = Math.min(MAX_R, MIN_R + (effectiveSize / maxSize) * (MAX_R - MIN_R));
     const lineNum  = parseLeadingNumber(g.lineSize);
     const isPe     = /pe/i.test(g.lineType || '');
     const isNylon  = /ナイロン|nylon/i.test(g.lineType || '');
     const stroke   = lineNum != null ? MIN_STROKE + (lineNum / maxLineNum) * (MAX_STROKE - MIN_STROKE) : 0;
     const peGradId    = `peGrad-${g.id}`;
     const nylonGradId = `nylonGrad-${g.id}`;
+    const lineStroke  = isPe ? `url(#${peGradId})` : isNylon ? `url(#${nylonGradId})` : 'var(--ink-faint)';
 
-    const ring = stroke > 0
-      ? `<circle cx="${C}" cy="${C}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${isPe ? `url(#${peGradId})` : isNylon ? `url(#${nylonGradId})` : 'var(--ink-faint)'}" stroke-width="${stroke.toFixed(1)}" />`
-      : '';
+    // ベイトリール用: 正方形を中心(C,C)に描くヘルパー。hs = half-side。
+    const bRect = (hs, cls, extra = '') =>
+      `<rect x="${(C - hs).toFixed(1)}" y="${(C - hs).toFixed(1)}" width="${(2 * hs).toFixed(1)}" height="${(2 * hs).toFixed(1)}" rx="4" ${cls ? `class="${cls}"` : ''} ${extra} />`;
 
-    // 巻かれたラインの質感を出すため、リング帯の中に細い同心円を重ねて
-    // 「巻き」の筋を表現する。本数はライン太さ(stroke)に応じて増やし、
-    // 太いラインほど巻き数が多く見えるようにする。
     const nWraps = stroke > 0 ? Math.max(3, Math.round(stroke * 1.2)) : 0;
-    const windTexture = Array.from({ length: nWraps }, (_, i) => {
-      const t = (i + 1) / (nWraps + 1);
-      const rr = r + stroke * t;
-      return `<circle cx="${C}" cy="${C}" r="${rr.toFixed(1)}" class="reel-spool-wind" />`;
-    }).join('');
 
-    // スプールの縁（フランジ）を表す薄いリムを、ライン帯の外側にもう一周描く。
-    const flangeR = r + stroke + 1.3;
-    const flange = stroke > 0
-      ? `<circle cx="${C}" cy="${C}" r="${flangeR.toFixed(1)}" class="reel-spool-flange" />`
-      : '';
+    let ring, windTexture, flange, innerRim, body;
+    if (isBait) {
+      ring = stroke > 0
+        ? bRect(r + stroke / 2, '', `fill="none" stroke="${lineStroke}" stroke-width="${stroke.toFixed(1)}"`)
+        : '';
+      windTexture = Array.from({ length: nWraps }, (_, i) => {
+        const hs = r + stroke * ((i + 1) / (nWraps + 1));
+        return bRect(hs, 'reel-spool-wind');
+      }).join('');
+      flange = stroke > 0 ? bRect(r + stroke + 1.3, 'reel-spool-flange') : '';
+      innerRim = bRect(r * 0.55, 'reel-spool-inner-rim');
+      body     = bRect(r, 'reel-spool-body');
+    } else {
+      ring = stroke > 0
+        ? `<circle cx="${C}" cy="${C}" r="${(r + stroke / 2).toFixed(1)}" fill="none" stroke="${lineStroke}" stroke-width="${stroke.toFixed(1)}" />`
+        : '';
+      windTexture = Array.from({ length: nWraps }, (_, i) => {
+        const rr = r + stroke * ((i + 1) / (nWraps + 1));
+        return `<circle cx="${C}" cy="${C}" r="${rr.toFixed(1)}" class="reel-spool-wind" />`;
+      }).join('');
+      const flangeR = r + stroke + 1.3;
+      flange = stroke > 0 ? `<circle cx="${C}" cy="${C}" r="${flangeR.toFixed(1)}" class="reel-spool-flange" />` : '';
+      innerRim = `<circle cx="${C}" cy="${C}" r="${(r * 0.55).toFixed(1)}" class="reel-spool-inner-rim" />`;
+      body     = `<circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />`;
+    }
 
     // リーダーが登録されている場合、フランジ外側に破線リングを描く。
     // フロロカーボン=グレー系、ナイロン=黄色系、その他=グレーで色分けする。
     const hasLeader = !!(g.leaderSize || g.leaderType);
-    const isLeaderFluro  = /フロロ/i.test(g.leaderType || '');
-    const isLeaderNylon  = /ナイロン/i.test(g.leaderType || '');
-    const leaderColor    = isLeaderFluro ? '#a0a0b8' : isLeaderNylon ? '#ffe980' : '#a0a0a0';
-    const leaderBaseR    = stroke > 0 ? flangeR : r + 2;
-    const leaderRingR    = leaderBaseR + 3.5;
-    const leaderTitle    = ['リーダー', g.leaderType, g.leaderSize, g.leaderLength].filter(Boolean).join(' ');
-    const leaderRing = hasLeader
-      ? `<circle cx="${C}" cy="${C}" r="${leaderRingR.toFixed(1)}" class="reel-leader-ring" stroke="${leaderColor}"><title>${escapeHtml(leaderTitle)}</title></circle>`
-      : '';
-
-    // 中心はスプール軸（アーバー）に見立て、本体の中にもう一段小さいリムを描く。
-    const innerRim = `<circle cx="${C}" cy="${C}" r="${(r * 0.55).toFixed(1)}" class="reel-spool-inner-rim" />`;
+    const isLeaderFluro = /フロロ/i.test(g.leaderType || '');
+    const isLeaderNylon = /ナイロン/i.test(g.leaderType || '');
+    const leaderColor   = isLeaderFluro ? '#a0a0b8' : isLeaderNylon ? '#ffe980' : '#a0a0a0';
+    const leaderTitle   = ['リーダー', g.leaderType, g.leaderSize, g.leaderLength].filter(Boolean).join(' ');
+    let leaderRing = '';
+    if (hasLeader) {
+      if (isBait) {
+        const leaderBaseHs = stroke > 0 ? r + stroke + 1.3 : r + 2;
+        const leaderRingHs = leaderBaseHs + 3.5;
+        leaderRing = `<rect x="${(C - leaderRingHs).toFixed(1)}" y="${(C - leaderRingHs).toFixed(1)}" width="${(2 * leaderRingHs).toFixed(1)}" height="${(2 * leaderRingHs).toFixed(1)}" rx="5" class="reel-leader-ring" stroke="${leaderColor}"><title>${escapeHtml(leaderTitle)}</title></rect>`;
+      } else {
+        const flangeR    = r + stroke + 1.3;
+        const leaderBaseR = stroke > 0 ? flangeR : r + 2;
+        const leaderRingR = leaderBaseR + 3.5;
+        leaderRing = `<circle cx="${C}" cy="${C}" r="${leaderRingR.toFixed(1)}" class="reel-leader-ring" stroke="${leaderColor}"><title>${escapeHtml(leaderTitle)}</title></circle>`;
+      }
+    }
 
     const peDefs = isPe ? `
       <defs>
@@ -3043,7 +3064,7 @@ function renderReelSizeChart(reels) {
       <div class="reel-compare-row">
         <span class="reel-compare-info">
           <span class="reel-compare-name">${escapeHtml(g.name || '-')}</span>
-          ${g.reelType ? `<span class="reel-compare-type reel-compare-type-${/ベイト/i.test(g.reelType) ? 'bait' : 'spinning'}">${escapeHtml(g.reelType)}</span>` : ''}
+          ${g.reelType ? `<span class="reel-compare-type reel-compare-type-${isBait ? 'bait' : 'spinning'}">${escapeHtml(g.reelType)}</span>` : ''}
           <span class="reel-compare-size">${escapeHtml(g.style)}</span>
           ${g.retrieveLength ? `<span class="reel-compare-spec">巻取${escapeHtml(g.retrieveLength)}cm</span>` : ''}
           ${g.gearRatio      ? `<span class="reel-compare-spec">ギア比${escapeHtml(g.gearRatio)}</span>`      : ''}
@@ -3056,7 +3077,7 @@ function renderReelSizeChart(reels) {
             ${ring}
             ${windTexture}
             ${flange}
-            <circle cx="${C}" cy="${C}" r="${r}" class="reel-spool-body" />
+            ${body}
             ${innerRim}
             ${centerLabel}
           </svg>
