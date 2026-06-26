@@ -1311,7 +1311,7 @@ form > textarea { margin-bottom: 0.6rem; }
 .reel-spool-wind   { fill: none; stroke: rgba(255, 255, 255, 0.18); stroke-width: 0.7; }
 .reel-spool-flange { fill: none; stroke: var(--ink-faint); stroke-width: 1.2; opacity: 0.55; }
 .reel-spool-inner-rim { fill: none; stroke: var(--border); stroke-width: 1; opacity: 0.8; }
-.reel-leader-ring { fill: none; stroke-width: 2; stroke-dasharray: 5 3; opacity: 0.8; }
+.reel-leader-ring { fill: none; stroke-width: 3; stroke-dasharray: 5 3; opacity: 0.85; }
 .reel-spool-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
 .reel-leader-label { font-family: var(--font-body); font-size: 0.65rem; color: var(--ink-muted); white-space: nowrap; }
 

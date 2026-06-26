@@ -2995,11 +2995,11 @@ function renderReelSizeChart(reels) {
       : '';
 
     // リーダーが登録されている場合、フランジ外側に破線リングを描く。
-    // フロロカーボン=水色系、ナイロン=黄色系、その他=グレーで色分けする。
+    // フロロカーボン=グレー系、ナイロン=黄色系、その他=グレーで色分けする。
     const hasLeader = !!(g.leaderSize || g.leaderType);
     const isLeaderFluro  = /フロロ/i.test(g.leaderType || '');
     const isLeaderNylon  = /ナイロン/i.test(g.leaderType || '');
-    const leaderColor    = isLeaderFluro ? '#7fe8ff' : isLeaderNylon ? '#ffe980' : '#a0a0a0';
+    const leaderColor    = isLeaderFluro ? '#a0a0b8' : isLeaderNylon ? '#ffe980' : '#a0a0a0';
     const leaderBaseR    = stroke > 0 ? flangeR : r + 2;
     const leaderRingR    = leaderBaseR + 3.5;
     const leaderTitle    = ['リーダー', g.leaderType, g.leaderSize, g.leaderLength].filter(Boolean).join(' ');
