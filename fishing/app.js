@@ -747,6 +747,7 @@ function renderEventsList(expanded = false) {
     // 分けて表示し、内容がない区分はグループ自体を出さない。
     const itineraryGroup = `
       ${ev.style ? `<span class="badge badge-outline">${escapeHtml(ev.style)}</span>` : ''}
+      ${ev.target ? `<span class="badge badge-outline">${escapeHtml(ev.target)}狙い</span>` : ''}
       ${ev.startTime
         ? `<span class="badge badge-outline ec-time-badge"><svg class="icon icon-inline"><use href="#icon-clock"/></svg>${formatTime(ev.startTime)}${ev.endTime ? '–' + formatTime(ev.endTime) : ' 〜 計測中'}</span>`
         : `<button type="button" class="btn btn-sm btn-start-trip" data-id="${escapeHtml(ev.id)}"><svg class="icon icon-inline"><use href="#icon-play"/></svg>開始</button>`}
@@ -760,9 +761,8 @@ function renderEventsList(expanded = false) {
       ${ev.tide    ? `<span class="badge badge-outline">${escapeHtml(ev.tide)}</span>` : ''}
       <span class="ec-weather-slot" data-id="${escapeHtml(ev.id)}"></span>`;
 
-    const showCatchGroup = ev.target || species.length || rate != null;
+    const showCatchGroup = species.length || rate != null;
     const catchGroup = `
-      ${ev.target ? `<span class="badge badge-target"><svg class="icon icon-inline"><use href="#icon-target"/></svg>${escapeHtml(ev.target)}</span>` : ''}
       ${species.map(s => `<span class="badge badge-species">${speciesIconSvg(s, 'icon-inline')} ${escapeHtml(s)}</span>`).join('')}
       ${rate != null ? `<span class="ec-rate">${rate.toFixed(1)}匹/時間</span>` : ''}`;
 
@@ -800,8 +800,8 @@ function renderEventsList(expanded = false) {
                 ${metaGroupHtml('天候', weatherGroup)}
                 ${showCatchGroup ? metaGroupHtml('釣果', catchGroup) : ''}
                 ${showCostGroup  ? metaGroupHtml('コスパ', costGroup) : ''}
+                ${photos.length ? metaGroupHtml('写真', photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')) : ''}
               </div>
-              ${photos.length ? `<div class="ec-photos"${tideActive ? ' hidden' : ''}>${photos.map(p => `<img src="${escapeHtml(p.url)}" class="ec-thumb" data-event-id="${escapeHtml(ev.id)}" data-photo-field="${p.field}" alt="釣行写真">`).join('')}</div>` : ''}
               <div class="tide-chart-card-body" data-tide-event-id="${escapeHtml(ev.id)}"${tideActive ? '' : ' hidden'}><p class="empty">読み込み中...</p></div>
             </div>
           </div>

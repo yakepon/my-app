@@ -1029,7 +1029,7 @@ form > textarea { margin-bottom: 0.6rem; }
 }
 .ec-photos { display: flex; gap: 0.35rem; flex-shrink: 0; margin-top: 0.5rem; }
 .ec-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.3rem; }
-.ec-group { display: flex; align-items: baseline; gap: 0.6rem; }
+.ec-group { display: flex; align-items: flex-start; gap: 0.6rem; }
 .ec-group-label {
   flex-shrink: 0;
   width: 2.6rem;
@@ -1038,6 +1038,7 @@ form > textarea { margin-bottom: 0.6rem; }
   font-weight: 700;
   color: var(--ink-faint);
   letter-spacing: 0.02em;
+  padding-top: 0.2rem;
 }
 .ec-group-content { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; min-width: 0; }
 
