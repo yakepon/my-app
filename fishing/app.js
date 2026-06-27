@@ -152,6 +152,7 @@ const els = {
   egiList:  document.getElementById('egiList'),
   egiCountBadge: document.getElementById('egiCountBadge'),
   lureWeightChartWrap: document.getElementById('lureWeightChartWrap'),
+  egiSizeChartWrap:   document.getElementById('egiSizeChartWrap'),
   lureColorFilterChips:  document.getElementById('lureColorFilterChips'),
   lureWeightFilterChips: document.getElementById('lureWeightFilterChips'),
   lureCountBadge: document.getElementById('lureCountBadge'),
@@ -218,6 +219,7 @@ let trendChartInst   = null;
 let speciesChartInst = null;
 let spotChartInst    = null;
 let lureWeightChartInst = null;
+let egiSizeChartInst   = null;
 
 // ── Mock / Demo mode ──────────────────────────────────────────
 function isMockMode() { return !getGasUrl(); }
@@ -325,7 +327,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'leaderType', 'leaderSize', 'leaderLength', 'color', 'pairedReelId'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'leaderType', 'leaderSize', 'leaderLength', 'color', 'pairedReelId', 'egiSize', 'egiSinkType'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -588,6 +590,7 @@ function setGearTab(tab) {
   els.gearLurePanel.hidden = tab !== 'lure';
   els.gearEgiPanel.hidden  = tab !== 'egi';
   if (tab === 'lure' && lureWeightChartInst) lureWeightChartInst.resize();
+  if (tab === 'egi'  && egiSizeChartInst)   egiSizeChartInst.resize();
 }
 
 // 分析画面の「釣行分析」「釣果分析」タブ切り替え。
@@ -2658,6 +2661,7 @@ function renderGearLists() {
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
   renderLureWeightChart(lures);
+  renderEgiSizeChart(egis);
   renderTackleCombo(rods, reels);
 }
 
@@ -2780,6 +2784,63 @@ function renderLureWeightChart(lures) {
   lureWeightChartInst = new Chart(document.getElementById('lureWeightChart'), {
     type: 'bar',
     data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#8b8b8b', boxWidth: 14, font: { family: 'Lato', size: 11 } } },
+      },
+      scales: {
+        x: { ...axisOpts.x, stacked: true },
+        y: { ...axisOpts.y, stacked: true },
+      },
+    },
+  });
+}
+
+const EGI_SIZE_ORDER = ['1.8号', '2号', '2.5号', '3号', '3.5号', '4号'];
+
+// 号数別エギ数をカラー積み上げ棒グラフで表示する。
+function renderEgiSizeChart(egis) {
+  const withSize = egis.filter(g => g.egiSize);
+
+  if (egiSizeChartInst) { egiSizeChartInst.destroy(); egiSizeChartInst = null; }
+
+  if (!withSize.length) {
+    els.egiSizeChartWrap.innerHTML = '<p class="empty">号数を入力したエギがあると、号数別の個数を表示できます。</p>';
+    return;
+  }
+
+  if (!els.egiSizeChartWrap.querySelector('canvas')) {
+    els.egiSizeChartWrap.innerHTML = '<canvas id="egiSizeChart"></canvas>';
+  }
+
+  const presentSizes = EGI_SIZE_ORDER.filter(s => withSize.some(g => g.egiSize === s));
+  const colorOrder = [];
+  const colorCounts = new Map();
+  withSize.forEach(g => {
+    const key = (g.color || '').trim() || '未設定';
+    if (!colorCounts.has(key)) { colorCounts.set(key, {}); colorOrder.push(key); }
+    colorCounts.get(key)[g.egiSize] = (colorCounts.get(key)[g.egiSize] || 0) + 1;
+  });
+
+  const datasets = colorOrder.map((key, i) => {
+    const fill = resolveLureColorFill(key, i);
+    return {
+      label: key,
+      data: presentSizes.map(s => colorCounts.get(key)[s] || 0),
+      backgroundColor: typeof fill === 'string' ? lureColorGradient(fill) : fill,
+      borderWidth: 0,
+      stack: 'egis',
+      borderRadius: 4,
+      maxBarThickness: 44,
+    };
+  });
+
+  const axisOpts = chartAxisOpts();
+  egiSizeChartInst = new Chart(document.getElementById('egiSizeChart'), {
+    type: 'bar',
+    data: { labels: presentSizes, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
