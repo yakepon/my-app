@@ -535,6 +535,7 @@
         <button type="button" class="gear-tab" id="gearTabRod" data-gear-tab="rod" role="tab" aria-selected="true"><svg class="icon icon-inline"><use href="#icon-rod"/></svg> ロッド</button>
         <button type="button" class="gear-tab" id="gearTabReel" data-gear-tab="reel" role="tab" aria-selected="false"><svg class="icon icon-inline"><use href="#icon-reel"/></svg> リール</button>
         <button type="button" class="gear-tab" id="gearTabLure" data-gear-tab="lure" role="tab" aria-selected="false"><svg class="icon icon-inline"><use href="#icon-lure"/></svg> ルアー</button>
+        <button type="button" class="gear-tab" id="gearTabEgi" data-gear-tab="egi" role="tab" aria-selected="false"><svg class="icon icon-inline"><use href="#icon-lure"/></svg> エギ</button>
       </div>
 
       <!-- Gear form (ロッド・リール・ルアー登録) -->
@@ -621,6 +622,32 @@
           <div class="form-grid" id="lureOnlyFields">
             <label>カラー
               <input type="text" name="color" list="lureColorList" placeholder="例: グロー / ピンク / イワシ">
+            </label>
+          </div>
+          <div class="form-grid" id="egiOnlyFields">
+            <label>号数
+              <select name="egiSize">
+                <option value="">選択...</option>
+                <option value="1.8号">1.8号</option>
+                <option value="2号">2号</option>
+                <option value="2.5号">2.5号</option>
+                <option value="3号">3号</option>
+                <option value="3.5号">3.5号</option>
+                <option value="4号">4号</option>
+              </select>
+            </label>
+            <label>沈下タイプ
+              <select name="egiSinkType">
+                <option value="">選択...</option>
+                <option value="スーパーシャロー">スーパーシャロー</option>
+                <option value="シャロー">シャロー</option>
+                <option value="ノーマル">ノーマル</option>
+                <option value="ディープ">ディープ</option>
+                <option value="スーパーディープ">スーパーディープ</option>
+              </select>
+            </label>
+            <label>カラー
+              <input type="text" name="egiColor" list="lureColorList" placeholder="例: ピンク / オレンジ / ナチュラル">
             </label>
           </div>
           <datalist id="gearStyleList">
@@ -751,6 +778,19 @@
             <div class="style-filter" id="lureWeightFilterChips"></div>
           </div>
           <div id="lureList"><p class="empty">登録されたルアーはありません。</p></div>
+        </section>
+      </div>
+
+      <div id="gearEgiPanel" hidden>
+        <button type="button" class="btn btn-primary gear-register-btn" id="navShowEgiForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> エギを登録</button>
+
+        <!-- Egi list -->
+        <section class="panel records-panel">
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-lure"/></svg> エギ一覧</h2>
+            <span class="ec-catch-stat" id="egiCountBadge"></span>
+          </div>
+          <div id="egiList"><p class="empty">登録されたエギはありません。</p></div>
         </section>
       </div>
 

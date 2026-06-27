@@ -51,6 +51,7 @@ const els = {
   navShowRodForm:  document.getElementById('navShowRodForm'),
   navShowReelForm: document.getElementById('navShowReelForm'),
   navShowLureForm: document.getElementById('navShowLureForm'),
+  navShowEgiForm:  document.getElementById('navShowEgiForm'),
   eventsScreen:   document.getElementById('eventsScreen'),
   catchScreen:    document.getElementById('catchScreen'),
   gearScreen:     document.getElementById('gearScreen'),
@@ -148,6 +149,8 @@ const els = {
   rodList:  document.getElementById('rodList'),
   reelList: document.getElementById('reelList'),
   lureList: document.getElementById('lureList'),
+  egiList:  document.getElementById('egiList'),
+  egiCountBadge: document.getElementById('egiCountBadge'),
   lureWeightChartWrap: document.getElementById('lureWeightChartWrap'),
   lureColorFilterChips:  document.getElementById('lureColorFilterChips'),
   lureWeightFilterChips: document.getElementById('lureWeightFilterChips'),
@@ -159,12 +162,15 @@ const els = {
   gearTabRod:   document.getElementById('gearTabRod'),
   gearTabReel:  document.getElementById('gearTabReel'),
   gearTabLure:  document.getElementById('gearTabLure'),
+  gearTabEgi:   document.getElementById('gearTabEgi'),
   gearRodPanel: document.getElementById('gearRodPanel'),
   gearReelPanel: document.getElementById('gearReelPanel'),
   gearLurePanel: document.getElementById('gearLurePanel'),
+  gearEgiPanel:  document.getElementById('gearEgiPanel'),
   rodOnlyFields:  document.getElementById('rodOnlyFields'),
   reelOnlyFields: document.getElementById('reelOnlyFields'),
   lureOnlyFields: document.getElementById('lureOnlyFields'),
+  egiOnlyFields:  document.getElementById('egiOnlyFields'),
   styleLabelText: document.getElementById('styleLabelText'),
   styleInput: document.getElementById('styleInput'),
   analysisTabTrip:    document.getElementById('analysisTabTrip'),
@@ -528,6 +534,7 @@ function showEventsScreen() {
   els.navShowRodForm.hidden  = true;
   els.navShowReelForm.hidden = true;
   els.navShowLureForm.hidden = true;
+  els.navShowEgiForm.hidden  = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -543,6 +550,7 @@ function showCatchScreen(ev) {
   els.navShowRodForm.hidden  = true;
   els.navShowReelForm.hidden = true;
   els.navShowLureForm.hidden = true;
+  els.navShowEgiForm.hidden  = true;
   resetQuickForm();
   renderEventBanner();
   renderEventCatches();
@@ -560,6 +568,7 @@ function showGearScreen() {
   els.navShowRodForm.hidden  = false;
   els.navShowReelForm.hidden = false;
   els.navShowLureForm.hidden = false;
+  els.navShowEgiForm.hidden  = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -569,12 +578,15 @@ function setGearTab(tab) {
   els.gearTabRod.classList.toggle('gear-tab-active', tab === 'rod');
   els.gearTabReel.classList.toggle('gear-tab-active', tab === 'reel');
   els.gearTabLure.classList.toggle('gear-tab-active', tab === 'lure');
+  els.gearTabEgi.classList.toggle('gear-tab-active', tab === 'egi');
   els.gearTabRod.setAttribute('aria-selected', String(tab === 'rod'));
   els.gearTabReel.setAttribute('aria-selected', String(tab === 'reel'));
   els.gearTabLure.setAttribute('aria-selected', String(tab === 'lure'));
+  els.gearTabEgi.setAttribute('aria-selected', String(tab === 'egi'));
   els.gearRodPanel.hidden  = tab !== 'rod';
   els.gearReelPanel.hidden = tab !== 'reel';
   els.gearLurePanel.hidden = tab !== 'lure';
+  els.gearEgiPanel.hidden  = tab !== 'egi';
   if (tab === 'lure' && lureWeightChartInst) lureWeightChartInst.resize();
 }
 
@@ -2215,9 +2227,9 @@ async function onEventSubmit(e) {
 // 編集中の写真スロット（最大3枚）。各要素: { field, idField, url, id, pendingDataUrl, removed }
 let gearPhotoState = [];
 
-// ルアーは1枚、ロッド・リールは最大3枚まで。
+// ルアー・エギは1枚、ロッド・リールは最大3枚まで。
 function gearPhotoSuffixesForType(type) {
-  return type === 'lure' ? GEAR_PHOTO_SUFFIXES.slice(0, 1) : GEAR_PHOTO_SUFFIXES;
+  return (type === 'lure' || type === 'egi') ? GEAR_PHOTO_SUFFIXES.slice(0, 1) : GEAR_PHOTO_SUFFIXES;
 }
 
 function makeEmptyGearPhotoState(type) {
@@ -2265,6 +2277,10 @@ function applyStyleFieldForType(type) {
     els.styleLabelText.textContent = 'スタイル（ルアーの種類）';
     els.styleInput.placeholder = '例: ミノー / メタルジグ / ワーム';
     els.styleInput.setAttribute('list', 'lureStyleList');
+  } else if (type === 'egi') {
+    els.styleLabelText.textContent = 'スタイル（シリーズ名など）';
+    els.styleInput.placeholder = '例: エギ王K / ドラゴン / ヤマシタ';
+    els.styleInput.removeAttribute('list');
   } else {
     els.styleLabelText.textContent = 'スタイル';
     els.styleInput.placeholder = '例: アジング';
@@ -2292,11 +2308,12 @@ function resetGearForm(type) {
   els.gearForm.reset();
   els.gearForm.elements['id'].value   = '';
   els.gearForm.elements['type'].value = type;
-  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : type === 'lure' ? 'ルアーを登録' : 'ロッドを登録';
+  els.gearFormTitle.textContent  = type === 'reel' ? 'リールを登録' : type === 'lure' ? 'ルアーを登録' : type === 'egi' ? 'エギを登録' : 'ロッドを登録';
   els.gearSubmitBtn.textContent  = '登録する';
   els.rodOnlyFields.hidden  = type !== 'rod';
   els.reelOnlyFields.hidden = type !== 'reel';
   els.lureOnlyFields.hidden = type !== 'lure';
+  els.egiOnlyFields.hidden  = type !== 'egi';
   applyStyleFieldForType(type);
   resetGearPhotoState(type);
   if (type === 'rod') populatePairedReelSelect('');
@@ -2341,11 +2358,15 @@ function enterGearEditMode(g) {
   els.gearForm.elements['leaderSize'].value         = g.leaderSize   || '';
   els.gearForm.elements['leaderLength'].value       = g.leaderLength || '';
   els.gearForm.elements['color'].value              = g.color || '';
-  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : g.type === 'lure' ? 'ルアー' : 'ロッド') + 'を編集';
+  els.gearForm.elements['egiSize'].value     = g.egiSize     || '';
+  els.gearForm.elements['egiSinkType'].value = g.egiSinkType || '';
+  els.gearForm.elements['egiColor'].value    = g.color       || '';
+  els.gearFormTitle.textContent = (g.type === 'reel' ? 'リール' : g.type === 'lure' ? 'ルアー' : g.type === 'egi' ? 'エギ' : 'ロッド') + 'を編集';
   els.gearSubmitBtn.textContent = '更新する';
   els.rodOnlyFields.hidden  = g.type !== 'rod';
   els.reelOnlyFields.hidden = g.type !== 'reel';
   els.lureOnlyFields.hidden = g.type !== 'lure';
+  els.egiOnlyFields.hidden  = g.type !== 'egi';
   setGearTab(g.type);
 
   applyGearPhotoLabelForType(g.type);
@@ -2394,7 +2415,9 @@ async function onGearSubmit(e) {
     leaderType:         type === 'reel' ? fd.get('leaderType')         : '',
     leaderSize:         type === 'reel' ? fd.get('leaderSize')         : '',
     leaderLength:       type === 'reel' ? fd.get('leaderLength')       : '',
-    color:              type === 'lure' ? fd.get('color')              : '',
+    color:              type === 'lure' ? fd.get('color') : type === 'egi' ? fd.get('egiColor') : '',
+    egiSize:            type === 'egi' ? fd.get('egiSize')     : '',
+    egiSinkType:        type === 'egi' ? fd.get('egiSinkType') : '',
   };
 
   els.gearSubmitBtn.disabled = true;
@@ -2465,6 +2488,9 @@ function gearSpecHtml(g) {
     const llen   = g.leaderLength ? escapeHtml(g.leaderLength) : '';
     specs.push(['リーダー', [ltype, lsize, llen].filter(Boolean).join(' ')].filter(Boolean).join(' '));
   }
+  if (g.type === 'egi' && g.egiSize)     specs.push(escapeHtml(g.egiSize));
+  if (g.type === 'egi' && g.egiSinkType) specs.push(escapeHtml(g.egiSinkType));
+  if (g.type === 'egi' && g.color)       specs.push(escapeHtml(g.color));
   if (g.purchaseDate || g.purchasePrice) {
     const date  = g.purchaseDate  ? escapeHtml(normDateStr(g.purchaseDate)) : '';
     const price = g.purchasePrice ? `¥${Number(g.purchasePrice).toLocaleString()}` : '';
@@ -2548,6 +2574,30 @@ function lureRowHtml(g) {
     </div>`;
 }
 
+function egiRowHtml(g) {
+  const photo = gearPhotoSlots(g)[0];
+  const specParts = [
+    g.egiSize     ? escapeHtml(g.egiSize)     : '',
+    g.egiSinkType ? escapeHtml(g.egiSinkType) : '',
+    g.color       ? escapeHtml(g.color)       : '',
+    g.selfWeight  ? `${escapeHtml(g.selfWeight)}g` : '',
+  ].filter(Boolean);
+  return `
+    <div class="lure-row">
+      <div class="lure-row-head">
+        <span class="gear-name">${escapeHtml(g.name || '-')}</span>
+        ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
+        <div class="gear-actions">
+          <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
+          <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
+        </div>
+      </div>
+      ${specParts.length ? `<span class="gear-spec">${specParts.join(' / ')}</span>` : ''}
+      ${photo ? `<img src="${escapeHtml(photo.url)}" class="gear-thumb lure-photo" data-gear-id="${escapeHtml(g.id)}" data-photo-field="${photo.field}" alt="${escapeHtml(g.name || '')}">` : ''}
+      ${g.memo ? `<span class="gear-memo">${escapeHtml(g.memo)}</span>` : ''}
+    </div>`;
+}
+
 // 自重(g)を10g単位のbinインデックスに変換する。未入力/不正値はnull。
 function lureWeightBin(g) {
   const w = Number(g.selfWeight);
@@ -2595,6 +2645,7 @@ function renderGearLists() {
   const reels = currentGears.filter(g => g.type === 'reel');
   const lures = currentGears.filter(g => g.type === 'lure')
     .sort((a, b) => (Number(b.selfWeight) || -1) - (Number(a.selfWeight) || -1));
+  const egis  = currentGears.filter(g => g.type === 'egi');
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
   renderLureColorFilter(lures);
@@ -2602,6 +2653,8 @@ function renderGearLists() {
   const visibleLures = filteredLures(lures);
   els.lureList.innerHTML = visibleLures.length ? visibleLures.map(lureRowHtml).join('') : '<p class="empty">該当するルアーはありません。</p>';
   els.lureCountBadge.innerHTML = `<span class="ec-catch-stat-value">${visibleLures.length}</span><span class="ec-catch-stat-label">個</span>`;
+  els.egiList.innerHTML = egis.length ? egis.map(egiRowHtml).join('') : '<p class="empty">登録されたエギはありません。</p>';
+  els.egiCountBadge.innerHTML = `<span class="ec-catch-stat-value">${egis.length}</span><span class="ec-catch-stat-label">個</span>`;
   renderRodLengthRuler(rods);
   renderReelSizeChart(reels);
   renderLureWeightChart(lures);
@@ -3805,9 +3858,11 @@ function init() {
   els.navShowRodForm.addEventListener('click', () => openGearForm('rod'));
   els.navShowReelForm.addEventListener('click', () => openGearForm('reel'));
   els.navShowLureForm.addEventListener('click', () => openGearForm('lure'));
+  els.navShowEgiForm.addEventListener('click', () => openGearForm('egi'));
   els.gearTabRod.addEventListener('click', () => setGearTab('rod'));
   els.gearTabReel.addEventListener('click', () => setGearTab('reel'));
   els.gearTabLure.addEventListener('click', () => setGearTab('lure'));
+  els.gearTabEgi.addEventListener('click', () => setGearTab('egi'));
   els.lureColorFilterChips.addEventListener('click', e => {
     const chip = e.target.closest('.hm-chip');
     if (!chip) return;
