@@ -4076,6 +4076,7 @@ function init() {
   els.rodList.addEventListener('click', handleGearListClick);
   els.reelList.addEventListener('click', handleGearListClick);
   els.lureList.addEventListener('click', handleGearListClick);
+  els.egiList.addEventListener('click', handleGearListClick);
   els.tackleCombo.addEventListener('change', onTackleComboReelChange);
   els.catchEditForm.addEventListener('submit', onCatchEditSubmit);
   els.catchModalClose.addEventListener('click', closeCatchModal);
