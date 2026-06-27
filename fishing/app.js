@@ -3281,7 +3281,7 @@ function renderTackleCombo(rods, reels) {
         <div class="tackle-combo-labels">
           <span class="tackle-combo-rod-name">${escapeHtml(rod.name || '-')}</span>
           <span class="tackle-combo-rod-len">${escapeHtml(rodPowerLabel)}</span>
-          <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}">${options}</select>
+          <select class="tackle-combo-reel-select" data-rod-id="${escapeHtml(rod.id)}" data-reel-type="${reel ? (/ベイト/i.test(reel.reelType || '') ? 'bait' : 'spinning') : ''}">${options}</select>
           ${lineLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">ラ:</span>${escapeHtml(lineLabel)}</span>` : ''}
           ${compatInfo ? `<span class="tackle-combo-compat ${compatInfo.cls}" title="${escapeHtml(compatInfo.title)}">${escapeHtml(compatInfo.text)}</span>` : ''}
           ${leaderLabel ? `<span class="tackle-combo-line-label"><span class="tackle-line-prefix">リ:</span>${escapeHtml(leaderLabel)}</span>` : ''}
@@ -3421,6 +3421,10 @@ async function onTackleComboReelChange(e) {
   if (!select) return;
   const rod = currentGears.find(g => g.id === select.dataset.rodId);
   if (!rod) return;
+  const selectedReel = currentGears.find(g => g.id === select.value);
+  select.dataset.reelType = selectedReel
+    ? (/ベイト/i.test(selectedReel.reelType || '') ? 'bait' : 'spinning')
+    : '';
   select.disabled = true;
   await sendAction({ ...rod, action: 'updateGear', pairedReelId: select.value });
   await loadAll();
