@@ -1371,6 +1371,10 @@ form > textarea { margin-bottom: 0.6rem; }
   font-family: var(--font-body);
   font-size: 0.68rem;
   color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .tackle-combo-reel-select {
   font-family: var(--font-body);
@@ -1388,6 +1392,10 @@ form > textarea { margin-bottom: 0.6rem; }
   font-family: var(--font-body);
   font-size: 0.68rem;
   color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .tackle-line-prefix {
   margin-right: 0.1em;
@@ -1396,6 +1404,7 @@ form > textarea { margin-bottom: 0.6rem; }
   font-family: var(--font-body);
   font-size: 0.66rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 .tackle-combo-compat-ok   { color: var(--success); }
 .tackle-combo-compat-warn { color: var(--warn); }
@@ -1695,7 +1704,11 @@ form > textarea { margin-bottom: 0.6rem; }
 
 /* ── Section header row ─────────────────────────────────────── */
 .section-header { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 0; }
-.section-header h2 { margin-bottom: 0; flex: 1; }
+.section-header h2 { margin-bottom: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (max-width: 480px) {
+  .section-header { flex-wrap: wrap; }
+  .section-header h2 { width: 100%; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
 
 /* ── Today highlight on event cards ───────────────────────────── */
 .event-card-today { border-color: rgba(255, 45, 149, 0.4); box-shadow: 0 0 0 1px rgba(255, 45, 149, 0.12); }
