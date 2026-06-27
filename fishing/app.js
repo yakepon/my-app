@@ -3100,11 +3100,15 @@ function lineColorStops(reel) {
 }
 
 // ラインの種類・号数を「PE0.6号」のような短い表記にまとめる。情報が無ければnull。
+function abbreviateLineType(str) {
+  return String(str || '').replace(/フロロカーボン/g, 'フロロ');
+}
+
 function lineTypeSizeLabel(reel) {
   if (!reel) return null;
   const isPe = /pe/i.test(reel.lineType || '');
   const isNylon = /ナイロン|フロロ|エステル|nylon/i.test(reel.lineType || '');
-  const typeShort = isPe ? 'PE' : isNylon ? 'ナイロン' : (reel.lineType || '');
+  const typeShort = isPe ? 'PE' : isNylon ? 'ナイロン' : abbreviateLineType(reel.lineType || '');
   const label = [typeShort, reel.lineSize].filter(Boolean).join('');
   return label || null;
 }
@@ -3274,7 +3278,7 @@ function renderTackleCombo(rods, reels) {
     const compatInfo = lineCompat ? tackleCompatLabel(lineCompat) : null;
     const leaderCompat = reel ? rodLeaderCompatibility(rod, reel) : null;
     const leaderCompatInfo = leaderCompat ? leaderCompatLabel(leaderCompat) : null;
-    const leaderLabel = reel && reel.leaderSize ? [reel.leaderType, reel.leaderSize].filter(Boolean).join(' ') : '';
+    const leaderLabel = reel && reel.leaderSize ? [abbreviateLineType(reel.leaderType), reel.leaderSize].filter(Boolean).join(' ') : '';
     return `
       <div class="tackle-combo-card${reel ? '' : ' tackle-combo-card-empty'}" title="${escapeHtml(loadInfo)}">
         ${tackleComboSvg(rod, reel, maxLenCm)}
