@@ -2457,7 +2457,7 @@ function gearSpecHtml(g) {
     const type   = escapeHtml(g.lineType || '');
     const size   = escapeHtml(g.lineSize || '');
     const date   = g.lastLineChangeDate ? `(${escapeHtml(normDateStr(g.lastLineChangeDate))}交換)` : '';
-    specs.push(['現在ライン', [type, size].filter(Boolean).join(' '), date].filter(Boolean).join(' '));
+    specs.push(['ライン', [type, size].filter(Boolean).join(' '), date].filter(Boolean).join(' '));
   }
   if (g.type === 'reel' && (g.leaderType || g.leaderSize || g.leaderLength)) {
     const ltype  = escapeHtml(g.leaderType  || '');
