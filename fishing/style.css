@@ -1381,8 +1381,8 @@ form > textarea { margin-bottom: 0.6rem; }
   background: var(--surface);
   max-width: 100%;
 }
-.tackle-combo-reel-select[data-reel-type="spinning"] { border-color: #2a8fe0; }
-.tackle-combo-reel-select[data-reel-type="bait"]     { border-color: #e07a2a; }
+.tackle-combo-reel-select[data-reel-type="spinning"] { border: 2px solid #2a8fe0; }
+.tackle-combo-reel-select[data-reel-type="bait"]     { border: 2px solid #e07a2a; }
 .tackle-combo-line-label {
   font-family: var(--font-body);
   font-size: 0.68rem;
