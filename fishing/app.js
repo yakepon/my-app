@@ -121,6 +121,10 @@ const els = {
   rodLineInfoModal:    document.getElementById('rodLineInfoModal'),
   rodLineInfoClose:    document.getElementById('rodLineInfoClose'),
   rodLineInfoBackdrop: document.getElementById('rodLineInfoBackdrop'),
+  lineLeaderInfoBtn:      document.getElementById('lineLeaderInfoBtn'),
+  lineLeaderInfoModal:    document.getElementById('lineLeaderInfoModal'),
+  lineLeaderInfoClose:    document.getElementById('lineLeaderInfoClose'),
+  lineLeaderInfoBackdrop: document.getElementById('lineLeaderInfoBackdrop'),
   spotList:   document.getElementById('spotList'),
   targetList: document.getElementById('targetList'),
   demoNotice: document.getElementById('demoNotice'),
@@ -3509,6 +3513,16 @@ function closeRodLineInfoModal() {
   document.body.style.overflow = '';
 }
 
+function openLineLeaderInfoModal() {
+  els.lineLeaderInfoModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLineLeaderInfoModal() {
+  els.lineLeaderInfoModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
 let lightboxTarget = null; // { type: 'catch' | 'event', id, photoField }
 
 function openPhotoLightbox(src, type, id, photoField = 'photo') {
@@ -4020,6 +4034,9 @@ function init() {
   els.rodLineInfoBtn.addEventListener('click', openRodLineInfoModal);
   els.rodLineInfoClose.addEventListener('click', closeRodLineInfoModal);
   els.rodLineInfoBackdrop.addEventListener('click', closeRodLineInfoModal);
+  els.lineLeaderInfoBtn.addEventListener('click', openLineLeaderInfoModal);
+  els.lineLeaderInfoClose.addEventListener('click', closeLineLeaderInfoModal);
+  els.lineLeaderInfoBackdrop.addEventListener('click', closeLineLeaderInfoModal);
 
   els.catchesList.addEventListener('click', e => {
     const thumb = e.target.closest('.catch-thumb');

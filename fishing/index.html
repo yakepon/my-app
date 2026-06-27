@@ -523,7 +523,10 @@
       <section class="panel tackle-combo-panel">
         <div class="section-header">
           <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド×リール 装備状況</h2>
-          <button type="button" class="icon-btn" id="rodLineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> 錘負荷・ライン早見表</button>
+          <div style="display:flex;gap:0.5rem;flex-shrink:0">
+            <button type="button" class="icon-btn" id="lineLeaderInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン×リーダー</button>
+            <button type="button" class="icon-btn" id="rodLineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> 錘負荷・ライン早見表</button>
+          </div>
         </div>
         <div id="tackleCombo" class="tackle-combo"></div>
       </section>
@@ -978,6 +981,59 @@
 
       <div class="form-actions">
         <button type="button" class="btn" id="lureLineInfoClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line × Leader Info Modal (ラインとリーダーの関係性) -->
+  <div id="lineLeaderInfoModal" class="modal" hidden>
+    <div class="modal-backdrop" id="lineLeaderInfoBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">ライン×リーダー早見表（参考情報）</h3>
+      <p class="hint">メーカーや釣り方によって差があります。あくまで目安としてご利用ください。</p>
+
+      <h4 class="line-info-subtitle">メインライン別・リーダーの必要性</h4>
+      <table class="line-info-table">
+        <thead><tr><th>メインライン</th><th>リーダー</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>PEライン</td><td>フロロ（推奨）またはナイロン</td><td>耐摩耗・耐衝撃を補完。根ズレに弱いため必須</td></tr>
+          <tr><td>ナイロンライン</td><td>基本不要（直結でOK）</td><td>適度な伸びと耐摩耗性あり。根周りのみフロロ短め</td></tr>
+          <tr><td>フロロカーボンライン</td><td>基本不要（直結でOK）</td><td>耐摩耗性が高く沈みやすい。そのまま使えることが多い</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">PEライン号数 × フロロリーダー号数の目安</h4>
+      <table class="line-info-table">
+        <thead><tr><th>PEライン</th><th>フロロリーダー</th><th>強度目安</th></tr></thead>
+        <tbody>
+          <tr><td>0.3号</td><td>1〜1.5号</td><td>4〜6lb</td></tr>
+          <tr><td>0.4号</td><td>1.5〜2号</td><td>6〜8lb</td></tr>
+          <tr><td>0.6号</td><td>2〜2.5号</td><td>8〜10lb</td></tr>
+          <tr><td>0.8号</td><td>2.5〜3号</td><td>10〜12lb</td></tr>
+          <tr><td>1号</td><td>3〜4号</td><td>12〜16lb</td></tr>
+          <tr><td>1.5号</td><td>4〜5号</td><td>16〜20lb</td></tr>
+          <tr><td>2号</td><td>5〜6号</td><td>20〜25lb</td></tr>
+          <tr><td>3号</td><td>8〜10号</td><td>30〜40lb</td></tr>
+          <tr><td>4号</td><td>10〜12号</td><td>40〜50lb</td></tr>
+          <tr><td>5号</td><td>12〜16号</td><td>50〜60lb</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">釣り方別・リーダー長さの目安</h4>
+      <table class="line-info-table">
+        <thead><tr><th>釣り方</th><th>リーダー長さ</th></tr></thead>
+        <tbody>
+          <tr><td>アジング / メバリング</td><td>30〜60cm</td></tr>
+          <tr><td>エギング</td><td>1〜2m</td></tr>
+          <tr><td>シーバス / バス</td><td>1〜2m</td></tr>
+          <tr><td>ショアジギング</td><td>1〜2m</td></tr>
+          <tr><td>サーフ（ヒラメ・マゴチ）</td><td>2〜3m</td></tr>
+          <tr><td>船釣り（オフショア）</td><td>1〜3m</td></tr>
+        </tbody>
+      </table>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="lineLeaderInfoClose">閉じる</button>
       </div>
     </div>
   </div>
