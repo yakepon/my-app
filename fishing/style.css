@@ -1457,7 +1457,7 @@ form > textarea { margin-bottom: 0.6rem; }
 }
 .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
 .icon-btn.delete-catch-btn:hover { color: var(--danger); border-color: var(--danger); }
-.icon-btn.frequent-btn.selected { color: var(--accent); border-color: var(--accent); font-weight: 900; }
+.icon-btn.frequent-btn.selected { background: var(--gradient); border-color: transparent; color: #fff; font-weight: 900; }
 
 .empty-catches { padding: 0.6rem 1.15rem; font-size: 0.8rem; color: var(--ink-muted); }
 
