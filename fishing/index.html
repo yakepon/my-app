@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260628d">
+  <link rel="stylesheet" href="style.css?v=20260628e">
 </head>
 <body>
   <!-- ══ Icon sprite (all custom line icons live here, referenced via <use>) ══ -->
@@ -1341,6 +1341,18 @@
       <button type="button" class="lightbox-btn lightbox-close" id="photoLightboxClose" title="閉じる"><svg class="icon"><use href="#icon-close"/></svg></button>
     </div>
     <img id="photoLightboxImg" class="lightbox-img" src="" alt="釣果写真（拡大）">
+  </div>
+
+  <!-- Lure catch history modal -->
+  <div id="lureCatchHistoryModal" class="modal" hidden>
+    <div class="modal-backdrop" id="lureCatchHistoryBackdrop"></div>
+    <div class="modal-box">
+      <h3 class="modal-title" id="lureCatchHistoryTitle">釣果実績</h3>
+      <div id="lureCatchHistoryBody" class="lure-history-list"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="lureCatchHistoryClose">閉じる</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

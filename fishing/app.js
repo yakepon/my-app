@@ -124,6 +124,11 @@ const els = {
   lureLineInfoModal:    document.getElementById('lureLineInfoModal'),
   lureLineInfoClose:    document.getElementById('lureLineInfoClose'),
   lureLineInfoBackdrop: document.getElementById('lureLineInfoBackdrop'),
+  lureCatchHistoryModal:    document.getElementById('lureCatchHistoryModal'),
+  lureCatchHistoryTitle:    document.getElementById('lureCatchHistoryTitle'),
+  lureCatchHistoryBody:     document.getElementById('lureCatchHistoryBody'),
+  lureCatchHistoryClose:    document.getElementById('lureCatchHistoryClose'),
+  lureCatchHistoryBackdrop: document.getElementById('lureCatchHistoryBackdrop'),
   reelGuideBtn:      document.getElementById('reelGuideBtn'),
   reelGuideModal:    document.getElementById('reelGuideModal'),
   reelGuideClose:    document.getElementById('reelGuideClose'),
@@ -2644,7 +2649,7 @@ function lureCatchCount(name) {
 
 function lureCatchBadgeHtml(name) {
   const n = lureCatchCount(name);
-  return n > 0 ? `<span class="lure-catch-badge">${n}匹</span>` : '';
+  return n > 0 ? `<button type="button" class="lure-catch-badge" data-lure-name="${escapeHtml(name)}">${n}匹</button>` : '';
 }
 
 function lureRowHtml(g) {
@@ -3620,6 +3625,9 @@ async function handleGearListClick(e) {
   const thumb = e.target.closest('.gear-thumb');
   if (thumb) { openPhotoLightbox(thumb.src, 'gear', thumb.dataset.gearId, thumb.dataset.photoField); return; }
 
+  const catchBadge = e.target.closest('.lure-catch-badge');
+  if (catchBadge) { openLureCatchHistory(catchBadge.dataset.lureName); return; }
+
   const btn = e.target.closest('[data-id]');
   if (!btn) return;
   const id = btn.dataset.id;
@@ -3731,6 +3739,44 @@ function openLineInfoModal() {
 
 function closeLineInfoModal() {
   els.lineInfoModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function openLureCatchHistory(lureName) {
+  const catches = currentCatches.filter(c => c.lure === lureName);
+  if (!catches.length) return;
+
+  const rows = catches.map(c => {
+    const ev = currentEvents.find(e => e.id === c.eventId);
+    return { c, ev };
+  }).filter(r => r.ev)
+    .sort((a, b) => {
+      const dateCmp = (b.ev.date || '').localeCompare(a.ev.date || '');
+      if (dateCmp !== 0) return dateCmp;
+      return (b.c.time || '').localeCompare(a.c.time || '');
+    });
+
+  els.lureCatchHistoryTitle.textContent = `${lureName} の釣果実績`;
+  els.lureCatchHistoryBody.innerHTML = rows.map(({ c, ev }) => {
+    const date = normDateStr(ev.date);
+    const dateFmt = date ? `${date.slice(0,4)}/${date.slice(5,7)}/${date.slice(8,10)}` : '';
+    const parts = [
+      c.time  ? `<span class="lh-time">${escapeHtml(c.time)}</span>` : '',
+      c.species ? `<span class="lh-species">${escapeHtml(c.species)}</span>` : '',
+      `<span class="lh-count">${escapeHtml(String(c.count || 1))}匹</span>`,
+    ].filter(Boolean).join('');
+    return `<div class="lh-row">
+      <div class="lh-date-spot"><span class="lh-date">${escapeHtml(dateFmt)}</span><span class="lh-spot">${escapeHtml(ev.spot || '')}</span></div>
+      <div class="lh-detail">${parts}</div>
+    </div>`;
+  }).join('');
+
+  els.lureCatchHistoryModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLureCatchHistory() {
+  els.lureCatchHistoryModal.hidden = true;
   document.body.style.overflow = '';
 }
 
@@ -4341,6 +4387,8 @@ function init() {
   els.lureLineInfoBtn.addEventListener('click', openLureLineInfoModal);
   els.lureLineInfoClose.addEventListener('click', closeLureLineInfoModal);
   els.lureLineInfoBackdrop.addEventListener('click', closeLureLineInfoModal);
+  els.lureCatchHistoryClose.addEventListener('click', closeLureCatchHistory);
+  els.lureCatchHistoryBackdrop.addEventListener('click', closeLureCatchHistory);
   els.reelGuideBtn.addEventListener('click', openReelGuideModal);
   els.reelGuideClose.addEventListener('click', closeReelGuideModal);
   els.reelGuideBackdrop.addEventListener('click', closeReelGuideModal);
