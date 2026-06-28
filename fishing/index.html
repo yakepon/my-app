@@ -529,10 +529,7 @@
       <section class="panel tackle-combo-panel">
         <div class="section-header">
           <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド×リール 装備状況</h2>
-          <div style="display:flex;gap:0.5rem;flex-shrink:0">
-            <button type="button" class="icon-btn" id="rodLineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ロッド×ライン</button>
-            <button type="button" class="icon-btn" id="lineLeaderInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン×リーダー</button>
-          </div>
+          <button type="button" class="icon-btn" id="rodLineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ロッド×ライン</button>
         </div>
         <div id="tackleCombo" class="tackle-combo"></div>
       </section>
@@ -741,12 +738,21 @@
       <div id="gearReelPanel" hidden>
         <button type="button" class="btn btn-primary gear-register-btn" id="navShowReelForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> リールを登録</button>
 
-        <!-- Reel size & line comparison -->
+        <!-- Line reference -->
         <section class="panel chart-panel">
           <div class="section-header">
-            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
-            <button type="button" class="icon-btn" id="lineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン早見表</button>
+            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> ライン早見表</h2>
+            <div style="display:flex;gap:0.5rem;flex-shrink:0">
+              <button type="button" class="icon-btn" id="lineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン早見表</button>
+              <button type="button" class="icon-btn" id="lineLeaderInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン×リーダー</button>
+            </div>
           </div>
+          <p class="hint">使用ラインの号数から強度・種類の目安が分かります。PEラインを使う場合はリーダーの組み合わせも確認できます。</p>
+        </section>
+
+        <!-- Reel size & line comparison -->
+        <section class="panel chart-panel">
+          <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リールサイズ・ライン比較</h2>
           <p class="hint">円の大きさはリールサイズ（スプール径）の目安です。巻かれたラインの太さは号数を、色はラインの種類（紫〜ピンク=PEライン、黄色=ナイロンライン）を表します。リーダーが登録されている場合は外枠に破線リングを表示します（水色=フロロカーボン、黄色=ナイロン）。</p>
           <div id="reelSizeChart" class="reel-compare"></div>
         </section>
