@@ -1941,8 +1941,7 @@ function buildSpeciesGrid() {
 }
 
 function lureGearLabel(g) {
-  const suffix = g.type === 'egi' && g.egiSize ? ` ${g.egiSize}` : g.style ? ` (${g.style})` : '';
-  return g.name + suffix;
+  return g.name;
 }
 
 function buildLureSelectGrid() {
