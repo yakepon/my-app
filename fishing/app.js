@@ -618,7 +618,9 @@ function setAnalysisTab(tab) {
 function applyPriceMap(prices) {
   currentPrices = prices || [];
   priceMap = {};
-  currentPrices.forEach(p => { priceMap[p.species] = Number(p.price) || 0; });
+  currentPrices.forEach(p => {
+    if (Number(p.price) !== -1) priceMap[p.species] = Number(p.price) || 0;
+  });
 }
 
 async function loadAll() {
@@ -1900,8 +1902,13 @@ function populateDatalists() {
 // 組み込みの魚種リストに、単価設定で追加されたカスタム魚種を合わせたもの。
 // その他は常に末尾に固定する。
 function allSpeciesNames() {
-  const builtIn = SPECIES_LIST.filter(s => s !== 'その他');
-  const custom = new Set(currentPrices.map(p => p.species).filter(Boolean));
+  const hiddenSet = new Set(
+    currentPrices.filter(p => Number(p.price) === -1).map(p => p.species)
+  );
+  const builtIn = SPECIES_LIST.filter(s => s !== 'その他' && !hiddenSet.has(s));
+  const custom = new Set(
+    currentPrices.filter(p => Number(p.price) !== -1).map(p => p.species).filter(Boolean)
+  );
   builtIn.forEach(s => custom.delete(s));
   return [...builtIn, ...custom, 'その他'];
 }
@@ -1945,6 +1952,9 @@ function buildPriceGrid() {
                  data-species="${escapeHtml(name)}" value="${price}" placeholder="0">
           <span class="price-unit">/匹</span>
         </span>
+        <button type="button" class="price-delete-btn" data-species="${escapeHtml(name)}" title="削除">
+          <svg class="icon"><use href="#icon-trash"/></svg>
+        </button>
       </label>`;
   }).join('');
 }
@@ -1995,6 +2005,16 @@ async function onAddSpecies() {
 
   els.addSpeciesBtn.disabled = false;
   els.addSpeciesBtn.innerHTML = '<svg class="icon icon-inline"><use href="#icon-plus"/></svg>魚種を追加';
+}
+
+async function onDeleteSpecies(name) {
+  if (!confirm(`「${name}」を削除しますか？\n釣果入力の選択肢から消えます。`)) return;
+  const ok = await sendAction({ action: 'savePrice', species: name, price: -1 });
+  if (ok) {
+    els.priceStatus.textContent = `「${name}」を削除しました。`;
+    els.priceStatus.className = 'status ok';
+    await loadAll();
+  }
 }
 
 function updateSubmitState() {
@@ -4003,6 +4023,10 @@ function init() {
 
   els.savePrices.addEventListener('click', onSavePrices);
   els.addSpeciesBtn.addEventListener('click', onAddSpecies);
+  els.priceGrid.addEventListener('click', e => {
+    const btn = e.target.closest('.price-delete-btn');
+    if (btn) onDeleteSpecies(btn.dataset.species);
+  });
 
   // Event list clicks (events screen)
   els.eventsList.addEventListener('click', handleEventsClick);

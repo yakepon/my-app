@@ -1612,6 +1612,23 @@ form > textarea { margin-bottom: 0.6rem; }
 .price-yen { font-family: var(--font-body); font-weight: 700; font-size: 0.8rem; color: var(--warn); }
 .price-input { width: 5.5rem; padding: 0.4rem 0.5rem; text-align: right; font-family: var(--font-body); }
 .price-unit { font-size: 0.68rem; color: var(--ink-muted); white-space: nowrap; }
+.price-delete-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.price-delete-btn:hover { border-color: var(--danger); color: var(--danger); background: rgba(224,48,63,0.06); }
+.price-delete-btn .icon { width: 13px; height: 13px; }
 
 .add-species-row {
   display: flex;
