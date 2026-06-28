@@ -805,6 +805,15 @@
       <div id="gearEgiPanel" hidden>
         <button type="button" class="btn btn-primary gear-register-btn" id="navShowEgiForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> エギを登録</button>
 
+        <!-- Egi guide reference -->
+        <section class="panel chart-panel">
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-lure"/></svg> エギ選び早見表</h2>
+            <button type="button" class="icon-btn" id="egiGuideBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> 早見表</button>
+          </div>
+          <p class="hint">号数・シンカータイプ・カラーから状況に合ったエギの目安が分かります。</p>
+        </section>
+
         <!-- Egi size distribution -->
         <section class="panel chart-panel">
           <h2><svg class="icon icon-h2"><use href="#icon-lure"/></svg> 号数別 エギ数</h2>
@@ -1128,6 +1137,55 @@
 
       <div class="form-actions">
         <button type="button" class="btn" id="lineLeaderInfoClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Egi Guide Modal (エギ選び早見表) -->
+  <div id="egiGuideModal" class="modal" hidden>
+    <div class="modal-backdrop" id="egiGuideBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">エギ選び早見表（参考情報）</h3>
+      <p class="hint">メーカーや釣り場の状況によって差があります。あくまで目安としてご利用ください。</p>
+
+      <h4 class="line-info-subtitle">号数と重さ・主な用途</h4>
+      <table class="line-info-table">
+        <thead><tr><th>号数</th><th>重さの目安</th><th>主な対象 / 状況</th></tr></thead>
+        <tbody>
+          <tr><td>1.5号</td><td>約3〜4g</td><td>小型・秋ヤリイカ・シャローの繊細な誘い</td></tr>
+          <tr><td>2号</td><td>約6〜7g</td><td>秋アオリイカ（小型）・サイトフィッシング</td></tr>
+          <tr><td>2.5号</td><td>約10〜11g</td><td>秋アオリイカ・エギング入門の汎用サイズ</td></tr>
+          <tr><td>3号</td><td>約15〜18g</td><td>アオリイカ全般・最も汎用的なサイズ</td></tr>
+          <tr><td>3.5号</td><td>約20〜25g</td><td>アオリイカ（春・大型）・遠投が必要な場面</td></tr>
+          <tr><td>4号</td><td>約25〜30g</td><td>春の大型アオリイカ・深場・流れが速い場所</td></tr>
+          <tr><td>4.5号</td><td>約35g〜</td><td>大型狙い・激流・深場の攻略</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">シンカータイプ（沈下速度）の目安</h4>
+      <table class="line-info-table">
+        <thead><tr><th>タイプ</th><th>沈下速度の目安</th><th>適した状況</th></tr></thead>
+        <tbody>
+          <tr><td>スーパーシャロー</td><td>3〜5秒/m</td><td>浅場（〜2m）・藻場・根掛かり回避</td></tr>
+          <tr><td>シャロー</td><td>2〜3秒/m</td><td>浅場（〜5m）・スローな誘い・表層狙い</td></tr>
+          <tr><td>ベーシック（標準）</td><td>1〜2秒/m</td><td>汎用（5〜15m）・標準的なエギング</td></tr>
+          <tr><td>ディープ / ファスト</td><td>0.5〜1秒/m</td><td>深場（15m〜）・潮流が速い場所</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">カラー選びの目安</h4>
+      <table class="line-info-table">
+        <thead><tr><th>状況</th><th>おすすめカラー</th></tr></thead>
+        <tbody>
+          <tr><td>晴天・澄み潮</td><td>ナチュラル（クリア・シルバー・ブルー系）</td></tr>
+          <tr><td>曇り・薄濁り</td><td>オレンジ・ピンク・赤テープ系</td></tr>
+          <tr><td>濁り・雨後</td><td>ゴールド・夜光（グロー）・マーブル系</td></tr>
+          <tr><td>夜間</td><td>夜光（グロー）・赤・ピンクグロー系</td></tr>
+        </tbody>
+      </table>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="egiGuideClose">閉じる</button>
       </div>
     </div>
   </div>
