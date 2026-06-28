@@ -76,8 +76,11 @@ const els = {
   eventPhotoInput:    document.getElementById('eventPhotoInput'),
   eventPhotoSlots:    document.getElementById('eventPhotoSlots'),
   eventPhotoAddLabel: document.getElementById('eventPhotoAddLabel'),
-  catchSubmitBtn: document.getElementById('catchSubmitBtn'),
-  catchesList:    document.getElementById('catchesList'),
+  catchSubmitBtn:  document.getElementById('catchSubmitBtn'),
+  catchesList:     document.getElementById('catchesList'),
+  lureSelectRow:   document.getElementById('lureSelectRow'),
+  lureSelectBtns:  document.getElementById('lureSelectBtns'),
+  lureSelectInput: document.getElementById('lureSelectInput'),
   statTotalCatch:   document.getElementById('statTotalCatch'),
   statYearlyCatch:  document.getElementById('statYearlyCatch'),
   statTotalCost:    document.getElementById('statTotalCost'),
@@ -189,6 +192,7 @@ let priceMap       = {}; // species -> 円/匹
 let activeEvent    = null;
 let selectedSpecies = '';
 let selectedCount   = 0;
+let selectedLure    = '';
 let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let gearTab        = 'rod'; // 'rod' | 'reel' | 'lure'
@@ -719,6 +723,7 @@ function renderAll() {
   populateDatalists();
   buildPriceGrid();
   buildSpeciesGrid();
+  buildLureSelectGrid();
   renderGearLists();
   // Refresh catch screen if currently visible
   if (currentScreen === 'catches' && activeEvent) {
@@ -1910,6 +1915,23 @@ function buildSpeciesGrid() {
   }).join('');
 }
 
+function buildLureSelectGrid() {
+  const items = currentGears.filter(g => g.type === 'lure' || g.type === 'egi');
+  els.lureSelectRow.hidden = items.length === 0;
+  if (!items.length) return;
+  els.lureSelectBtns.innerHTML = items.map(g => {
+    const suffix = g.type === 'egi' && g.egiSize ? ` ${g.egiSize}` : g.style ? ` (${g.style})` : '';
+    const label = g.name + suffix;
+    return `<button type="button" class="layer-btn lure-select-btn" data-lure="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+  }).join('');
+}
+
+function resetLureSelection() {
+  selectedLure = '';
+  els.lureSelectInput.value = '';
+  document.querySelectorAll('.lure-select-btn').forEach(b => b.classList.remove('selected'));
+}
+
 // ── Species unit price grid（単価設定） ─────────────────────────
 function buildPriceGrid() {
   els.priceGrid.innerHTML = allSpeciesNames().filter(name => name !== 'その他').map(name => {
@@ -2028,6 +2050,7 @@ function resetQuickForm() {
   resetCountSelection();
   clearPhotoInput();
   resetLayerSelection();
+  resetLureSelection();
   updateSubmitState();
 }
 
@@ -2046,7 +2069,7 @@ async function onQuickCatchSubmit(e) {
     count:   String(selectedCount),
     size:    '',
     weight:  '',
-    lure:    '',
+    lure:    selectedLure,
     point:   '',
     layer:   els.layerInput.value,
     memo:    '',
@@ -4035,6 +4058,23 @@ function init() {
     } else {
       btn.classList.add('selected');
       els.layerInput.value = layer;
+    }
+  });
+
+  // Lure / egi select buttons
+  els.lureSelectBtns.addEventListener('click', e => {
+    const btn = e.target.closest('.lure-select-btn');
+    if (!btn) return;
+    const lure = btn.dataset.lure;
+    const alreadySelected = btn.classList.contains('selected');
+    document.querySelectorAll('.lure-select-btn').forEach(b => b.classList.remove('selected'));
+    if (alreadySelected) {
+      selectedLure = '';
+      els.lureSelectInput.value = '';
+    } else {
+      btn.classList.add('selected');
+      selectedLure = lure;
+      els.lureSelectInput.value = lure;
     }
   });
 
