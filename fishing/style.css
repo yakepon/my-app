@@ -787,6 +787,21 @@ main, header, footer, section { position: relative; z-index: 2; }
   box-shadow: 0 8px 18px -8px rgba(255,45,149,0.5);
   transform: scale(1.05);
 }
+.event-lure-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.3rem;
+}
+.event-lure-btn:not(:has(.event-lure-thumb)) { padding: 0.5rem 0.9rem; }
+.event-lure-thumb {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 5px;
+  flex-shrink: 0;
+  display: block;
+}
 
 /* ── Photo upload ───────────────────────────────────────────── */
 .photo-file-input { display: none; }

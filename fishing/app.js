@@ -1965,7 +1965,10 @@ function buildEventLureSelect() {
   els.eventLureSelectBtns.innerHTML = items.map(g => {
     const label = lureGearLabel(g);
     const sel = eventLureIds.includes(g.id);
-    return `<button type="button" class="layer-btn event-lure-btn${sel ? ' selected' : ''}" data-gear-id="${escapeHtml(g.id)}" data-label="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+    const thumb = g.photo
+      ? `<img class="event-lure-thumb" src="${escapeHtml(g.photo)}" alt="">`
+      : '';
+    return `<button type="button" class="layer-btn event-lure-btn${sel ? ' selected' : ''}" data-gear-id="${escapeHtml(g.id)}" data-label="${escapeHtml(label)}">${thumb}<span>${escapeHtml(label)}</span></button>`;
   }).join('');
 }
 
