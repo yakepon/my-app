@@ -1453,6 +1453,7 @@ form > textarea { margin-bottom: 0.6rem; }
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
 .icon-btn.delete-catch-btn:hover { color: var(--danger); border-color: var(--danger); }

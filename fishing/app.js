@@ -3612,8 +3612,10 @@ async function handleGearListClick(e) {
   const id = btn.dataset.id;
 
   if (btn.classList.contains('frequent-btn')) {
+    if (btn.disabled) return;
     const g = currentGears.find(g => g.id === id);
     if (!g) return;
+    btn.disabled = true;
     await sendAction({ ...g, action: 'updateGear', frequent: g.frequent === '1' ? '' : '1' });
     await loadAll();
     return;
