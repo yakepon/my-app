@@ -121,6 +121,10 @@ const els = {
   lureLineInfoModal:    document.getElementById('lureLineInfoModal'),
   lureLineInfoClose:    document.getElementById('lureLineInfoClose'),
   lureLineInfoBackdrop: document.getElementById('lureLineInfoBackdrop'),
+  rodGuideBtn:      document.getElementById('rodGuideBtn'),
+  rodGuideModal:    document.getElementById('rodGuideModal'),
+  rodGuideClose:    document.getElementById('rodGuideClose'),
+  rodGuideBackdrop: document.getElementById('rodGuideBackdrop'),
   rodLineInfoBtn:      document.getElementById('rodLineInfoBtn'),
   rodLineInfoModal:    document.getElementById('rodLineInfoModal'),
   rodLineInfoClose:    document.getElementById('rodLineInfoClose'),
@@ -3660,6 +3664,16 @@ function closeLureLineInfoModal() {
   document.body.style.overflow = '';
 }
 
+function openRodGuideModal() {
+  els.rodGuideModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRodGuideModal() {
+  els.rodGuideModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
 function openRodLineInfoModal() {
   els.rodLineInfoModal.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -4212,6 +4226,9 @@ function init() {
   els.lureLineInfoBtn.addEventListener('click', openLureLineInfoModal);
   els.lureLineInfoClose.addEventListener('click', closeLureLineInfoModal);
   els.lureLineInfoBackdrop.addEventListener('click', closeLureLineInfoModal);
+  els.rodGuideBtn.addEventListener('click', openRodGuideModal);
+  els.rodGuideClose.addEventListener('click', closeRodGuideModal);
+  els.rodGuideBackdrop.addEventListener('click', closeRodGuideModal);
   els.rodLineInfoBtn.addEventListener('click', openRodLineInfoModal);
   els.rodLineInfoClose.addEventListener('click', closeRodLineInfoModal);
   els.rodLineInfoBackdrop.addEventListener('click', closeRodLineInfoModal);

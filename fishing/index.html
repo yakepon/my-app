@@ -713,6 +713,15 @@
       <div id="gearRodPanel">
         <button type="button" class="btn btn-primary gear-register-btn" id="navShowRodForm"><svg class="icon icon-inline"><use href="#icon-plus"/></svg> ロッドを登録</button>
 
+        <!-- Rod guide reference -->
+        <section class="panel chart-panel">
+          <div class="section-header">
+            <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド選び早見表</h2>
+            <button type="button" class="icon-btn" id="rodGuideBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> 早見表</button>
+          </div>
+          <p class="hint">長さや硬さ（パワー）から釣り方・対象魚の目安が分かります。</p>
+        </section>
+
         <!-- Rod length comparison -->
         <section class="panel chart-panel">
           <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> 全長比較</h2>
@@ -1113,6 +1122,60 @@
 
       <div class="form-actions">
         <button type="button" class="btn" id="lineLeaderInfoClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rod Guide Modal (ロッド選び早見表) -->
+  <div id="rodGuideModal" class="modal" hidden>
+    <div class="modal-backdrop" id="rodGuideBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">ロッド選び早見表（参考情報）</h3>
+      <p class="hint">メーカーや釣り方によって差があります。あくまで目安としてご利用ください。</p>
+
+      <h4 class="line-info-subtitle">長さ別の用途</h4>
+      <table class="line-info-table">
+        <thead><tr><th>全長の目安</th><th>主な釣り方</th><th>特徴</th></tr></thead>
+        <tbody>
+          <tr><td>〜1.8m</td><td>アジング・メバリング・管釣り</td><td>手元感度◎。近距離の繊細な操作向き</td></tr>
+          <tr><td>1.8〜2.4m</td><td>エギング・バス・ライトロック</td><td>取り回しと飛距離のバランス型</td></tr>
+          <tr><td>2.4〜3.0m</td><td>シーバス・ライトジギング・サーフ</td><td>遠投と感度を両立。ランガン向き</td></tr>
+          <tr><td>3.0〜4.5m</td><td>投げ釣り・チヌ・フカセ・磯（グレ）</td><td>堤防・磯の遠投釣り全般</td></tr>
+          <tr><td>4.5m〜</td><td>磯大物・のべ竿スタイル</td><td>足場の高い磯での取り込み重視</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">硬さ（パワー）の目安</h4>
+      <table class="line-info-table">
+        <thead><tr><th>表記</th><th>読み</th><th>適合ルアー重さ目安</th><th>主な対象・釣り方</th></tr></thead>
+        <tbody>
+          <tr><td>UL</td><td>ウルトラライト</td><td>〜5g</td><td>管釣りトラウト・アジ・メバル</td></tr>
+          <tr><td>L</td><td>ライト</td><td>〜10g</td><td>アジング・メバリング・エリアトラウト</td></tr>
+          <tr><td>ML</td><td>ミディアムライト</td><td>〜20g</td><td>エギング（2〜3号）・ライトシーバス</td></tr>
+          <tr><td>M</td><td>ミディアム</td><td>〜30g</td><td>シーバス・エギング・バス</td></tr>
+          <tr><td>MH</td><td>ミディアムヘビー</td><td>〜50g</td><td>ショアジギング・ヒラスズキ</td></tr>
+          <tr><td>H</td><td>ヘビー</td><td>〜80g</td><td>青物ショアジギング・ロックフィッシュ</td></tr>
+          <tr><td>XH</td><td>エクストラヘビー</td><td>100g〜</td><td>GT・大型青物</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">号数（錘負荷）の目安</h4>
+      <table class="line-info-table">
+        <thead><tr><th>錘負荷（号）</th><th>重さの目安</th><th>主な釣り方</th></tr></thead>
+        <tbody>
+          <tr><td>0.3〜0.8号</td><td>1〜3g</td><td>アジング・メバリング</td></tr>
+          <tr><td>1〜2号</td><td>4〜8g</td><td>エギング（1.5〜2号エギ）・トラウト</td></tr>
+          <tr><td>3〜5号</td><td>11〜19g</td><td>エギング（3〜3.5号エギ）・ライトシーバス</td></tr>
+          <tr><td>5〜10号</td><td>19〜38g</td><td>シーバス・ちょい投げ</td></tr>
+          <tr><td>10〜20号</td><td>38〜75g</td><td>投げ釣り・ライトショアジギング</td></tr>
+          <tr><td>20〜50号</td><td>75〜188g</td><td>遠投投げ・ショアジギング</td></tr>
+          <tr><td>50号〜</td><td>188g〜</td><td>磯大物・船釣り</td></tr>
+        </tbody>
+      </table>
+      <p class="hint">※ 1号 = 3.75g。ルアーロッドはg表記が多く、エギングロッドはエギ号数で表記されることが多いです。</p>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="rodGuideClose">閉じる</button>
       </div>
     </div>
   </div>
