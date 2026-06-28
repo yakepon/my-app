@@ -2636,6 +2636,17 @@ function compatibleReelNames(lureWeight) {
     .map(r => r.name || '-');
 }
 
+function lureCatchCount(name) {
+  return currentCatches
+    .filter(c => c.lure === name)
+    .reduce((sum, c) => sum + (Number(c.count) || 1), 0);
+}
+
+function lureCatchBadgeHtml(name) {
+  const n = lureCatchCount(name);
+  return n > 0 ? `<span class="lure-catch-badge">${n}匹</span>` : '';
+}
+
 function lureRowHtml(g) {
   const photo  = gearPhotoSlots(g)[0];
   const weight = g.selfWeight !== '' && g.selfWeight != null ? Number(g.selfWeight) : null;
@@ -2653,6 +2664,7 @@ function lureRowHtml(g) {
         <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
         <span class="gear-name">${escapeHtml(g.name || '-')}</span>
         <div class="gear-actions">
+          ${lureCatchBadgeHtml(g.name)}
           <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>
@@ -2680,6 +2692,7 @@ function egiRowHtml(g) {
         <span class="gear-name">${escapeHtml(g.name || '-')}</span>
         ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
         <div class="gear-actions">
+          ${lureCatchBadgeHtml(g.name)}
           <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>

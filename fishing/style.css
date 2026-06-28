@@ -1219,7 +1219,8 @@ form > textarea { margin-bottom: 0.6rem; }
 .lure-row:hover { background: var(--surface-2); }
 .lure-row:last-child { border-bottom: none; }
 .lure-row-head { display: flex; align-items: center; gap: 0.5rem; }
-.lure-row-head .gear-actions { margin-left: auto; }
+.lure-row-head .gear-actions { margin-left: auto; display: flex; align-items: center; gap: 0.4rem; }
+.lure-catch-badge { font-size: 0.7rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .lure-photo.gear-thumb {
   width: 140px;
   height: 140px;
