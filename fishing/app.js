@@ -81,6 +81,9 @@ const els = {
   lureSelectRow:   document.getElementById('lureSelectRow'),
   lureSelectBtns:  document.getElementById('lureSelectBtns'),
   lureSelectInput: document.getElementById('lureSelectInput'),
+  eventLureSelectRow:  document.getElementById('eventLureSelectRow'),
+  eventLureSelectBtns: document.getElementById('eventLureSelectBtns'),
+  catchEditLureSelect: document.getElementById('catchEditLureSelect'),
   statTotalCatch:   document.getElementById('statTotalCatch'),
   statYearlyCatch:  document.getElementById('statYearlyCatch'),
   statTotalCost:    document.getElementById('statTotalCost'),
@@ -205,6 +208,7 @@ let activeEvent    = null;
 let selectedSpecies = '';
 let selectedCount   = 0;
 let selectedLure    = '';
+let eventLureIds    = []; // 釣行フォームで選択中のルアー/エギのgear ID配列
 let pendingPhotoDataUrl = null;
 let currentScreen  = 'events'; // 'events' | 'catches' | 'gear'
 let gearTab        = 'rod'; // 'rod' | 'reel' | 'lure'
@@ -341,7 +345,7 @@ function mockExec(payload) {
   const { events, catches, prices, gears } = mockLoad();
   const { action, id } = payload;
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
-  const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3'];
+  const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'lures'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
   const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'leaderType', 'leaderSize', 'leaderLength', 'color', 'pairedReelId', 'egiSize', 'egiSinkType'];
 
@@ -570,6 +574,7 @@ function showCatchScreen(ev) {
   els.navShowLureForm.hidden = true;
   els.navShowEgiForm.hidden  = true;
   resetQuickForm();
+  buildLureSelectGrid();
   renderEventBanner();
   renderEventCatches();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -738,6 +743,7 @@ function renderAll() {
   buildPriceGrid();
   buildSpeciesGrid();
   buildLureSelectGrid();
+  buildEventLureSelect();
   renderGearLists();
   // Refresh catch screen if currently visible
   if (currentScreen === 'catches' && activeEvent) {
@@ -1934,14 +1940,32 @@ function buildSpeciesGrid() {
   }).join('');
 }
 
+function lureGearLabel(g) {
+  const suffix = g.type === 'egi' && g.egiSize ? ` ${g.egiSize}` : g.style ? ` (${g.style})` : '';
+  return g.name + suffix;
+}
+
 function buildLureSelectGrid() {
-  const items = currentGears.filter(g => g.type === 'lure' || g.type === 'egi');
+  const lureIds = activeEvent && activeEvent.lures
+    ? activeEvent.lures.split(',').filter(Boolean)
+    : [];
+  const items = currentGears.filter(g => lureIds.includes(g.id));
   els.lureSelectRow.hidden = items.length === 0;
   if (!items.length) return;
   els.lureSelectBtns.innerHTML = items.map(g => {
-    const suffix = g.type === 'egi' && g.egiSize ? ` ${g.egiSize}` : g.style ? ` (${g.style})` : '';
-    const label = g.name + suffix;
+    const label = lureGearLabel(g);
     return `<button type="button" class="layer-btn lure-select-btn" data-lure="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+  }).join('');
+}
+
+function buildEventLureSelect() {
+  const items = currentGears.filter(g => g.type === 'lure' || g.type === 'egi');
+  els.eventLureSelectRow.hidden = items.length === 0;
+  if (!items.length) return;
+  els.eventLureSelectBtns.innerHTML = items.map(g => {
+    const label = lureGearLabel(g);
+    const sel = eventLureIds.includes(g.id);
+    return `<button type="button" class="layer-btn event-lure-btn${sel ? ' selected' : ''}" data-gear-id="${escapeHtml(g.id)}" data-label="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
   }).join('');
 }
 
@@ -2196,6 +2220,9 @@ function enterEventEditMode(ev) {
   els.eventFormTitle.textContent  = '釣行を編集';
   els.eventSubmitBtn.textContent  = '更新する';
 
+  eventLureIds = ev.lures ? ev.lures.split(',').filter(Boolean) : [];
+  buildEventLureSelect();
+
   eventPhotoState = makeEmptyEventPhotoState();
   eventPhotoState.forEach(slot => {
     slot.url = ev[slot.field]   || '';
@@ -2212,6 +2239,8 @@ function exitEventEditMode() {
   els.eventForm.elements['id'].value      = '';
   els.eventFormTitle.textContent  = '釣行を登録';
   els.eventSubmitBtn.textContent  = '登録する';
+  eventLureIds = [];
+  buildEventLureSelect();
   resetEventPhotoState();
 }
 
@@ -2233,6 +2262,7 @@ async function onEventSubmit(e) {
     memo:    fd.get('memo'),
     startTime: fd.get('startTime') || '',
     endTime:   fd.get('endTime')   || '',
+    lures:     eventLureIds.join(','),
   };
 
   els.eventSubmitBtn.disabled = true;
@@ -3619,6 +3649,17 @@ function resetEditPhotoState() {
   els.editPhotoThumb.src = '';
 }
 
+function populateCatchEditLureSelect(currentLure) {
+  const lureIds = activeEvent && activeEvent.lures
+    ? activeEvent.lures.split(',').filter(Boolean)
+    : [];
+  const items = currentGears.filter(g => lureIds.includes(g.id));
+  const labels = items.map(lureGearLabel);
+  if (currentLure && !labels.includes(currentLure)) labels.unshift(currentLure);
+  els.catchEditLureSelect.innerHTML = '<option value="">─</option>' +
+    labels.map(l => `<option value="${escapeHtml(l)}"${l === currentLure ? ' selected' : ''}>${escapeHtml(l)}</option>`).join('');
+}
+
 function openCatchModal(c) {
   const f = els.catchEditForm;
   f.elements['id'].value      = c.id;
@@ -3630,7 +3671,7 @@ function openCatchModal(c) {
   f.elements['count'].value   = c.count   || '';
   f.elements['size'].value    = c.size    || '';
   f.elements['weight'].value  = c.weight  || '';
-  f.elements['lure'].value    = c.lure    || '';
+  populateCatchEditLureSelect(c.lure || '');
   f.elements['point'].value   = c.point   || '';
   f.elements['layer'].value   = c.layer   || '';
   f.elements['memo'].value    = c.memo    || '';
@@ -4127,7 +4168,7 @@ function init() {
     }
   });
 
-  // Lure / egi select buttons
+  // Lure / egi select buttons (釣果入力フォーム)
   els.lureSelectBtns.addEventListener('click', e => {
     const btn = e.target.closest('.lure-select-btn');
     if (!btn) return;
@@ -4141,6 +4182,21 @@ function init() {
       btn.classList.add('selected');
       selectedLure = lure;
       els.lureSelectInput.value = lure;
+    }
+  });
+
+  // Lure / egi select buttons (釣行フォーム — 最大10個)
+  els.eventLureSelectBtns.addEventListener('click', e => {
+    const btn = e.target.closest('.event-lure-btn');
+    if (!btn) return;
+    const gearId = btn.dataset.gearId;
+    const idx = eventLureIds.indexOf(gearId);
+    if (idx >= 0) {
+      eventLureIds.splice(idx, 1);
+      btn.classList.remove('selected');
+    } else if (eventLureIds.length < 10) {
+      eventLureIds.push(gearId);
+      btn.classList.add('selected');
     }
   });
 

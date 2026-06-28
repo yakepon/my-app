@@ -386,6 +386,12 @@
 
           <datalist id="spotList"></datalist>
           <datalist id="targetList"></datalist>
+
+          <div id="eventLureSelectRow" class="layer-row" hidden>
+            <span class="count-label">持参ルアー / エギ（最大10個）</span>
+            <div class="layer-btns" id="eventLureSelectBtns"></div>
+          </div>
+
           <div class="form-actions">
             <button type="submit" class="btn btn-primary" id="eventSubmitBtn">登録する</button>
             <button type="button" class="btn" id="cancelEventEdit">キャンセル</button>
@@ -912,7 +918,9 @@
             <input type="number" name="weight" min="0">
           </label>
           <label>ルアー / エサ
-            <input type="text" name="lure">
+            <select name="lure" id="catchEditLureSelect">
+              <option value="">─</option>
+            </select>
           </label>
           <label>ポイント
             <input type="text" name="point">
