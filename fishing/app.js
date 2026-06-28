@@ -3615,9 +3615,13 @@ async function handleGearListClick(e) {
     if (btn.disabled) return;
     const g = currentGears.find(g => g.id === id);
     if (!g) return;
+    const next = g.frequent === '1' ? '' : '1';
+    btn.classList.toggle('selected', next === '1');
     btn.disabled = true;
-    await sendAction({ ...g, action: 'updateGear', frequent: g.frequent === '1' ? '' : '1' });
-    await loadAll();
+    try {
+      const ok = await sendAction({ ...g, action: 'updateGear', frequent: next });
+      if (ok) { await loadAll(); } else { btn.classList.toggle('selected', g.frequent === '1'); btn.disabled = false; }
+    } catch { btn.classList.toggle('selected', g.frequent === '1'); btn.disabled = false; }
     return;
   }
 
