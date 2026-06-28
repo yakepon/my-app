@@ -2650,9 +2650,9 @@ function lureRowHtml(g) {
   return `
     <div class="lure-row">
       <div class="lure-row-head">
+        <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
         <span class="gear-name">${escapeHtml(g.name || '-')}</span>
         <div class="gear-actions">
-          <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
           <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>
@@ -2676,10 +2676,10 @@ function egiRowHtml(g) {
   return `
     <div class="lure-row">
       <div class="lure-row-head">
+        <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
         <span class="gear-name">${escapeHtml(g.name || '-')}</span>
         ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
         <div class="gear-actions">
-          <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
           <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>
