@@ -55,6 +55,10 @@
         <span class="stat-value" id="statAvg">--</span>
         <span class="stat-label">AVG KCAL</span>
       </div>
+      <div class="stat-card stat-card-cancel">
+        <span class="stat-value" id="statCancel">--</span>
+        <span class="stat-label">TOTAL CANCEL</span>
+      </div>
     </section>
 
     <section class="panel chart-panel">
@@ -87,6 +91,16 @@
       <h2 id="formTitle">記録を追加</h2>
       <form id="recordForm">
         <input type="hidden" name="id">
+        <div class="type-toggle">
+          <label class="type-opt">
+            <input type="radio" name="type" value="ride" checked>
+            <span class="type-label">ライド</span>
+          </label>
+          <label class="type-opt cancel-opt">
+            <input type="radio" name="type" value="cancel">
+            <span class="type-label">無断キャンセル</span>
+          </label>
+        </div>
         <div class="form-grid">
           <label>日時
             <input type="datetime-local" name="datetime" required>
@@ -106,9 +120,11 @@
           <label>インストラクター
             <input type="text" name="instructor" list="instructorList" placeholder="例: Yuki">
           </label>
-          <label>消費カロリー
-            <input type="number" name="calories" min="0" placeholder="例: 450">
-          </label>
+          <div id="caloriesField">
+            <label>消費カロリー
+              <input type="number" name="calories" min="0" placeholder="例: 450">
+            </label>
+          </div>
         </div>
         <label class="memo-field">メモ
           <textarea name="memo" rows="2" placeholder="感想やフリーメモ"></textarea>

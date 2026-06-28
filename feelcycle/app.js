@@ -9,10 +9,12 @@ const els = {
   statCount: document.getElementById('statCount'),
   statMonthly: document.getElementById('statMonthly'),
   statAvg: document.getElementById('statAvg'),
+  statCancel: document.getElementById('statCancel'),
   form: document.getElementById('recordForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitBtn'),
   cancelEdit: document.getElementById('cancelEdit'),
+  caloriesField: document.getElementById('caloriesField'),
   recordsList: document.getElementById('recordsList'),
   trendChart: document.getElementById('trendChart'),
   categoryChart: document.getElementById('categoryChart'),
@@ -45,6 +47,10 @@ function setGasUrl(url) {
 function setStatus(message, state) {
   els.connStatus.textContent = message;
   els.connStatus.className = 'status' + (state ? ' ' + state : '');
+}
+
+function setFormType(type) {
+  els.caloriesField.hidden = type === 'cancel';
 }
 
 function escapeHtml(str) {
@@ -90,13 +96,16 @@ async function loadRecords() {
 function renderRecords(records) {
   const sorted = [...records].sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
-  const count = sorted.length;
-  const calRecords = sorted.filter((r) => r.calories !== '' && r.calories != null && !isNaN(Number(r.calories)));
+  const rideRecords = sorted.filter((r) => !r.type || r.type === 'ride');
+  const cancelRecords = sorted.filter((r) => r.type === 'cancel');
+
+  const count = rideRecords.length;
+  const calRecords = rideRecords.filter((r) => r.calories !== '' && r.calories != null && !isNaN(Number(r.calories)));
   const totalCal = calRecords.reduce((sum, r) => sum + Number(r.calories), 0);
   const avgCal = calRecords.length ? Math.round(totalCal / calRecords.length) : 0;
 
   const now = new Date();
-  const monthlyCount = sorted.filter((r) => {
+  const monthlyCount = rideRecords.filter((r) => {
     const d = new Date(r.datetime);
     return !isNaN(d.getTime()) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   }).length;
@@ -104,11 +113,12 @@ function renderRecords(records) {
   els.statCount.textContent = count;
   els.statMonthly.textContent = monthlyCount;
   els.statAvg.textContent = avgCal;
+  els.statCancel.textContent = cancelRecords.length;
 
   renderCharts(sorted);
   populateDatalists(sorted);
 
-  if (count === 0) {
+  if (sorted.length === 0) {
     els.recordsList.innerHTML = '<p class="empty">まだ記録がありません。最初のライドを記録しましょう。</p>';
     return;
   }
@@ -116,12 +126,15 @@ function renderRecords(records) {
   const visible = sorted.slice(0, recordsLimit);
   const remaining = sorted.length - visible.length;
 
-  els.recordsList.innerHTML = visible.map((r) => `
-    <article class="record-card">
+  els.recordsList.innerHTML = visible.map((r) => {
+    const isCancel = r.type === 'cancel';
+    return `
+    <article class="record-card${isCancel ? ' record-card-cancel' : ''}">
       <div class="record-main">
         <span class="record-date">${formatDate(r.datetime)}</span>
         <h3 class="record-program">${escapeHtml(r.program || '-')}</h3>
         <div class="record-meta">
+          ${isCancel ? '<span class="badge-cancel">無断キャンセル</span>' : ''}
           ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
           ${r.studio ? `<span class="meta-item">${escapeHtml(r.studio)}</span>` : ''}
           ${r.bikeNo ? `<span class="meta-item">No.${escapeHtml(r.bikeNo)}</span>` : ''}
@@ -129,16 +142,18 @@ function renderRecords(records) {
         </div>
         ${r.memo ? `<p class="record-memo">${escapeHtml(r.memo)}</p>` : ''}
       </div>
+      ${!isCancel ? `
       <div class="record-calories">
         <span class="cal-value">${r.calories || '-'}</span>
         <span class="cal-unit">KCAL</span>
-      </div>
+      </div>` : ''}
       <div class="record-actions">
         <button type="button" class="icon-btn edit-btn" data-id="${escapeHtml(r.id)}">編集</button>
         <button type="button" class="icon-btn delete-btn" data-id="${escapeHtml(r.id)}">削除</button>
       </div>
     </article>
-  `).join('') + (remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : '');
+  `;
+  }).join('') + (remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : '');
 }
 
 function chartAxisOptions() {
@@ -156,10 +171,11 @@ function chartAxisOptions() {
 }
 
 function renderCharts(records) {
+  const rideRecords = records.filter((r) => !r.type || r.type === 'ride');
   renderTrendChart(records);
-  renderCategoryChart(records);
-  renderInstructorChart(records);
-  renderHeatmap(records);
+  renderCategoryChart(rideRecords);
+  renderInstructorChart(rideRecords);
+  renderHeatmap(rideRecords);
 }
 
 const DATALIST_FIELDS = {
@@ -179,12 +195,17 @@ function populateDatalists(records) {
 }
 
 function renderTrendChart(records) {
-  const counts = {};
+  const rideCounts = {};
+  const cancelCounts = {};
   records.forEach((r) => {
     const d = new Date(r.datetime);
     if (isNaN(d.getTime())) return;
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    counts[key] = (counts[key] || 0) + 1;
+    if (r.type === 'cancel') {
+      cancelCounts[key] = (cancelCounts[key] || 0) + 1;
+    } else {
+      rideCounts[key] = (rideCounts[key] || 0) + 1;
+    }
   });
 
   const now = new Date();
@@ -198,25 +219,51 @@ function renderTrendChart(records) {
   if (!records.length) return;
 
   trendChart = new Chart(els.trendChart, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: months.map((key) => `${key.slice(2, 4)}/${key.slice(5)}`),
-      datasets: [{
-        label: '受講回数',
-        data: months.map((key) => counts[key] || 0),
-        borderColor: '#00e5ff',
-        backgroundColor: 'rgba(0, 229, 255, 0.15)',
-        pointBackgroundColor: '#00e5ff',
-        pointBorderColor: '#00e5ff',
-        tension: 0.35,
-        fill: true,
-        pointRadius: 3,
-      }],
+      datasets: [
+        {
+          type: 'line',
+          label: '受講',
+          data: months.map((key) => rideCounts[key] || 0),
+          borderColor: '#00e5ff',
+          backgroundColor: 'rgba(0, 229, 255, 0.15)',
+          pointBackgroundColor: '#00e5ff',
+          pointBorderColor: '#00e5ff',
+          tension: 0.35,
+          fill: true,
+          pointRadius: 3,
+          order: 1,
+        },
+        {
+          type: 'bar',
+          label: '無断キャンセル',
+          data: months.map((key) => cancelCounts[key] || 0),
+          backgroundColor: 'rgba(255, 46, 126, 0.65)',
+          borderColor: '#ff2e7e',
+          borderWidth: 1,
+          borderRadius: 4,
+          maxBarThickness: 24,
+          order: 2,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: '#8a8aa3',
+            font: { family: 'JetBrains Mono', size: 11 },
+            usePointStyle: true,
+            boxWidth: 12,
+            padding: 16,
+          },
+        },
+      },
       scales: chartAxisOptions(),
     },
   });
@@ -390,6 +437,10 @@ function enterEditMode(record) {
   els.form.calories.value = record.calories || '';
   els.form.memo.value = record.memo || '';
 
+  const type = record.type || 'ride';
+  els.form.querySelectorAll('input[name="type"]').forEach((radio) => { radio.checked = radio.value === type; });
+  setFormType(type);
+
   els.formTitle.textContent = '記録を編集';
   els.submitBtn.textContent = '更新する';
   els.cancelEdit.hidden = false;
@@ -402,6 +453,7 @@ function exitEditMode() {
   els.formTitle.textContent = '記録を追加';
   els.submitBtn.textContent = '記録する';
   els.cancelEdit.hidden = true;
+  setFormType('ride');
 }
 
 function onEdit(id) {
@@ -454,6 +506,7 @@ async function onSubmit(e) {
     instructor: formData.get('instructor'),
     calories: formData.get('calories'),
     memo: formData.get('memo'),
+    type: formData.get('type') || 'ride',
   };
 
   els.submitBtn.disabled = true;
@@ -503,6 +556,9 @@ function init() {
 
   els.form.addEventListener('submit', onSubmit);
   els.cancelEdit.addEventListener('click', exitEditMode);
+  els.form.addEventListener('change', (e) => {
+    if (e.target.name === 'type') setFormType(e.target.value);
+  });
 
   els.searchBtn.addEventListener('click', performSearch);
 

@@ -1,5 +1,5 @@
 const SHEET_NAME = 'records';
-const HEADERS = ['id', 'datetime', 'studio', 'bikeNo', 'category', 'program', 'instructor', 'calories', 'memo'];
+const HEADERS = ['id', 'datetime', 'studio', 'bikeNo', 'category', 'program', 'instructor', 'calories', 'memo', 'type'];
 
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
