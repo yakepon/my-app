@@ -121,6 +121,10 @@ const els = {
   lureLineInfoModal:    document.getElementById('lureLineInfoModal'),
   lureLineInfoClose:    document.getElementById('lureLineInfoClose'),
   lureLineInfoBackdrop: document.getElementById('lureLineInfoBackdrop'),
+  reelGuideBtn:      document.getElementById('reelGuideBtn'),
+  reelGuideModal:    document.getElementById('reelGuideModal'),
+  reelGuideClose:    document.getElementById('reelGuideClose'),
+  reelGuideBackdrop: document.getElementById('reelGuideBackdrop'),
   egiGuideBtn:      document.getElementById('egiGuideBtn'),
   egiGuideModal:    document.getElementById('egiGuideModal'),
   egiGuideClose:    document.getElementById('egiGuideClose'),
@@ -3668,6 +3672,16 @@ function closeLureLineInfoModal() {
   document.body.style.overflow = '';
 }
 
+function openReelGuideModal() {
+  els.reelGuideModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReelGuideModal() {
+  els.reelGuideModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
 function openEgiGuideModal() {
   els.egiGuideModal.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -4240,6 +4254,9 @@ function init() {
   els.lureLineInfoBtn.addEventListener('click', openLureLineInfoModal);
   els.lureLineInfoClose.addEventListener('click', closeLureLineInfoModal);
   els.lureLineInfoBackdrop.addEventListener('click', closeLureLineInfoModal);
+  els.reelGuideBtn.addEventListener('click', openReelGuideModal);
+  els.reelGuideClose.addEventListener('click', closeReelGuideModal);
+  els.reelGuideBackdrop.addEventListener('click', closeReelGuideModal);
   els.egiGuideBtn.addEventListener('click', openEgiGuideModal);
   els.egiGuideClose.addEventListener('click', closeEgiGuideModal);
   els.egiGuideBackdrop.addEventListener('click', closeEgiGuideModal);

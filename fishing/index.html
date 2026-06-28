@@ -741,13 +741,14 @@
         <!-- Line reference -->
         <section class="panel chart-panel">
           <div class="section-header">
-            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> ライン早見表</h2>
-            <div style="display:flex;gap:0.5rem;flex-shrink:0">
+            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リール・ライン早見表</h2>
+            <div style="display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap">
+              <button type="button" class="icon-btn" id="reelGuideBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> リール早見表</button>
               <button type="button" class="icon-btn" id="lineInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン早見表</button>
               <button type="button" class="icon-btn" id="lineLeaderInfoBtn"><svg class="icon icon-inline"><use href="#icon-info"/></svg> ライン×リーダー</button>
             </div>
           </div>
-          <p class="hint">使用ラインの号数から強度・種類の目安が分かります。PEラインを使う場合はリーダーの組み合わせも確認できます。</p>
+          <p class="hint">リールの番手・ギア比の選び方や、ラインの号数・リーダーの組み合わせが確認できます。</p>
         </section>
 
         <!-- Reel size & line comparison -->
@@ -1137,6 +1138,54 @@
 
       <div class="form-actions">
         <button type="button" class="btn" id="lineLeaderInfoClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reel Guide Modal (リール選び早見表) -->
+  <div id="reelGuideModal" class="modal" hidden>
+    <div class="modal-backdrop" id="reelGuideBackdrop"></div>
+    <div class="modal-box line-info-box">
+      <h3 class="modal-title">リール選び早見表（参考情報）</h3>
+      <p class="hint">メーカーや製品によって差があります。あくまで目安としてご利用ください。</p>
+
+      <h4 class="line-info-subtitle">番手（サイズ）と主な用途</h4>
+      <table class="line-info-table">
+        <thead><tr><th>番手</th><th>主な用途</th></tr></thead>
+        <tbody>
+          <tr><td>500〜1000番</td><td>アジング・メバリング・渓流・管釣り</td></tr>
+          <tr><td>2000〜2500番</td><td>エギング（軽量）・ライトシーバス・トラウト</td></tr>
+          <tr><td>3000〜4000番</td><td>エギング・シーバス・ライトショアジギング</td></tr>
+          <tr><td>4000〜5000番</td><td>ショアジギング・サーフ・ヒラスズキ</td></tr>
+          <tr><td>6000番以上</td><td>遠投・大型青物・オフショア</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">ギア比と特徴</h4>
+      <table class="line-info-table">
+        <thead><tr><th>種類</th><th>ギア比の目安</th><th>特徴・向いている釣り</th></tr></thead>
+        <tbody>
+          <tr><td>ローギア（PG）</td><td>〜4.9</td><td>巻き重り少なく一定速度を保ちやすい。深場・重いルアー向き</td></tr>
+          <tr><td>ノーマルギア</td><td>5.0〜5.8</td><td>汎用。バランス重視のオールラウンド</td></tr>
+          <tr><td>ハイギア（HG）</td><td>5.9〜6.4</td><td>素早い回収・ランガン向き。シーバス・エギングに人気</td></tr>
+          <tr><td>エクストラハイギア（XG）</td><td>6.5以上</td><td>高速巻き・青物ジギング・GT系</td></tr>
+        </tbody>
+      </table>
+
+      <h4 class="line-info-subtitle">スピニング vs ベイトキャスティング</h4>
+      <table class="line-info-table">
+        <thead><tr><th>項目</th><th>スピニング</th><th>ベイトキャスティング</th></tr></thead>
+        <tbody>
+          <tr><td>扱いやすさ</td><td>簡単（初心者向き）</td><td>練習が必要（バックラッシュあり）</td></tr>
+          <tr><td>軽量ルアー</td><td>得意</td><td>苦手（スプールの慣性が大きい）</td></tr>
+          <tr><td>重量ルアー遠投</td><td>◯</td><td>◎（キャスティング精度◎）</td></tr>
+          <tr><td>ライン操作</td><td>普通</td><td>精密なコントロールが可能</td></tr>
+          <tr><td>主な用途</td><td>海釣り全般・エギング・シーバス・サーフ</td><td>バス・船ジギング・タイラバ</td></tr>
+        </tbody>
+      </table>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="reelGuideClose">閉じる</button>
       </div>
     </div>
   </div>
