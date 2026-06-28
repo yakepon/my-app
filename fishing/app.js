@@ -347,7 +347,7 @@ function mockExec(payload) {
   const pick = (src, keys) => Object.fromEntries(keys.map(k => [k, src[k] !== undefined ? src[k] : '']));
   const EF = ['date', 'spot', 'area', 'style', 'target', 'weather', 'tide', 'cost', 'memo', 'startTime', 'endTime', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'lures'];
   const CF = ['eventId', 'time', 'species', 'count', 'size', 'weight', 'lure', 'point', 'layer', 'memo', 'photo', 'photoId'];
-  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'leaderType', 'leaderSize', 'leaderLength', 'color', 'pairedReelId', 'egiSize', 'egiSinkType'];
+  const GF = ['type', 'name', 'style', 'maker', 'memo', 'photo', 'photoId', 'photo2', 'photoId2', 'photo3', 'photoId3', 'selfWeight', 'purchaseDate', 'purchasePrice', 'rodLength', 'sinkerWeight', 'reelType', 'retrieveLength', 'gearRatio', 'nylonCapacity', 'peCapacity', 'maxDrag', 'lineType', 'lineSize', 'lastLineChangeDate', 'leaderType', 'leaderSize', 'leaderLength', 'color', 'pairedReelId', 'egiSize', 'egiSinkType', 'frequent'];
 
   if      (action === 'addEvent')    { events.push({ id: payload.id || uid(), ...pick(payload, EF) }); }
   else if (action === 'updateEvent') { const i = events.findIndex(e => e.id === id);  if (i >= 0) events[i]  = { id, ...pick(payload, EF) }; }
@@ -1958,7 +1958,7 @@ function buildLureSelectGrid() {
 }
 
 function buildEventLureSelect() {
-  const items = currentGears.filter(g => g.type === 'lure' || g.type === 'egi');
+  const items = currentGears.filter(g => (g.type === 'lure' || g.type === 'egi') && g.frequent === '1');
   els.eventLureSelectRow.hidden = items.length === 0;
   if (!items.length) return;
   els.eventLureSelectBtns.innerHTML = items.map(g => {
@@ -2652,6 +2652,7 @@ function lureRowHtml(g) {
       <div class="lure-row-head">
         <span class="gear-name">${escapeHtml(g.name || '-')}</span>
         <div class="gear-actions">
+          <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
           <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>
@@ -2678,6 +2679,7 @@ function egiRowHtml(g) {
         <span class="gear-name">${escapeHtml(g.name || '-')}</span>
         ${g.maker ? `<span class="gear-maker">${escapeHtml(g.maker)}</span>` : ''}
         <div class="gear-actions">
+          <button type="button" class="icon-btn frequent-btn${g.frequent === '1' ? ' selected' : ''}" data-id="${escapeHtml(g.id)}" title="釣行のルアー選択に表示">頻度高</button>
           <button type="button" class="icon-btn edit-gear-btn" data-id="${escapeHtml(g.id)}">編集</button>
           <button type="button" class="icon-btn delete-gear-btn" data-id="${escapeHtml(g.id)}">削除</button>
         </div>
@@ -3608,6 +3610,14 @@ async function handleGearListClick(e) {
   const btn = e.target.closest('[data-id]');
   if (!btn) return;
   const id = btn.dataset.id;
+
+  if (btn.classList.contains('frequent-btn')) {
+    const g = currentGears.find(g => g.id === id);
+    if (!g) return;
+    await sendAction({ ...g, action: 'updateGear', frequent: g.frequent === '1' ? '' : '1' });
+    await loadAll();
+    return;
+  }
 
   if (btn.classList.contains('edit-gear-btn')) {
     const g = currentGears.find(g => g.id === id);
