@@ -323,8 +323,9 @@
         <h2 id="eventFormTitle">釣行を登録</h2>
         <form id="eventForm">
           <input type="hidden" name="id">
+          <p class="form-required-note"><span class="count-required">*</span> は必須項目です</p>
           <div class="form-grid">
-            <label>日付
+            <label><span>日付 <span class="count-required">*</span></span>
               <input type="date" name="date" required>
             </label>
             <label>開始時刻
@@ -333,11 +334,11 @@
             <label>終了時刻
               <input type="time" name="endTime">
             </label>
-            <label>釣り場名
+            <label><span>釣り場名 <span class="count-required">*</span></span>
               <input type="text" name="spot" list="spotList" placeholder="例: 大黒海釣り公園" required>
             </label>
-            <label>エリア
-              <input type="text" name="area" placeholder="例: 神奈川">
+            <label><span>エリア <span class="count-required">*</span></span>
+              <input type="text" name="area" placeholder="例: 神奈川" required>
             </label>
             <label>釣り方
               <select name="style">
@@ -351,14 +352,6 @@
             </label>
             <label>ターゲット
               <input type="text" name="target" list="targetList" placeholder="例: アジ">
-            </label>
-            <label>天気
-              <select name="weather">
-                <option value="">選択...</option>
-                <option>晴れ</option>
-                <option>曇り</option>
-                <option>雨</option>
-              </select>
             </label>
             <label>潮回り
               <select name="tide">
@@ -735,7 +728,7 @@
         <!-- Gear list (ロッド一覧) -->
         <section class="panel records-panel">
           <div class="section-header">
-            <h2><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド一覧</h2>
+            <h2 class="lure-list-h2"><svg class="icon icon-h2"><use href="#icon-rod"/></svg> ロッド一覧<span class="ec-catch-stat" id="rodCountBadge"></span></h2>
           </div>
           <div id="rodList"><p class="empty">登録されたロッドはありません。</p></div>
         </section>
@@ -767,7 +760,7 @@
         <!-- Gear list (リール一覧) -->
         <section class="panel records-panel">
           <div class="section-header">
-            <h2><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リール一覧</h2>
+            <h2 class="lure-list-h2"><svg class="icon icon-h2"><use href="#icon-reel"/></svg> リール一覧<span class="ec-catch-stat" id="reelCountBadge"></span></h2>
           </div>
           <div id="reelList"><p class="empty">登録されたリールはありません。</p></div>
         </section>
@@ -794,16 +787,22 @@
         <!-- Gear list (ルアー一覧) -->
         <section class="panel records-panel">
           <div class="section-header">
-            <h2><svg class="icon icon-h2"><use href="#icon-lure"/></svg> ルアー一覧</h2>
-            <span class="ec-catch-stat" id="lureCountBadge"></span>
+            <h2 class="lure-list-h2"><svg class="icon icon-h2"><use href="#icon-lure"/></svg> ルアー一覧<span class="ec-catch-stat" id="lureCountBadge"></span></h2>
           </div>
-          <div class="filter-group">
-            <span class="filter-group-label">カラー</span>
-            <div class="style-filter" id="lureColorFilterChips"></div>
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">重さ</span>
-            <div class="style-filter" id="lureWeightFilterChips"></div>
+          <button type="button" class="lure-filter-head" id="lureFilterToggle" aria-expanded="false">
+            <svg class="icon"><use href="#icon-filter"/></svg>
+            <span class="lure-filter-title">カラー・重さ</span>
+            <svg class="icon global-filter-chevron"><use href="#icon-chevron-down"/></svg>
+          </button>
+          <div class="lure-filter-body" id="lureFilterBody" hidden>
+            <div class="filter-group">
+              <span class="filter-group-label">カラー</span>
+              <div class="style-filter" id="lureColorFilterChips"></div>
+            </div>
+            <div class="filter-group">
+              <span class="filter-group-label">重さ</span>
+              <div class="style-filter" id="lureWeightFilterChips"></div>
+            </div>
           </div>
           <div id="lureList"><p class="empty">登録されたルアーはありません。</p></div>
         </section>

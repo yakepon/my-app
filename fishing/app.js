@@ -173,12 +173,16 @@ const els = {
   reelList: document.getElementById('reelList'),
   lureList: document.getElementById('lureList'),
   egiList:  document.getElementById('egiList'),
+  rodCountBadge:  document.getElementById('rodCountBadge'),
+  reelCountBadge: document.getElementById('reelCountBadge'),
   egiCountBadge: document.getElementById('egiCountBadge'),
   lureWeightChartWrap: document.getElementById('lureWeightChartWrap'),
   egiSizeChartWrap:   document.getElementById('egiSizeChartWrap'),
   lureColorFilterChips:  document.getElementById('lureColorFilterChips'),
   lureWeightFilterChips: document.getElementById('lureWeightFilterChips'),
   lureCountBadge: document.getElementById('lureCountBadge'),
+  lureFilterToggle: document.getElementById('lureFilterToggle'),
+  lureFilterBody:   document.getElementById('lureFilterBody'),
   rodLengthRuler: document.getElementById('rodLengthRuler'),
   reelSizeChart: document.getElementById('reelSizeChart'),
   tackleCombo: document.getElementById('tackleCombo'),
@@ -948,8 +952,8 @@ async function fetchTideCached(area, dateStr) {
   return hours;
 }
 
-// ── Daily max/min temperature (event list) ─────────────────────
-const weatherCache = {}; // key: `${area}|${date}` -> { max, min } | null
+// ── Daily weather / max/min temperature (event list) ────────────
+const weatherCache = {}; // key: `${area}|${date}` -> { max, min, weather } | null
 
 async function fetchDailyTemp(area, dateStr) {
   if (isMockMode()) return null; // デモモードはGAS経由の外部取得ができないため非対応
@@ -960,7 +964,9 @@ async function fetchDailyTemp(area, dateStr) {
     const res = await fetch(`${url}${sep}action=weather&area=${encodeURIComponent(area || '')}&date=${encodeURIComponent(dateStr)}`);
     if (!res.ok) return null;
     const data = await res.json();
-    return (data.max != null || data.min != null) ? { max: data.max, min: data.min } : null;
+    return (data.max != null || data.min != null || data.weather || data.windMax != null || data.waterTemp != null)
+      ? { max: data.max ?? null, min: data.min ?? null, weather: data.weather || null, windMax: data.windMax ?? null, waterTemp: data.waterTemp ?? null }
+      : null;
   } catch {
     return null;
   }
@@ -972,13 +978,19 @@ async function loadEventWeather(ev) {
   if (!(key in weatherCache)) {
     weatherCache[key] = await fetchDailyTemp(ev.area, dateStr);
   }
-  const temp = weatherCache[key];
-  if (!temp) return;
+  const data = weatherCache[key];
+  if (!data) return;
   const slots = document.querySelectorAll(`.ec-weather-slot[data-id="${cssEscape(ev.id)}"]`);
   slots.forEach(slot => {
-    slot.innerHTML = `<span class="badge badge-outline">
-      <svg class="icon icon-inline"><use href="#icon-temp"/></svg>${temp.max != null ? temp.max + '℃' : '--'} / ${temp.min != null ? temp.min + '℃' : '--'}
-    </span>`;
+    const weatherBadge   = data.weather
+      ? `<span class="badge badge-outline">${escapeHtml(data.weather)}</span>` : '';
+    const tempBadge      = (data.max != null || data.min != null)
+      ? `<span class="badge badge-outline"><svg class="icon icon-inline"><use href="#icon-temp"/></svg>${data.max != null ? data.max + '℃' : '--'} / ${data.min != null ? data.min + '℃' : '--'}</span>` : '';
+    const windBadge      = data.windMax != null
+      ? `<span class="badge badge-outline">風最大 ${data.windMax}m/s</span>` : '';
+    const waterTempBadge = data.waterTemp != null
+      ? `<span class="badge badge-outline">水温 ${data.waterTemp}℃</span>` : '';
+    slot.innerHTML = weatherBadge + tempBadge + windBadge + waterTempBadge;
   });
 }
 
@@ -2758,6 +2770,8 @@ function renderGearLists() {
   const egis  = currentGears.filter(g => g.type === 'egi');
   els.rodList.innerHTML  = rods.length  ? rods.map(gearRowHtml).join('')  : '<p class="empty">登録されたロッドはありません。</p>';
   els.reelList.innerHTML = reels.length ? reels.map(gearRowHtml).join('') : '<p class="empty">登録されたリールはありません。</p>';
+  els.rodCountBadge.innerHTML  = `<span class="ec-catch-stat-value">${rods.length}</span><span class="ec-catch-stat-label">本</span>`;
+  els.reelCountBadge.innerHTML = `<span class="ec-catch-stat-value">${reels.length}</span><span class="ec-catch-stat-label">個</span>`;
   renderLureColorFilter(lures);
   renderLureWeightFilter(lures);
   const visibleLures = filteredLures(lures);
@@ -4127,6 +4141,11 @@ function init() {
   els.gearTabReel.addEventListener('click', () => setGearTab('reel'));
   els.gearTabLure.addEventListener('click', () => setGearTab('lure'));
   els.gearTabEgi.addEventListener('click', () => setGearTab('egi'));
+  els.lureFilterToggle.addEventListener('click', () => {
+    const expanded = els.lureFilterToggle.getAttribute('aria-expanded') === 'true';
+    els.lureFilterToggle.setAttribute('aria-expanded', String(!expanded));
+    els.lureFilterBody.hidden = expanded;
+  });
   els.lureColorFilterChips.addEventListener('click', e => {
     const chip = e.target.closest('.hm-chip');
     if (!chip) return;

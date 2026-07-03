@@ -277,6 +277,49 @@ function resolveWeatherStation(area) {
   return null;
 }
 
+// 水温取得用の緯度経度（Open-Meteo Marine API で使用）
+const AREA_COORDS_GAS = {
+  // 神奈川県
+  '横浜':   { lat: 35.45, lon: 139.65 }, '川崎':   { lat: 35.51, lon: 139.71 },
+  '本牧':   { lat: 35.42, lon: 139.67 }, '横須賀': { lat: 35.28, lon: 139.67 },
+  '三浦':   { lat: 35.15, lon: 139.62 }, '湘南港': { lat: 35.30, lon: 139.39 },
+  '茅ヶ崎': { lat: 35.33, lon: 139.41 }, '藤沢':   { lat: 35.34, lon: 139.49 },
+  '江の島': { lat: 35.30, lon: 139.48 }, '小田原': { lat: 35.25, lon: 139.15 },
+  // 千葉県
+  '銚子':   { lat: 35.73, lon: 140.83 }, '勝浦':   { lat: 35.13, lon: 140.25 },
+  '館山':   { lat: 34.98, lon: 139.87 }, '富津':   { lat: 35.30, lon: 139.83 },
+  '木更津': { lat: 35.38, lon: 139.93 }, '千葉':   { lat: 35.60, lon: 140.10 },
+  '船橋':   { lat: 35.70, lon: 139.98 },
+  // 静岡県
+  '熱海':   { lat: 35.10, lon: 139.07 }, '下田':   { lat: 34.68, lon: 138.95 },
+  '沼津':   { lat: 35.09, lon: 138.86 }, '清水':   { lat: 35.02, lon: 138.49 },
+  '御前崎': { lat: 34.59, lon: 138.22 }, '浜松':   { lat: 34.71, lon: 137.73 },
+};
+
+function resolveAreaCoordsGas(area) {
+  if (!area) return null;
+  for (const name in AREA_COORDS_GAS) {
+    if (area.indexOf(name) !== -1) return AREA_COORDS_GAS[name];
+  }
+  return null;
+}
+
+// Open-Meteo Marine API で海面水温（日平均）を取得する。
+function getWaterTemp(area, dateStr) {
+  const coords = resolveAreaCoordsGas(area);
+  if (!coords || !dateStr) return null;
+  try {
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${coords.lat}&longitude=${coords.lon}&daily=sea_surface_temperature_mean&timezone=Asia%2FTokyo&start_date=${dateStr}&end_date=${dateStr}`;
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return null;
+    const data = JSON.parse(res.getContentText());
+    const temp = data.daily && data.daily.sea_surface_temperature_mean && data.daily.sea_surface_temperature_mean[0];
+    return (temp != null && !isNaN(Number(temp))) ? Math.round(Number(temp) * 10) / 10 : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 // 気象庁「過去の気象データ検索」の日別ページ(HTML)から、指定日の最高・最低気温(℃)を抜き出す。
 // 観測所の種別によって列の並びが異なる（s1=主要観測所は気圧列がある分ずれる）。
 function getDailyTemp(area, dateStr) {
@@ -310,11 +353,21 @@ function getDailyTemp(area, dateStr) {
       while ((cm = cellRe.exec(row))) {
         cells.push(cm[1].replace(/<[^>]+>/g, '').trim());
       }
-      const maxIdx = station.type === 's1' ? 7 : 5;
-      const minIdx = station.type === 's1' ? 8 : 6;
-      const max = parseFloat(cells[maxIdx]);
-      const min = parseFloat(cells[minIdx]);
-      return { max: isNaN(max) ? null : max, min: isNaN(min) ? null : min };
+      const maxIdx     = station.type === 's1' ? 7  : 5;
+      const minIdx     = station.type === 's1' ? 8  : 6;
+      const windMaxIdx = station.type === 's1' ? 12 : 9;
+      const weatherIdx = station.type === 's1' ? 19 : 12;
+      const max    = parseFloat(cells[maxIdx]);
+      const min    = parseFloat(cells[minIdx]);
+      const windMax = parseFloat(cells[windMaxIdx]);
+      const rawWeather = (cells[weatherIdx] || '').trim();
+      const weather = rawWeather && !['×', '///'].includes(rawWeather) ? rawWeather : null;
+      return {
+        max:     isNaN(max)     ? null : max,
+        min:     isNaN(min)     ? null : min,
+        windMax: isNaN(windMax) ? null : windMax,
+        weather,
+      };
     }
     return { max: null, min: null };
   } catch (err) {
@@ -328,7 +381,9 @@ function doGet(e) {
     return jsonOutput(getTide(params.area, params.date));
   }
   if (params.action === 'weather') {
-    return jsonOutput(getDailyTemp(params.area, params.date));
+    const result = getDailyTemp(params.area, params.date);
+    result.waterTemp = getWaterTemp(params.area, params.date);
+    return jsonOutput(result);
   }
 
   const es = getOrCreateSheet(EVENT_SHEET, EVENT_HEADERS);

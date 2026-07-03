@@ -995,6 +995,7 @@ textarea { resize: vertical; line-height: 1.5; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 0.9rem; }
 @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
+.form-required-note { font-size: 0.72rem; color: var(--ink-muted); margin: 0 0 0.8rem; }
 
 .memo-field {
   display: flex;
@@ -1754,6 +1755,41 @@ form > textarea { margin-bottom: 0.6rem; }
   .section-header { flex-wrap: wrap; }
   .section-header h2 { width: 100%; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* ── Lure list: count badge inside h2, collapsible filter ────── */
+.lure-list-h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0;
+}
+.lure-filter-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.6rem 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  margin-top: 0.8rem;
+  -webkit-tap-highlight-color: transparent;
+}
+.lure-filter-head .icon { font-size: 0.95rem; color: var(--accent-2); flex-shrink: 0; }
+.lure-filter-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.lure-filter-head[aria-expanded="true"] .global-filter-chevron { transform: rotate(180deg); }
+.lure-filter-body { padding-bottom: 0.5rem; }
+.lure-filter-body .filter-group:last-of-type { margin-bottom: 0; }
 
 /* ── Today highlight on event cards ───────────────────────────── */
 .event-card-today { border-color: rgba(255, 45, 149, 0.4); box-shadow: 0 0 0 1px rgba(255, 45, 149, 0.12); }
