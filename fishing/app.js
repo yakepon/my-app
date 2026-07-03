@@ -3392,6 +3392,11 @@ function tackleComboSvg(rod, reel, maxLenCm) {
   // 号数・タイプから推定した適合ルアー重量（=ラインが耐えられる負荷の目安）を
   // ネイティブのSVGツールチップとして表示する。カード全体のtitle（ロッド側の
   // 錘負荷・最大ドラグ力）より内側の要素なので、ホバー中はこちらが優先される。
+  const hasLeader = !!(reel && (reel.leaderSize || reel.leaderType));
+  const isLeaderFluro = hasLeader && /フロロ/i.test(reel.leaderType || '');
+  const isLeaderNylon = hasLeader && /ナイロン/i.test(reel.leaderType || '');
+  const leaderColor   = isLeaderFluro ? '#a0a0b8' : isLeaderNylon ? '#ffe980' : '#c0c0c0';
+
   const reelLoadRange = reel ? reelLureWeightRange(reel) : null;
   const reelTitleText = reel
     ? [
@@ -3442,13 +3447,34 @@ function tackleComboSvg(rod, reel, maxLenCm) {
     const fishY = tipY + 46;
     const ctrlLX = (tipX + fishX) / 2 - 5;
     const ctrlLY = (tipY + fishY) / 2 + 10;
-    catchMarkup = `
+    if (hasLeader) {
+      // split bezier at t=0.62: main line (upper), knot circle, leader (lower)
+      const t = 0.62;
+      const m1x = tipX  + (ctrlLX - tipX)  * t;
+      const m1y = tipY  + (ctrlLY - tipY)  * t;
+      const m2x = ctrlLX + (fishX - ctrlLX) * t;
+      const m2y = ctrlLY + (fishY - ctrlLY) * t;
+      const kx  = m1x + (m2x - m1x) * t;
+      const ky  = m1y + (m2y - m1y) * t;
+      const leaderTitleText = [reel.leaderType, reel.leaderSize, reel.leaderLength].filter(Boolean).join(' ') || 'リーダー';
+      catchMarkup = `
+      <path d="M ${tipX.toFixed(1)} ${tipY.toFixed(1)} Q ${m1x.toFixed(1)} ${m1y.toFixed(1)} ${kx.toFixed(1)} ${ky.toFixed(1)}" class="tackle-combo-line" stroke="${lineColor}" />
+      <circle cx="${kx.toFixed(1)}" cy="${ky.toFixed(1)}" r="2.2" fill="${leaderColor}" stroke="${lineColor}" stroke-width="0.7" />
+      <path d="M ${kx.toFixed(1)} ${ky.toFixed(1)} Q ${m2x.toFixed(1)} ${m2y.toFixed(1)} ${fishX.toFixed(1)} ${fishY.toFixed(1)}" class="tackle-combo-line" stroke="${leaderColor}"><title>${escapeHtml(leaderTitleText)}</title></path>
+      <g class="tackle-combo-fish" transform="translate(${fishX.toFixed(1)} ${fishY.toFixed(1)}) rotate(25)" fill="${leaderColor}">
+        <polygon points="-11,0 -16,-5 -16,5" />
+        <ellipse cx="0" cy="0" rx="8" ry="4.5" />
+        <circle cx="4.5" cy="-1.2" r="1.1" fill="var(--surface)" />
+      </g>`;
+    } else {
+      catchMarkup = `
       <path d="M ${tipX.toFixed(1)} ${tipY.toFixed(1)} Q ${ctrlLX.toFixed(1)} ${ctrlLY.toFixed(1)} ${fishX.toFixed(1)} ${fishY.toFixed(1)}" class="tackle-combo-line" stroke="${lineColor}" />
       <g class="tackle-combo-fish" transform="translate(${fishX.toFixed(1)} ${fishY.toFixed(1)}) rotate(25)" fill="${lineColor}">
         <polygon points="-11,0 -16,-5 -16,5" />
         <ellipse cx="0" cy="0" rx="8" ry="4.5" />
         <circle cx="4.5" cy="-1.2" r="1.1" fill="var(--surface)" />
       </g>`;
+    }
   }
 
   return `

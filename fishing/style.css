@@ -1760,10 +1760,11 @@ form > textarea { margin-bottom: 0.6rem; }
 .lure-list-h2 {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
   margin-bottom: 0;
 }
+.lure-list-h2 .ec-catch-stat { margin-left: auto; }
 .lure-filter-head {
   display: flex;
   align-items: center;
