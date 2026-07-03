@@ -2230,7 +2230,6 @@ function enterEventEditMode(ev) {
   els.eventForm.elements['area'].value    = ev.area    || '';
   els.eventForm.elements['style'].value   = ev.style   || '';
   els.eventForm.elements['target'].value  = ev.target  || '';
-  els.eventForm.elements['weather'].value = ev.weather || '';
   els.eventForm.elements['tide'].value    = ev.tide    || '';
   els.eventForm.elements['cost'].value    = ev.cost    || '';
   els.eventForm.elements['memo'].value    = ev.memo    || '';
