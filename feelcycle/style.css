@@ -412,6 +412,37 @@ main {
   width: 28px;
 }
 
+.bike-entrance-group {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.bike-rows-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.entrance-marker {
+  position: relative;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.entrance-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
 @media (max-width: 600px) {
   .bike-row {
     gap: 4px;
@@ -432,6 +463,14 @@ main {
 
   .instructor-label {
     font-size: 7px;
+  }
+
+  .entrance-marker {
+    width: 14px;
+  }
+
+  .entrance-label {
+    font-size: 8px;
   }
 }
 

@@ -392,9 +392,11 @@ const BIKE_MAP_LAYOUTS = {
   '武蔵小杉': [
     { type: 'pods', totalCols: 10, leftCol: 1, rightCol: 8, left: [1, 2], right: [3, 4] },
     { type: 'row', bikes: [14, 13, 12, 11, 10, 9, 8, 7, 6, 5] },
-    { type: 'row', bikes: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
-    { type: 'row', bikes: [35, 34, 33, 32, 31, 30, 29, 28, 27, 26] },
-    { type: 'row', bikes: [36, 37, 38, 39, 40, null, 41, 42, 43, 44, 45] },
+    { type: 'rows-with-entrance', rows: [
+      [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+      [35, 34, 33, 32, 31, 30, 29, 28, 27, 26],
+      [36, 37, 38, 39, 40, null, 41, 42, 43, 44, 45],
+    ] },
   ],
 };
 
@@ -442,6 +444,16 @@ function renderBikeMap(records) {
           <div class="instructor-marker" title="インストラクター">
             <span class="instructor-avatar"></span>
             <span class="instructor-label">INSTR.</span>
+          </div>
+        </div>`;
+    }
+    if (row.type === 'rows-with-entrance') {
+      const rowsInner = row.rows.map((bikes) => `<div class="bike-row">${bikes.map(cell).join('')}</div>`).join('');
+      return `
+        <div class="bike-entrance-group">
+          <div class="bike-rows-stack">${rowsInner}</div>
+          <div class="entrance-marker" title="入口">
+            <span class="entrance-label">ENTER</span>
           </div>
         </div>`;
     }
