@@ -64,7 +64,12 @@ body {
   position: absolute;
   top: -10%;
   left: 0;
-  filter: sepia(1) saturate(4) hue-rotate(-20deg) brightness(1.05);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  background: var(--orange-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   animation-name: moneyFall;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
@@ -500,18 +505,6 @@ main {
   color: var(--text-dim);
 }
 
-.budget-forecast {
-  margin-top: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  color: var(--text-dim);
-}
-
-.budget-forecast.forecast-over {
-  color: var(--gauge-red);
-}
-
 /* ===== Form ===== */
 
 .form-grid {
@@ -658,6 +651,14 @@ textarea {
 .chart-bar-fill-over { fill: var(--gauge-red); }
 .chart-bar-fill-none { fill: var(--text-dim); }
 
+.chart-bar-forecast {
+  opacity: 0.35;
+}
+
+.chart-bar-forecast-ok { fill: var(--gauge-green); }
+.chart-bar-forecast-over { fill: var(--gauge-red); }
+.chart-bar-forecast-none { fill: var(--text-dim); }
+
 .chart-target-line {
   stroke: var(--text);
   stroke-width: 2;
@@ -710,6 +711,7 @@ textarea {
 
 .chart-tooltip-row .tooltip-label {
   color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .chart-tooltip-row .tooltip-value {
@@ -741,6 +743,11 @@ textarea {
 
 .chart-legend-swatch.legend-ok { background: var(--gauge-green); }
 .chart-legend-swatch.legend-over { background: var(--gauge-red); }
+.chart-legend-swatch.legend-forecast {
+  background: var(--text-dim);
+  opacity: 0.5;
+  border: 1px solid var(--line-strong);
+}
 .chart-legend-line {
   width: 12px;
   height: 2px;

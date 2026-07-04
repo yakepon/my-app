@@ -34,7 +34,6 @@ const els = {
   cancelEdit: document.getElementById('cancelEdit'),
   expenseCategorySelect: document.getElementById('expenseCategorySelect'),
   subCategoryInput: document.getElementById('subCategoryInput'),
-  subCategoryList: document.getElementById('subCategoryList'),
   recordsList: document.getElementById('recordsList'),
   budgetList: document.getElementById('budgetList'),
   budgetPanel: document.getElementById('budgetPanel'),
@@ -191,9 +190,9 @@ function renderTopStats(records) {
 
   const label = periodLabel(ym);
   els.statBudgetLabel.textContent = `${label}の予算`;
+  els.statForecastLabel.textContent = `${label}の着地見込み`;
   els.statExpenseLabel.textContent = `${label}の支出`;
-  els.statBalanceLabel.textContent = `${label}の差引`;
-  els.statForecastLabel.textContent = `${label}の見込み`;
+  els.statBalanceLabel.textContent = `${label}の残りの予算`;
 
   els.statBudget.textContent = formatCurrency(totalBudget);
   els.statExpense.textContent = formatCurrency(expense);
@@ -213,17 +212,12 @@ function renderBudgetRow(ym, major, sub, spent) {
   const budget = getBudgetAmount(ym, major, sub);
   const comment = getBudgetComment(ym, major, sub);
   const label = sub || '全体';
-  const showForecast = ym === currentYearMonth();
-  const forecast = showForecast ? projectedAmount(ym, spent) : null;
 
   const commentField = `
     <input type="text" class="budget-comment-input" placeholder="予算の根拠・メモ" value="${escapeHtml(comment)}" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
   `;
 
   if (!budget) {
-    const forecastLine = showForecast
-      ? `<p class="budget-forecast">月末見込み ${formatCurrency(forecast)}</p>`
-      : '';
     return `
       <div class="budget-row">
         <div class="budget-row-head">
@@ -236,7 +230,6 @@ function renderBudgetRow(ym, major, sub, spent) {
         </div>
         ${commentField}
         <p class="budget-empty">予算を設定すると残量ゲージが表示されます（今月の支出: ${formatCurrency(spent)}）</p>
-        ${forecastLine}
       </div>
     `;
   }
@@ -247,10 +240,6 @@ function renderBudgetRow(ym, major, sub, spent) {
   let gaugeClass = 'gauge-green';
   if (pct <= 10) gaugeClass = 'gauge-red';
   else if (pct <= 50) gaugeClass = 'gauge-yellow';
-
-  const forecastLine = showForecast
-    ? `<p class="budget-forecast ${forecast > budget ? 'forecast-over' : ''}">月末見込み ${formatCurrency(forecast)}</p>`
-    : '';
 
   return `
     <div class="budget-row">
@@ -272,7 +261,6 @@ function renderBudgetRow(ym, major, sub, spent) {
       <div class="budget-row-foot">
         <span>${formatCurrency(spent)} / ${formatCurrency(budget)} 使用</span>
       </div>
-      ${forecastLine}
     </div>
   `;
 }
@@ -442,9 +430,12 @@ function barPath(x, yTop, width, height, radius) {
 function renderChart(records) {
   const filter = els.chartFilter.value || 'all';
   const months = trailingMonths(CHART_MONTHS);
-  const data = months.map((ym) => ({ ym, ...monthActualBudget(ym, filter, records) }));
+  const data = months.map((ym) => {
+    const base = monthActualBudget(ym, filter, records);
+    return { ym, ...base, forecast: projectedAmount(ym, base.actual) };
+  });
 
-  const maxVal = niceCeil(Math.max(1, ...data.map((d) => Math.max(d.actual, d.budget))) * 1.15);
+  const maxVal = niceCeil(Math.max(1, ...data.map((d) => Math.max(d.actual, d.budget, d.forecast))) * 1.15);
 
   const W = 600;
   const H = 220;
@@ -479,13 +470,24 @@ function renderChart(records) {
     let fillClass = 'chart-bar-fill-none';
     if (d.budget > 0) fillClass = d.actual <= d.budget ? 'chart-bar-fill-ok' : 'chart-bar-fill-over';
 
+    let forecastPath = '';
+    if (d.forecast > d.actual) {
+      const forecastTop = yScale(d.forecast);
+      const forecastBottom = yScale(d.actual);
+      const fPath = barPath(barX, forecastTop, barWidth, forecastBottom - forecastTop, 4);
+      let forecastClass = 'chart-bar-forecast-none';
+      if (d.budget > 0) forecastClass = d.forecast <= d.budget ? 'chart-bar-forecast-ok' : 'chart-bar-forecast-over';
+      forecastPath = fPath ? `<path class="chart-bar-forecast ${forecastClass}" d="${fPath}" />` : '';
+    }
+
     const targetY = d.budget > 0 ? yScale(d.budget) : null;
     const targetLine = targetY !== null
       ? `<line class="chart-target-line" x1="${barX - 3}" y1="${targetY}" x2="${barX + barWidth + 3}" y2="${targetY}" />`
       : '';
 
-    const valueLabel = i === latestIndex && d.actual > 0
-      ? `<text class="chart-value-label" x="${barX + barWidth / 2}" y="${barYTop - 8}">${escapeHtml(formatCurrencyShort(d.actual))}</text>`
+    const labelValue = i === latestIndex && d.forecast > d.actual ? d.forecast : d.actual;
+    const valueLabel = i === latestIndex && labelValue > 0
+      ? `<text class="chart-value-label" x="${barX + barWidth / 2}" y="${yScale(labelValue) - 8}">${escapeHtml(formatCurrencyShort(labelValue))}</text>`
       : '';
 
     const monthLabel = `<text class="chart-axis-label" x="${slotX + slotWidth / 2}" y="${H - 6}" text-anchor="middle">${escapeHtml(formatMonthShort(d.ym))}</text>`;
@@ -494,6 +496,7 @@ function renderChart(records) {
       <g class="chart-bar-group" tabindex="0" data-index="${i}">
         <rect x="${slotX}" y="${marginTop}" width="${slotWidth}" height="${plotHeight}" fill="transparent" />
         ${path ? `<path class="chart-bar ${fillClass}" d="${path}" />` : ''}
+        ${forecastPath}
         ${targetLine}
         ${valueLabel}
         ${monthLabel}
@@ -529,15 +532,20 @@ function attachChartTooltip(data) {
       diffRow = `<div class="chart-tooltip-row"><span class="tooltip-label">${label}</span><span class="tooltip-value">${formatCurrency(Math.abs(diff))}</span></div>`;
     }
 
+    const forecastRow = d.forecast > d.actual
+      ? `<div class="chart-tooltip-row"><span class="tooltip-label">見込み</span><span class="tooltip-value" data-field="forecast">${formatCurrency(d.forecast)}</span></div>`
+      : '';
+
     tooltip.innerHTML = `
       <div class="chart-tooltip-month"></div>
-      <div class="chart-tooltip-row"><span class="tooltip-label">実績</span><span class="tooltip-value"></span></div>
-      <div class="chart-tooltip-row"><span class="tooltip-label">予算</span><span class="tooltip-value"></span></div>
+      <div class="chart-tooltip-row"><span class="tooltip-label">実績</span><span class="tooltip-value" data-field="actual"></span></div>
+      ${forecastRow}
+      <div class="chart-tooltip-row"><span class="tooltip-label">予算</span><span class="tooltip-value" data-field="budget"></span></div>
       ${diffRow}
     `;
     tooltip.querySelector('.chart-tooltip-month').textContent = formatYearMonthFull(d.ym);
-    tooltip.querySelectorAll('.tooltip-value')[0].textContent = formatCurrency(d.actual);
-    tooltip.querySelectorAll('.tooltip-value')[1].textContent = d.budget > 0 ? formatCurrency(d.budget) : '未設定';
+    tooltip.querySelector('[data-field="actual"]').textContent = formatCurrency(d.actual);
+    tooltip.querySelector('[data-field="budget"]').textContent = d.budget > 0 ? formatCurrency(d.budget) : '未設定';
 
     const wrapRect = wrap.getBoundingClientRect();
     tooltip.style.left = `${clientX - wrapRect.left}px`;
@@ -566,6 +574,7 @@ function renderChartLegend() {
   els.chartLegend.innerHTML = `
     <span class="chart-legend-item"><span class="chart-legend-swatch legend-ok"></span>実績（予算内）</span>
     <span class="chart-legend-item"><span class="chart-legend-swatch legend-over"></span>実績（予算超過）</span>
+    <span class="chart-legend-item"><span class="chart-legend-swatch legend-forecast"></span>月末見込み</span>
     <span class="chart-legend-item"><span class="chart-legend-line"></span>予算</span>
   `;
 }
@@ -577,6 +586,7 @@ function renderChartTable(data) {
       <tr>
         <td>${escapeHtml(formatYearMonthFull(d.ym))}</td>
         <td>${formatCurrency(d.actual)}</td>
+        <td>${d.forecast > d.actual ? formatCurrency(d.forecast) : '—'}</td>
         <td>${d.budget > 0 ? formatCurrency(d.budget) : '未設定'}</td>
         <td>${d.budget > 0 ? formatCurrency(diff) : '—'}</td>
       </tr>
@@ -586,7 +596,7 @@ function renderChartTable(data) {
   els.chartTable.innerHTML = `
     <table class="chart-table">
       <thead>
-        <tr><th>月</th><th>実績</th><th>予算</th><th>差引</th></tr>
+        <tr><th>月</th><th>実績</th><th>見込み</th><th>予算</th><th>差引</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
@@ -612,7 +622,15 @@ function updateSubCategoryOptions() {
   const predefined = CATEGORY_TREE[major] || [];
   const historical = historicalSubCategories[major] ? [...historicalSubCategories[major]] : [];
   const combined = [...new Set([...predefined, ...historical])];
-  els.subCategoryList.innerHTML = combined.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
+
+  const previousValue = els.subCategoryInput.value;
+  const options = ['<option value="">選択してください</option>']
+    .concat(combined.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`));
+  els.subCategoryInput.innerHTML = options.join('');
+
+  if (combined.includes(previousValue)) {
+    els.subCategoryInput.value = previousValue;
+  }
 }
 
 function renderRecordRow(r) {
@@ -790,11 +808,11 @@ function initMoneyRain() {
   const COUNT = 18;
   for (let i = 0; i < COUNT; i++) {
     const span = document.createElement('span');
-    span.textContent = '💴';
+    span.textContent = '$';
     const duration = 10 + Math.random() * 10;
     span.style.left = `${Math.random() * 100}%`;
-    span.style.fontSize = `${18 + Math.random() * 16}px`;
-    span.style.opacity = String(0.12 + Math.random() * 0.16);
+    span.style.fontSize = `${16 + Math.random() * 20}px`;
+    span.style.opacity = String(0.08 + Math.random() * 0.14);
     span.style.animationDuration = `${duration}s`;
     span.style.animationDelay = `${-Math.random() * duration}s`;
     const swaySign = Math.random() < 0.5 ? -1 : 1;

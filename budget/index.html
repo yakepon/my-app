@@ -24,18 +24,18 @@
         <span class="stat-label" id="statBudgetLabel">今月の予算</span>
         <span class="stat-value" id="statBudget">--</span>
       </div>
+      <div class="stat-card stat-forecast">
+        <span class="stat-label" id="statForecastLabel">今月の着地見込み</span>
+        <span class="stat-value" id="statForecast">--</span>
+      </div>
       <div class="stat-card stat-expense">
         <span class="stat-label" id="statExpenseLabel">今月の支出</span>
         <span class="stat-value" id="statExpense">--</span>
       </div>
       <div class="stat-card stat-balance">
-        <span class="stat-label" id="statBalanceLabel">今月の差引</span>
+        <span class="stat-label" id="statBalanceLabel">今月の残りの予算</span>
         <span class="stat-value" id="statBalance">--</span>
         <span class="hanko" id="hankoStamp">黒</span>
-      </div>
-      <div class="stat-card stat-forecast">
-        <span class="stat-label" id="statForecastLabel">今月の見込み</span>
-        <span class="stat-value" id="statForecast">--</span>
       </div>
     </section>
 
@@ -73,13 +73,12 @@
             </select>
           </label>
           <label class="category-field">カテゴリ（中）
-            <input type="text" name="subCategory" list="subCategoryList" id="subCategoryInput" placeholder="例: ガソリン代">
+            <select name="subCategory" id="subCategoryInput"></select>
           </label>
         </div>
         <label class="memo-field">メモ
           <textarea name="memo" rows="2" placeholder="購入先やメモ"></textarea>
         </label>
-        <datalist id="subCategoryList"></datalist>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" id="submitBtn">記帳する</button>
           <button type="button" class="btn" id="cancelEdit" hidden>キャンセル</button>
