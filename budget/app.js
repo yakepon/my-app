@@ -24,6 +24,8 @@ const els = {
   statExpense: document.getElementById('statExpense'),
   statBalanceLabel: document.getElementById('statBalanceLabel'),
   statBalance: document.getElementById('statBalance'),
+  statForecastLabel: document.getElementById('statForecastLabel'),
+  statForecast: document.getElementById('statForecast'),
   hankoStamp: document.getElementById('hankoStamp'),
   summaryMonth: document.getElementById('summaryMonth'),
   form: document.getElementById('recordForm'),
@@ -84,6 +86,20 @@ function formatDateShort(value) {
 function currentYearMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function daysInMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+// 経過日数あたりの支出ペースから月末時点の見込み額を算出する。
+// 過去に完了した月は経過日数=月の総日数となり、実績とそのまま一致する。
+function projectedAmount(ym, actual) {
+  const totalDays = daysInMonth(ym);
+  const elapsed = ym === currentYearMonth() ? new Date().getDate() : totalDays;
+  const safeElapsed = Math.max(1, Math.min(elapsed, totalDays));
+  return (actual / safeElapsed) * totalDays;
 }
 
 function recordYearMonth(record) {
@@ -161,15 +177,19 @@ function renderTopStats(records) {
   const expense = records.filter((r) => recordYearMonth(r) === ym).reduce((sum, r) => sum + Number(r.amount || 0), 0);
   const totalBudget = totalBudgetAmount(ym);
   const balance = totalBudget - expense;
+  const forecast = projectedAmount(ym, expense);
 
   const label = periodLabel(ym);
   els.statBudgetLabel.textContent = `${label}の予算`;
   els.statExpenseLabel.textContent = `${label}の支出`;
   els.statBalanceLabel.textContent = `${label}の差引`;
+  els.statForecastLabel.textContent = `${label}の見込み`;
 
   els.statBudget.textContent = formatCurrency(totalBudget);
   els.statExpense.textContent = formatCurrency(expense);
   els.statBalance.textContent = formatCurrency(balance);
+  els.statForecast.textContent = formatCurrency(forecast);
+  els.statForecast.className = 'stat-value ' + (totalBudget > 0 && forecast > totalBudget ? 'ink-expense' : '');
 
   const isSurplus = balance >= 0;
   els.hankoStamp.textContent = isSurplus ? '黒字' : '赤字';
@@ -182,8 +202,13 @@ function renderTopStats(records) {
 function renderBudgetRow(ym, major, sub, spent) {
   const budget = getBudgetAmount(ym, major, sub);
   const label = sub || '全体';
+  const showForecast = ym === currentYearMonth();
+  const forecast = showForecast ? projectedAmount(ym, spent) : null;
 
   if (!budget) {
+    const forecastLine = showForecast
+      ? `<p class="budget-forecast">月末見込み ${formatCurrency(forecast)}</p>`
+      : '';
     return `
       <div class="budget-row">
         <div class="budget-row-head">
@@ -195,6 +220,7 @@ function renderBudgetRow(ym, major, sub, spent) {
           </div>
         </div>
         <p class="budget-empty">予算を設定すると残量ゲージが表示されます（今月の支出: ${formatCurrency(spent)}）</p>
+        ${forecastLine}
       </div>
     `;
   }
@@ -205,6 +231,10 @@ function renderBudgetRow(ym, major, sub, spent) {
   let gaugeClass = 'gauge-green';
   if (pct <= 10) gaugeClass = 'gauge-red';
   else if (pct <= 50) gaugeClass = 'gauge-yellow';
+
+  const forecastLine = showForecast
+    ? `<p class="budget-forecast ${forecast > budget ? 'forecast-over' : ''}">月末見込み ${formatCurrency(forecast)}</p>`
+    : '';
 
   return `
     <div class="budget-row">
@@ -225,6 +255,7 @@ function renderBudgetRow(ym, major, sub, spent) {
       <div class="budget-row-foot">
         <span>${formatCurrency(spent)} / ${formatCurrency(budget)} 使用</span>
       </div>
+      ${forecastLine}
     </div>
   `;
 }

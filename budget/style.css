@@ -162,7 +162,7 @@ main {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
 }
 
@@ -493,6 +493,18 @@ main {
 .budget-empty {
   font-size: 12px;
   color: var(--text-dim);
+}
+
+.budget-forecast {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+
+.budget-forecast.forecast-over {
+  color: var(--gauge-red);
 }
 
 /* ===== Form ===== */
