@@ -65,15 +65,26 @@ function saveBudget(sheet, data) {
   const commentCol = headers.indexOf('comment');
 
   const lastRow = sheet.getLastRow();
+  const matchingRows = [];
   if (lastRow >= 2) {
     const rows = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-    for (let i = 0; i < rows.length; i++) {
-      if (String(rows[i][ymCol]) === String(yearMonth) && String(rows[i][catCol]) === String(category) && String(rows[i][subCol] || '') === String(subCategory)) {
-        sheet.getRange(i + 2, amtCol + 1).setValue(amount);
-        if (commentCol > -1) sheet.getRange(i + 2, commentCol + 1).setValue(comment);
-        return;
+    rows.forEach((row, i) => {
+      if (String(row[ymCol]) === String(yearMonth) && String(row[catCol]) === String(category) && String(row[subCol] || '') === String(subCategory)) {
+        matchingRows.push(i + 2);
       }
+    });
+  }
+
+  if (matchingRows.length) {
+    // 同じ月・カテゴリの行が複数あると保存先と表示元がズレて「更新できない」ように見えるため、
+    // 最後の1行に統合して更新し、古い重複行は削除する
+    const keepRow = matchingRows[matchingRows.length - 1];
+    sheet.getRange(keepRow, amtCol + 1).setValue(amount);
+    if (commentCol > -1) sheet.getRange(keepRow, commentCol + 1).setValue(comment);
+    for (let j = matchingRows.length - 2; j >= 0; j--) {
+      sheet.deleteRow(matchingRows[j]);
     }
+    return;
   }
 
   const row = headers.map((key) => {
