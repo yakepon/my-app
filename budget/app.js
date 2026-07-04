@@ -3,7 +3,7 @@ const STORAGE_KEY = 'budget_gas_url';
 const EXPENSE_CATEGORIES = ['車', '遊び', '外食', '美容', 'その他'];
 
 const CATEGORY_TREE = {
-  '車': ['月極', 'パーキング', '高速代', 'ガソリン代'],
+  '車': ['月極', 'パーキング', '高速代', 'ガソリン代', 'メンテナンス代'],
   '遊び': ['洋服代', '家電代', 'キャンプ関連', '釣り関連', '夜遊び'],
   '外食': ['家族', '友達'],
   '美容': ['美容院', '整髪料'],
@@ -35,6 +35,8 @@ const els = {
   subCategoryList: document.getElementById('subCategoryList'),
   recordsList: document.getElementById('recordsList'),
   budgetList: document.getElementById('budgetList'),
+  budgetPanel: document.getElementById('budgetPanel'),
+  budgetTooltip: document.getElementById('budgetTooltip'),
   chartFilter: document.getElementById('chartFilter'),
   chartWrap: document.getElementById('chartWrap'),
   chartLegend: document.getElementById('chartLegend'),
@@ -185,7 +187,7 @@ function renderBudgetRow(ym, major, sub, spent) {
     return `
       <div class="budget-row">
         <div class="budget-row-head">
-          <span class="budget-cat">${escapeHtml(label)}</span>
+          <span class="budget-cat" tabindex="0" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">${escapeHtml(label)}</span>
           <div class="budget-set">
             <span class="budget-set-label">予算</span>
             <input type="number" class="budget-input" min="0" step="1000" placeholder="未設定" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
@@ -207,7 +209,7 @@ function renderBudgetRow(ym, major, sub, spent) {
   return `
     <div class="budget-row">
       <div class="budget-row-head">
-        <span class="budget-cat">${escapeHtml(label)}</span>
+        <span class="budget-cat" tabindex="0" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">${escapeHtml(label)}</span>
         <div class="budget-set">
           <span class="budget-set-label">予算</span>
           <input type="number" class="budget-input" min="0" step="1000" value="${budget}" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
@@ -249,6 +251,81 @@ function renderBudgets(records) {
       </div>
     `;
   }).join('');
+
+  attachBudgetTooltips();
+}
+
+function attachBudgetTooltips() {
+  const tooltip = els.budgetTooltip;
+  const panel = els.budgetPanel;
+
+  function showTooltip(target, clientX, clientY) {
+    const major = target.dataset.category;
+    const sub = target.dataset.subcategory || null;
+    const ym = els.summaryMonth.value || currentYearMonth();
+
+    const matches = currentRecords
+      .filter((r) => recordYearMonth(r) === ym && (r.category || '').trim() === major && (sub ? (r.subCategory || '').trim() === sub : true))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    tooltip.innerHTML = '';
+
+    const title = document.createElement('div');
+    title.className = 'budget-tooltip-title';
+    title.textContent = `${periodLabel(ym)}の実績 — ${target.textContent.trim()}`;
+    tooltip.appendChild(title);
+
+    if (!matches.length) {
+      const empty = document.createElement('p');
+      empty.className = 'budget-tooltip-empty';
+      empty.textContent = 'この月の記録はありません';
+      tooltip.appendChild(empty);
+    } else {
+      matches.forEach((r) => {
+        const row = document.createElement('div');
+        row.className = 'budget-tooltip-row';
+
+        const date = document.createElement('span');
+        date.className = 'tt-date';
+        date.textContent = formatDateShort(r.date);
+
+        const amount = document.createElement('span');
+        amount.className = 'tt-amount';
+        amount.textContent = formatCurrency(r.amount);
+
+        row.appendChild(date);
+        row.appendChild(amount);
+        tooltip.appendChild(row);
+
+        if (r.memo) {
+          const memo = document.createElement('span');
+          memo.className = 'budget-tooltip-memo';
+          memo.textContent = r.memo;
+          tooltip.appendChild(memo);
+        }
+      });
+    }
+
+    const panelRect = panel.getBoundingClientRect();
+    tooltip.style.left = `${clientX - panelRect.left + 12}px`;
+    tooltip.style.top = `${clientY - panelRect.top + 12}px`;
+    tooltip.classList.add('visible');
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+  }
+
+  panel.querySelectorAll('.budget-cat').forEach((el) => {
+    el.addEventListener('pointerenter', (e) => showTooltip(el, e.clientX, e.clientY));
+    el.addEventListener('pointermove', (e) => showTooltip(el, e.clientX, e.clientY));
+    el.addEventListener('pointerleave', hideTooltip);
+    el.addEventListener('focus', () => {
+      const rect = el.getBoundingClientRect();
+      showTooltip(el, rect.left, rect.bottom);
+    });
+    el.addEventListener('blur', hideTooltip);
+  });
 }
 
 const CHART_MONTHS = 6;
@@ -659,7 +736,26 @@ async function onSubmit(e) {
   }
 }
 
+function initMoneyRain() {
+  const container = document.getElementById('moneyRain');
+  if (!container) return;
+  const COUNT = 18;
+  for (let i = 0; i < COUNT; i++) {
+    const span = document.createElement('span');
+    span.textContent = '¥';
+    const duration = 10 + Math.random() * 10;
+    span.style.left = `${Math.random() * 100}%`;
+    span.style.fontSize = `${14 + Math.random() * 18}px`;
+    span.style.opacity = String(0.08 + Math.random() * 0.14);
+    span.style.animationDuration = `${duration}s`;
+    span.style.animationDelay = `${-Math.random() * duration}s`;
+    container.appendChild(span);
+  }
+}
+
 function init() {
+  initMoneyRain();
+
   const url = getGasUrl();
   els.gasUrl.value = url;
   els.summaryMonth.value = currentYearMonth();

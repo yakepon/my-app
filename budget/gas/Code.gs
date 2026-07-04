@@ -17,36 +17,70 @@ function getBudgetSheet() {
   }
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(BUDGET_HEADERS);
+  } else {
+    ensureBudgetHeaders(sheet);
   }
   // "2026-07" が日付として誤認識されるのを防ぐため、yearMonth列はプレーンテキスト固定にする
-  sheet.getRange(1, 1, sheet.getMaxRows(), 1).setNumberFormat('@');
+  const ymCol = getHeaders(sheet).indexOf('yearMonth') + 1;
+  if (ymCol > 0) sheet.getRange(1, ymCol, sheet.getMaxRows(), 1).setNumberFormat('@');
   return sheet;
 }
 
+// 既存シートに無い列があれば末尾に追加し、既存データの列はそのまま保持する
+function ensureBudgetHeaders(sheet) {
+  const lastCol = sheet.getLastColumn();
+  const existing = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const missing = BUDGET_HEADERS.filter((h) => existing.indexOf(h) === -1);
+  if (missing.length) {
+    sheet.getRange(1, lastCol + 1, 1, missing.length).setValues([missing]);
+  }
+}
+
+// 列の並び順に依存せず、ヘッダー名で値を読み書きする（records シートと同じ方式）
 function budgetsToRecords(sheet) {
+  const headers = getHeaders(sheet);
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  return sheet.getRange(2, 1, lastRow - 1, 4).getValues()
-    .filter((row) => row[0] !== '')
-    .map((row) => ({ yearMonth: row[0], category: row[1], subCategory: row[2], amount: row[3] }));
+  return sheet.getRange(2, 1, lastRow - 1, headers.length).getValues()
+    .map((row) => {
+      const record = {};
+      headers.forEach((key, i) => { record[key] = row[i]; });
+      return record;
+    })
+    .filter((record) => record.category !== '' && record.category !== undefined);
 }
 
 function saveBudget(sheet, data) {
+  const headers = getHeaders(sheet);
   const yearMonth = data.yearMonth;
   const category = data.category;
   const subCategory = data.subCategory || '';
   const amount = Number(data.amount) || 0;
+
+  const ymCol = headers.indexOf('yearMonth');
+  const catCol = headers.indexOf('category');
+  const subCol = headers.indexOf('subCategory');
+  const amtCol = headers.indexOf('amount');
+
   const lastRow = sheet.getLastRow();
   if (lastRow >= 2) {
-    const rows = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+    const rows = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
     for (let i = 0; i < rows.length; i++) {
-      if (String(rows[i][0]) === String(yearMonth) && String(rows[i][1]) === String(category) && String(rows[i][2] || '') === String(subCategory)) {
-        sheet.getRange(i + 2, 4).setValue(amount);
+      if (String(rows[i][ymCol]) === String(yearMonth) && String(rows[i][catCol]) === String(category) && String(rows[i][subCol] || '') === String(subCategory)) {
+        sheet.getRange(i + 2, amtCol + 1).setValue(amount);
         return;
       }
     }
   }
-  sheet.appendRow([yearMonth, category, subCategory, amount]);
+
+  const row = headers.map((key) => {
+    if (key === 'yearMonth') return yearMonth;
+    if (key === 'category') return category;
+    if (key === 'subCategory') return subCategory;
+    if (key === 'amount') return amount;
+    return '';
+  });
+  sheet.appendRow(row);
 }
 
 function getSheet() {

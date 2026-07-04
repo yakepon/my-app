@@ -11,6 +11,7 @@
 </head>
 <body>
   <div class="ledger-lines" aria-hidden="true"></div>
+  <div class="money-rain" id="moneyRain" aria-hidden="true"></div>
 
   <header class="app-header">
     <p class="kicker">HOUSEHOLD LEDGER</p>
@@ -82,12 +83,13 @@
       </form>
     </section>
 
-    <section class="panel budget-panel">
+    <section class="panel budget-panel" id="budgetPanel">
       <div class="summary-head">
         <h2>予算/実績</h2>
         <input type="month" id="summaryMonth">
       </div>
       <div class="budget-list" id="budgetList"></div>
+      <div class="budget-tooltip" id="budgetTooltip"></div>
     </section>
 
     <section class="panel chart-panel">

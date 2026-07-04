@@ -9,6 +9,7 @@
   --orange: #FF5B1F;
   --orange-deep: #D6470F;
   --orange-soft: rgba(255, 91, 31, 0.14);
+  --orange-gradient: linear-gradient(135deg, #FF9A4D 0%, #FF5B1F 55%, #D6470F 100%);
   --gauge-green: #34C759;
   --gauge-yellow: #FFD60A;
   --gauge-red: #FF3B30;
@@ -50,6 +51,43 @@ body {
   background-size: 42px 42px, 42px 42px, auto, auto;
 }
 
+/* 天井から降ってくる ¥ の粒子演出 */
+.money-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.money-rain span {
+  position: absolute;
+  top: -10%;
+  left: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  background: var(--orange-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation-name: moneyFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@keyframes moneyFall {
+  0% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(60vh) rotate(6deg); }
+  100% { transform: translateY(120vh) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .money-rain {
+    display: none;
+  }
+}
+
 /* ===== Header ===== */
 
 .app-header {
@@ -63,7 +101,10 @@ body {
   font-family: var(--font-mono);
   letter-spacing: 0.4em;
   font-size: 11px;
-  color: var(--orange);
+  background: var(--orange-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin-bottom: 14px;
 }
 
@@ -113,7 +154,7 @@ main {
   content: "";
   width: 8px;
   height: 8px;
-  background: var(--orange);
+  background: var(--orange-gradient);
   flex-shrink: 0;
 }
 
@@ -129,10 +170,19 @@ main {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-top: 3px solid var(--orange);
   border-radius: 2px;
   padding: 20px 18px;
   overflow: hidden;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--orange-gradient);
 }
 
 .stat-label {
@@ -175,7 +225,7 @@ main {
 .hanko-red {
   border-color: var(--orange);
   color: var(--orange);
-  background: var(--orange-soft);
+  background: linear-gradient(135deg, rgba(255, 154, 77, 0.22), rgba(214, 71, 15, 0.12));
 }
 
 .hanko-stamped {
@@ -244,9 +294,82 @@ main {
 
 /* ===== Budgets ===== */
 
+.budget-panel {
+  position: relative;
+}
+
 .budget-list {
   display: flex;
   flex-direction: column;
+}
+
+.budget-cat {
+  cursor: help;
+}
+
+.budget-tooltip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  min-width: 180px;
+  max-width: 260px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.budget-tooltip.visible {
+  opacity: 1;
+}
+
+.budget-tooltip-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.budget-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-mono);
+  padding: 3px 0;
+}
+
+.budget-tooltip-row .tt-date {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.budget-tooltip-row .tt-amount {
+  font-weight: 700;
+  color: var(--orange);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.budget-tooltip-memo {
+  display: block;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 11px;
+  margin-top: -1px;
+  padding-bottom: 3px;
+}
+
+.budget-tooltip-empty {
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
 .budget-group {
@@ -263,7 +386,10 @@ main {
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--orange);
+  background: var(--orange-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   padding-bottom: 8px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--line-strong);
@@ -447,16 +573,16 @@ textarea {
 
 .btn-primary {
   width: 100%;
-  background: var(--orange);
+  background: var(--orange-gradient);
   border: none;
   color: var(--bg);
   font-size: 16px;
   padding: 14px;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  transition: filter 0.15s ease, opacity 0.15s ease;
 }
 
 .btn-primary:hover {
-  background: var(--orange-deep);
+  filter: brightness(1.12);
   color: var(--bg);
 }
 
