@@ -240,91 +240,7 @@ main {
   width: auto;
 }
 
-.summary-totals {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding-bottom: 22px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid var(--line);
-}
-
-.summary-total-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.summary-total-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.summary-total-value {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 18px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.ink-budget { color: var(--text); }
 .ink-expense { color: var(--orange); }
-
-.breakdown-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-}
-
-.breakdown-col h3 {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 14px;
-}
-
-.breakdown-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.breakdown-row-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 13px;
-  margin-bottom: 5px;
-}
-
-.breakdown-cat {
-  color: var(--text);
-}
-
-.breakdown-amt {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 12px;
-}
-
-.breakdown-bar-track {
-  height: 4px;
-  background: var(--panel-2);
-  overflow: hidden;
-}
-
-.breakdown-bar-fill {
-  height: 100%;
-}
-
-.bar-expense { background: var(--orange); }
 
 /* ===== Budgets ===== */
 
@@ -411,6 +327,19 @@ main {
   color: var(--text-dim);
 }
 
+.budget-remaining {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  margin-bottom: 10px;
+}
+
+.budget-remaining.gauge-green { color: var(--gauge-green); }
+.budget-remaining.gauge-yellow { color: var(--gauge-yellow); }
+.budget-remaining.gauge-red { color: var(--gauge-red); }
+
 .budget-bar-track {
   height: 8px;
   background: var(--panel-2);
@@ -429,15 +358,10 @@ main {
 
 .budget-row-foot {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-dim);
-}
-
-.budget-row-foot .over-label {
-  color: var(--gauge-red);
-  font-weight: 700;
 }
 
 .budget-empty {
@@ -677,16 +601,6 @@ textarea {
 @media (max-width: 640px) {
   .stats {
     grid-template-columns: 1fr;
-  }
-
-  .summary-totals {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .breakdown-cols {
-    grid-template-columns: 1fr;
-    gap: 22px;
   }
 
   .form-grid {

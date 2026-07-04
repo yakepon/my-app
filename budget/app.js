@@ -23,10 +23,6 @@ const els = {
   statBalance: document.getElementById('statBalance'),
   hankoStamp: document.getElementById('hankoStamp'),
   summaryMonth: document.getElementById('summaryMonth'),
-  summaryBudget: document.getElementById('summaryBudget'),
-  summaryExpense: document.getElementById('summaryExpense'),
-  summaryBalance: document.getElementById('summaryBalance'),
-  expenseBreakdown: document.getElementById('expenseBreakdown'),
   form: document.getElementById('recordForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitBtn'),
@@ -132,7 +128,6 @@ async function loadRecords() {
 
 function renderAll(records) {
   renderTopStats(records);
-  renderMonthlySummary(records);
   renderBudgets(records);
   populateCategoryLists(records);
   renderRecords(records);
@@ -154,51 +149,6 @@ function renderTopStats(records) {
   // 押し直す演出のためクラスを一度外して再付与する
   void els.hankoStamp.offsetWidth;
   els.hankoStamp.classList.add('hanko-stamped');
-}
-
-function renderMonthlySummary(records) {
-  const ym = els.summaryMonth.value || currentYearMonth();
-  const monthRecords = records.filter((r) => recordYearMonth(r) === ym);
-
-  const expense = monthRecords.reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const totalBudget = totalBudgetAmount();
-  const balance = totalBudget - expense;
-
-  els.summaryBudget.textContent = formatCurrency(totalBudget);
-  els.summaryExpense.textContent = formatCurrency(expense);
-  els.summaryBalance.textContent = formatCurrency(balance);
-  els.summaryBalance.className = 'summary-total-value ' + (balance >= 0 ? 'ink-budget' : 'ink-expense');
-
-  renderBreakdown(els.expenseBreakdown, monthRecords);
-}
-
-function renderBreakdown(el, records) {
-  if (!records.length) {
-    el.innerHTML = '<p class="empty">記録がありません。</p>';
-    return;
-  }
-  const counts = {};
-  records.forEach((r) => {
-    const cat = (r.category || '').trim() || '未分類';
-    counts[cat] = (counts[cat] || 0) + Number(r.amount || 0);
-  });
-  const total = Object.values(counts).reduce((sum, v) => sum + v, 0);
-  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-  el.innerHTML = rows.map(([cat, amount]) => {
-    const pct = total ? Math.round((amount / total) * 100) : 0;
-    return `
-      <div class="breakdown-row">
-        <div class="breakdown-row-head">
-          <span class="breakdown-cat">${escapeHtml(cat)}</span>
-          <span class="breakdown-amt ink-expense">${formatCurrency(amount)}</span>
-        </div>
-        <div class="breakdown-bar-track">
-          <div class="breakdown-bar-fill bar-expense" style="width:${pct}%"></div>
-        </div>
-      </div>
-    `;
-  }).join('');
 }
 
 function renderBudgetRow(major, sub, spent) {
@@ -239,12 +189,14 @@ function renderBudgetRow(major, sub, spent) {
           <span class="budget-unit">円</span>
         </div>
       </div>
+      <div class="budget-remaining ${overspent ? 'gauge-red' : gaugeClass}">
+        ${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}
+      </div>
       <div class="budget-bar-track">
         <div class="budget-bar-fill ${gaugeClass}" style="width:${pct}%"></div>
       </div>
       <div class="budget-row-foot">
-        <span class="${overspent ? 'over-label' : ''}">${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}</span>
-        <span>${formatCurrency(spent)} / ${formatCurrency(budget)}</span>
+        <span>${formatCurrency(spent)} / ${formatCurrency(budget)} 使用</span>
       </div>
     </div>
   `;
@@ -475,10 +427,7 @@ function init() {
   els.cancelEdit.addEventListener('click', exitEditMode);
   els.expenseCategorySelect.addEventListener('change', updateSubCategoryOptions);
 
-  els.summaryMonth.addEventListener('change', () => {
-    renderMonthlySummary(currentRecords);
-    renderBudgets(currentRecords);
-  });
+  els.summaryMonth.addEventListener('change', () => renderBudgets(currentRecords));
 
   els.budgetList.addEventListener('change', (e) => {
     const input = e.target.closest('.budget-input');

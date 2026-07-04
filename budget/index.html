@@ -47,36 +47,6 @@
       <p class="status" id="connStatus">未接続</p>
     </section>
 
-    <section class="panel summary-panel">
-      <div class="summary-head">
-        <h2>月次集計</h2>
-        <input type="month" id="summaryMonth">
-      </div>
-      <div class="summary-totals">
-        <div class="summary-total-item">
-          <span class="summary-total-label">予算合計</span>
-          <span class="summary-total-value" id="summaryBudget">--</span>
-        </div>
-        <div class="summary-total-item">
-          <span class="summary-total-label">支出合計</span>
-          <span class="summary-total-value ink-expense" id="summaryExpense">--</span>
-        </div>
-        <div class="summary-total-item">
-          <span class="summary-total-label">差引</span>
-          <span class="summary-total-value" id="summaryBalance">--</span>
-        </div>
-      </div>
-      <div class="breakdown-col">
-        <h3>支出の内訳</h3>
-        <div class="breakdown-list" id="expenseBreakdown"><p class="empty">記録がありません。</p></div>
-      </div>
-    </section>
-
-    <section class="panel budget-panel">
-      <h2>予算</h2>
-      <div class="budget-list" id="budgetList"></div>
-    </section>
-
     <section class="panel form-panel">
       <h2 id="formTitle">記帳する</h2>
       <form id="recordForm">
@@ -110,6 +80,14 @@
           <button type="button" class="btn" id="cancelEdit" hidden>キャンセル</button>
         </div>
       </form>
+    </section>
+
+    <section class="panel budget-panel">
+      <div class="summary-head">
+        <h2>予算/実績</h2>
+        <input type="month" id="summaryMonth">
+      </div>
+      <div class="budget-list" id="budgetList"></div>
     </section>
 
     <section class="panel records-panel">
