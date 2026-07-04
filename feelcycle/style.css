@@ -334,6 +334,79 @@ main {
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* ===== Bike Map ===== */
+
+.bike-map-wrap {
+  overflow-x: auto;
+}
+
+.bike-map {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.bike-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.bike-pods-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.bike-pod {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bike-pod-spacer {
+  flex: 1;
+}
+
+.bike-circle {
+  flex-shrink: 0;
+  width: 28px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bike-gap {
+  flex-shrink: 0;
+  width: 28px;
+}
+
+@media (max-width: 600px) {
+  .bike-row, .bike-pods-row {
+    gap: 4px;
+  }
+
+  .bike-pod {
+    gap: 4px;
+  }
+
+  .bike-circle, .bike-gap {
+    width: 20px;
+    font-size: 9px;
+  }
+}
+
 /* ===== Type Toggle ===== */
 
 .type-toggle {

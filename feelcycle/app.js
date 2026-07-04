@@ -20,6 +20,7 @@ const els = {
   categoryChart: document.getElementById('categoryChart'),
   instructorChart: document.getElementById('instructorChart'),
   heatmap: document.getElementById('heatmap'),
+  bikeMap: document.getElementById('bikeMap'),
   searchCategory: document.getElementById('searchCategory'),
   searchProgram: document.getElementById('searchProgram'),
   searchBtn: document.getElementById('searchBtn'),
@@ -176,6 +177,7 @@ function renderCharts(records) {
   renderCategoryChart(rideRecords);
   renderInstructorChart(rideRecords);
   renderHeatmap(rideRecords);
+  renderBikeMap(rideRecords);
 }
 
 const DATALIST_FIELDS = {
@@ -379,6 +381,60 @@ function renderHeatmap(records) {
   }).join('');
 
   els.heatmap.innerHTML = `<div class="heatmap-grid">${headerCells}${bodyCells}</div>`;
+}
+
+// スタジオごとのバイク配置（座席図を上から順に並べたもの）。
+// 対応スタジオを増やす場合はここにレイアウトを追加する。
+const BIKE_MAP_LAYOUTS = {
+  '武蔵小杉': [
+    { type: 'pods', left: [1, 2], right: [3, 4] },
+    { type: 'row', bikes: [14, 13, 12, 11, 10, 9, 8, 7, 6, 5] },
+    { type: 'row', bikes: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
+    { type: 'row', bikes: [35, 34, 33, 32, 31, 30, 29, 28, 27, 26] },
+    { type: 'row', bikes: [36, 37, 38, 39, 40, null, 41, 42, 43, 44, 45] },
+  ],
+};
+
+function renderBikeMap(records) {
+  const [studio, layout] = Object.entries(BIKE_MAP_LAYOUTS)[0];
+  const studioRecords = records.filter((r) => String(r.studio || '').trim() === studio);
+
+  if (!studioRecords.length) {
+    els.bikeMap.innerHTML = `<p class="empty">${studio}での記録がありません。</p>`;
+    return;
+  }
+
+  const counts = {};
+  studioRecords.forEach((r) => {
+    const bikeNo = Number(r.bikeNo);
+    if (!bikeNo) return;
+    counts[bikeNo] = (counts[bikeNo] || 0) + 1;
+  });
+  const max = Math.max(1, ...Object.values(counts));
+
+  const cell = (no) => {
+    if (no == null) return '<span class="bike-gap"></span>';
+    const count = counts[no] || 0;
+    const intensity = count / max;
+    const style = count
+      ? `style="background: rgba(255, 46, 126, ${(0.15 + intensity * 0.65).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(255, 46, 126, ${(intensity * 0.6).toFixed(2)})"`
+      : '';
+    return `<span class="bike-circle" ${style} title="No.${no}: ${count}回">${no}</span>`;
+  };
+
+  const rowsHtml = layout.map((row) => {
+    if (row.type === 'pods') {
+      return `
+        <div class="bike-pods-row">
+          <div class="bike-pod">${row.left.map(cell).join('')}</div>
+          <div class="bike-pod-spacer"></div>
+          <div class="bike-pod">${row.right.map(cell).join('')}</div>
+        </div>`;
+    }
+    return `<div class="bike-row">${row.bikes.map(cell).join('')}</div>`;
+  }).join('');
+
+  els.bikeMap.innerHTML = `<div class="bike-map">${rowsHtml}</div>`;
 }
 
 function performSearch() {
