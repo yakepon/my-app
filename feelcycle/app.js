@@ -384,10 +384,13 @@ function renderHeatmap(records) {
 }
 
 // スタジオごとのバイク配置（座席図を上から順に並べたもの）。
+// pods は前方左右の縦2台ずつのバイク。totalCols/leftCol/rightCol は
+// 直後の row と同じ列数の中で、左右のポッドが何列目の真上に来るかを表す
+// （0始まり。実際の座席図の画像から採寸した位置）。
 // 対応スタジオを増やす場合はここにレイアウトを追加する。
 const BIKE_MAP_LAYOUTS = {
   '武蔵小杉': [
-    { type: 'pods', left: [1, 2], right: [3, 4] },
+    { type: 'pods', totalCols: 10, leftCol: 1, rightCol: 8, left: [1, 2], right: [3, 4] },
     { type: 'row', bikes: [14, 13, 12, 11, 10, 9, 8, 7, 6, 5] },
     { type: 'row', bikes: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
     { type: 'row', bikes: [35, 34, 33, 32, 31, 30, 29, 28, 27, 26] },
@@ -412,23 +415,34 @@ function renderBikeMap(records) {
   });
   const max = Math.max(1, ...Object.values(counts));
 
+  const gapSlot = () => '<span class="bike-gap"></span>';
+
   const cell = (no) => {
-    if (no == null) return '<span class="bike-gap"></span>';
+    if (no == null) return gapSlot();
     const count = counts[no] || 0;
     const intensity = count / max;
     const style = count
       ? `style="background: rgba(255, 46, 126, ${(0.15 + intensity * 0.65).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(255, 46, 126, ${(intensity * 0.6).toFixed(2)})"`
       : '';
-    return `<span class="bike-circle" ${style} title="No.${no}: ${count}回">${no}</span>`;
+    return `<span class="bike-circle" ${style} title="No.${no}: ${count}回">${count || ''}</span>`;
   };
 
   const rowsHtml = layout.map((row) => {
     if (row.type === 'pods') {
+      const before = gapSlot().repeat(row.leftCol);
+      const between = gapSlot().repeat(row.rightCol - row.leftCol - 1);
+      const after = gapSlot().repeat(row.totalCols - row.rightCol - 1);
       return `
-        <div class="bike-pods-row">
+        <div class="bike-row bike-pods-row">
+          ${before}
           <div class="bike-pod">${row.left.map(cell).join('')}</div>
-          <div class="bike-pod-spacer"></div>
+          ${between}
           <div class="bike-pod">${row.right.map(cell).join('')}</div>
+          ${after}
+          <div class="instructor-marker" title="インストラクター">
+            <span class="instructor-avatar"></span>
+            <span class="instructor-label">INSTR.</span>
+          </div>
         </div>`;
     }
     return `<div class="bike-row">${row.bikes.map(cell).join('')}</div>`;

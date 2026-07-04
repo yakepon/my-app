@@ -355,10 +355,8 @@ main {
 }
 
 .bike-pods-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 4px;
+  position: relative;
+  margin-bottom: 18px;
 }
 
 .bike-pod {
@@ -367,8 +365,30 @@ main {
   gap: 6px;
 }
 
-.bike-pod-spacer {
-  flex: 1;
+.instructor-marker {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.instructor-avatar {
+  width: 28px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.instructor-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .bike-circle {
@@ -393,7 +413,7 @@ main {
 }
 
 @media (max-width: 600px) {
-  .bike-row, .bike-pods-row {
+  .bike-row {
     gap: 4px;
   }
 
@@ -404,6 +424,14 @@ main {
   .bike-circle, .bike-gap {
     width: 20px;
     font-size: 9px;
+  }
+
+  .instructor-avatar {
+    width: 20px;
+  }
+
+  .instructor-label {
+    font-size: 7px;
   }
 }
 
