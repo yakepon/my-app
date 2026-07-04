@@ -54,8 +54,8 @@
       </div>
       <div class="summary-totals">
         <div class="summary-total-item">
-          <span class="summary-total-label">収入合計</span>
-          <span class="summary-total-value ink-income" id="summaryIncome">--</span>
+          <span class="summary-total-label">予算合計</span>
+          <span class="summary-total-value" id="summaryBudget">--</span>
         </div>
         <div class="summary-total-item">
           <span class="summary-total-label">支出合計</span>
@@ -66,15 +66,9 @@
           <span class="summary-total-value" id="summaryBalance">--</span>
         </div>
       </div>
-      <div class="breakdown-cols">
-        <div class="breakdown-col">
-          <h3>支出の内訳</h3>
-          <div class="breakdown-list" id="expenseBreakdown"><p class="empty">記録がありません。</p></div>
-        </div>
-        <div class="breakdown-col">
-          <h3>収入の内訳</h3>
-          <div class="breakdown-list" id="incomeBreakdown"><p class="empty">記録がありません。</p></div>
-        </div>
+      <div class="breakdown-col">
+        <h3>支出の内訳</h3>
+        <div class="breakdown-list" id="expenseBreakdown"><p class="empty">記録がありません。</p></div>
       </div>
     </section>
 
@@ -87,16 +81,6 @@
       <h2 id="formTitle">記帳する</h2>
       <form id="recordForm">
         <input type="hidden" name="id">
-        <div class="type-toggle">
-          <label class="type-opt type-opt-expense">
-            <input type="radio" name="type" value="expense" checked>
-            <span class="type-label">支出</span>
-          </label>
-          <label class="type-opt type-opt-income">
-            <input type="radio" name="type" value="income">
-            <span class="type-label">収入</span>
-          </label>
-        </div>
         <div class="form-grid">
           <label>日付
             <input type="date" name="date" required>
@@ -104,7 +88,7 @@
           <label>金額
             <input type="number" name="amount" min="0" step="1" placeholder="例: 1200" required>
           </label>
-          <label class="category-field" id="expenseCategoryField">カテゴリ（大）
+          <label class="category-field">カテゴリ（大）
             <select name="expenseCategory" id="expenseCategorySelect">
               <option value="車">車</option>
               <option value="遊び">遊び</option>
@@ -113,18 +97,14 @@
               <option value="その他">その他</option>
             </select>
           </label>
-          <label class="category-field" id="subCategoryField">カテゴリ（中）
+          <label class="category-field">カテゴリ（中）
             <input type="text" name="subCategory" list="subCategoryList" id="subCategoryInput" placeholder="例: ガソリン代">
-          </label>
-          <label class="category-field" id="incomeCategoryField" hidden>カテゴリ
-            <input type="text" name="incomeCategory" list="incomeCategoryList" id="incomeCategoryInput" placeholder="例: 給与">
           </label>
         </div>
         <label class="memo-field">メモ
           <textarea name="memo" rows="2" placeholder="購入先やメモ"></textarea>
         </label>
         <datalist id="subCategoryList"></datalist>
-        <datalist id="incomeCategoryList"></datalist>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" id="submitBtn">記帳する</button>
           <button type="button" class="btn" id="cancelEdit" hidden>キャンセル</button>

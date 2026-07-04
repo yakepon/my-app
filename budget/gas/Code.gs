@@ -1,5 +1,5 @@
 const SHEET_NAME = 'records';
-const HEADERS = ['id', 'date', 'type', 'category', 'subCategory', 'amount', 'memo'];
+const HEADERS = ['id', 'date', 'category', 'subCategory', 'amount', 'memo'];
 // "2026-07-04" のような日付文字列はスプレッドシートに自動で日付型として認識され、
 // 読み込み時にDateオブジェクト（タイムゾーンずれ込みのISO文字列）になってしまう
 // （<input type="date">に値が入らない原因）。この列はプレーンテキスト書式に固定し、

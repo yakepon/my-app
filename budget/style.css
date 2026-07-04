@@ -9,6 +9,9 @@
   --orange: #FF5B1F;
   --orange-deep: #D6470F;
   --orange-soft: rgba(255, 91, 31, 0.14);
+  --gauge-green: #34C759;
+  --gauge-yellow: #FFD60A;
+  --gauge-red: #FF3B30;
   --font-display: "Oswald", sans-serif;
   --font-body: "Noto Sans JP", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -268,7 +271,7 @@ main {
   color: var(--text);
 }
 
-.ink-income { color: var(--text); }
+.ink-budget { color: var(--text); }
 .ink-expense { color: var(--orange); }
 
 .breakdown-cols {
@@ -322,7 +325,6 @@ main {
 }
 
 .bar-expense { background: var(--orange); }
-.bar-income { background: var(--text-dim); }
 
 /* ===== Budgets ===== */
 
@@ -418,13 +420,12 @@ main {
 
 .budget-bar-fill {
   height: 100%;
-  background: var(--text);
   transition: width 0.2s ease, background 0.2s ease;
 }
 
-.budget-bar-fill.over {
-  background: var(--orange);
-}
+.budget-bar-fill.gauge-green { background: var(--gauge-green); }
+.budget-bar-fill.gauge-yellow { background: var(--gauge-yellow); }
+.budget-bar-fill.gauge-red { background: var(--gauge-red); }
 
 .budget-row-foot {
   display: flex;
@@ -435,64 +436,13 @@ main {
 }
 
 .budget-row-foot .over-label {
-  color: var(--orange);
+  color: var(--gauge-red);
   font-weight: 700;
 }
 
 .budget-empty {
   font-size: 12px;
   color: var(--text-dim);
-}
-
-/* ===== Type Toggle ===== */
-
-.type-toggle {
-  display: flex;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  padding: 3px;
-  gap: 3px;
-  margin-bottom: 20px;
-}
-
-.type-opt {
-  flex: 1;
-  display: block;
-  cursor: pointer;
-}
-
-.type-opt input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.type-label {
-  display: block;
-  text-align: center;
-  padding: 9px 12px;
-  border-radius: 1px;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  transition: color 0.15s ease, background 0.15s ease;
-  cursor: pointer;
-}
-
-.type-opt-expense input[type="radio"]:checked + .type-label {
-  color: var(--bg);
-  background: var(--orange);
-}
-
-.type-opt-income input[type="radio"]:checked + .type-label {
-  color: var(--bg);
-  background: var(--text);
 }
 
 /* ===== Form ===== */

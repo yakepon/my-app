@@ -1,9 +1,6 @@
 const STORAGE_KEY = 'budget_gas_url';
 
-const DEFAULT_CATEGORIES = {
-  expense: ['車', '遊び', '外食', '美容', 'その他'],
-  income: ['給与', '賞与', '副業', 'その他'],
-};
+const EXPENSE_CATEGORIES = ['車', '遊び', '外食', '美容', 'その他'];
 
 const CATEGORY_TREE = {
   '車': ['月極', 'パーキング', '高速代', 'ガソリン代'],
@@ -26,23 +23,17 @@ const els = {
   statBalance: document.getElementById('statBalance'),
   hankoStamp: document.getElementById('hankoStamp'),
   summaryMonth: document.getElementById('summaryMonth'),
-  summaryIncome: document.getElementById('summaryIncome'),
+  summaryBudget: document.getElementById('summaryBudget'),
   summaryExpense: document.getElementById('summaryExpense'),
   summaryBalance: document.getElementById('summaryBalance'),
   expenseBreakdown: document.getElementById('expenseBreakdown'),
-  incomeBreakdown: document.getElementById('incomeBreakdown'),
   form: document.getElementById('recordForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitBtn'),
   cancelEdit: document.getElementById('cancelEdit'),
-  expenseCategoryField: document.getElementById('expenseCategoryField'),
   expenseCategorySelect: document.getElementById('expenseCategorySelect'),
-  subCategoryField: document.getElementById('subCategoryField'),
   subCategoryInput: document.getElementById('subCategoryInput'),
   subCategoryList: document.getElementById('subCategoryList'),
-  incomeCategoryField: document.getElementById('incomeCategoryField'),
-  incomeCategoryInput: document.getElementById('incomeCategoryInput'),
-  incomeCategoryList: document.getElementById('incomeCategoryList'),
   recordsList: document.getElementById('recordsList'),
   budgetList: document.getElementById('budgetList'),
 };
@@ -100,7 +91,7 @@ function budgetKey(category, subCategory) {
 
 function getBudgetItems() {
   const items = [];
-  DEFAULT_CATEGORIES.expense.forEach((major) => {
+  EXPENSE_CATEGORIES.forEach((major) => {
     const subs = CATEGORY_TREE[major] || [];
     if (subs.length === 0) {
       items.push({ major, sub: null });
@@ -109,6 +100,10 @@ function getBudgetItems() {
     }
   });
   return items;
+}
+
+function totalBudgetAmount() {
+  return getBudgetItems().reduce((sum, { major, sub }) => sum + Number(currentBudgets[budgetKey(major, sub)] || 0), 0);
 }
 
 async function loadRecords() {
@@ -145,9 +140,8 @@ function renderAll(records) {
 
 function renderTopStats(records) {
   const ym = currentYearMonth();
-  const monthRecords = records.filter((r) => recordYearMonth(r) === ym);
-  const expense = monthRecords.filter((r) => r.type === 'expense').reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const totalBudget = getBudgetItems().reduce((sum, { major, sub }) => sum + Number(currentBudgets[budgetKey(major, sub)] || 0), 0);
+  const expense = records.filter((r) => recordYearMonth(r) === ym).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+  const totalBudget = totalBudgetAmount();
   const balance = totalBudget - expense;
 
   els.statBudget.textContent = formatCurrency(totalBudget);
@@ -166,20 +160,19 @@ function renderMonthlySummary(records) {
   const ym = els.summaryMonth.value || currentYearMonth();
   const monthRecords = records.filter((r) => recordYearMonth(r) === ym);
 
-  const income = monthRecords.filter((r) => r.type === 'income').reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const expense = monthRecords.filter((r) => r.type === 'expense').reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const balance = income - expense;
+  const expense = monthRecords.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+  const totalBudget = totalBudgetAmount();
+  const balance = totalBudget - expense;
 
-  els.summaryIncome.textContent = formatCurrency(income);
+  els.summaryBudget.textContent = formatCurrency(totalBudget);
   els.summaryExpense.textContent = formatCurrency(expense);
   els.summaryBalance.textContent = formatCurrency(balance);
-  els.summaryBalance.className = 'summary-total-value ' + (balance >= 0 ? 'ink-income' : 'ink-expense');
+  els.summaryBalance.className = 'summary-total-value ' + (balance >= 0 ? 'ink-budget' : 'ink-expense');
 
-  renderBreakdown(els.expenseBreakdown, monthRecords.filter((r) => r.type === 'expense'), 'expense');
-  renderBreakdown(els.incomeBreakdown, monthRecords.filter((r) => r.type === 'income'), 'income');
+  renderBreakdown(els.expenseBreakdown, monthRecords);
 }
 
-function renderBreakdown(el, records, type) {
+function renderBreakdown(el, records) {
   if (!records.length) {
     el.innerHTML = '<p class="empty">記録がありません。</p>';
     return;
@@ -198,10 +191,10 @@ function renderBreakdown(el, records, type) {
       <div class="breakdown-row">
         <div class="breakdown-row-head">
           <span class="breakdown-cat">${escapeHtml(cat)}</span>
-          <span class="breakdown-amt ${type === 'expense' ? 'ink-expense' : 'ink-income'}">${formatCurrency(amount)}</span>
+          <span class="breakdown-amt ink-expense">${formatCurrency(amount)}</span>
         </div>
         <div class="breakdown-bar-track">
-          <div class="breakdown-bar-fill ${type === 'expense' ? 'bar-expense' : 'bar-income'}" style="width:${pct}%"></div>
+          <div class="breakdown-bar-fill bar-expense" style="width:${pct}%"></div>
         </div>
       </div>
     `;
@@ -232,7 +225,9 @@ function renderBudgetRow(major, sub, spent) {
   const remaining = budget - spent;
   const pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
   const overspent = remaining < 0;
-  const warn = pct > 0 && pct <= 20;
+  let gaugeClass = 'gauge-green';
+  if (pct <= 10) gaugeClass = 'gauge-red';
+  else if (pct <= 50) gaugeClass = 'gauge-yellow';
 
   return `
     <div class="budget-row">
@@ -245,7 +240,7 @@ function renderBudgetRow(major, sub, spent) {
         </div>
       </div>
       <div class="budget-bar-track">
-        <div class="budget-bar-fill ${overspent || warn ? 'over' : ''}" style="width:${pct}%"></div>
+        <div class="budget-bar-fill ${gaugeClass}" style="width:${pct}%"></div>
       </div>
       <div class="budget-row-foot">
         <span class="${overspent ? 'over-label' : ''}">${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}</span>
@@ -257,9 +252,9 @@ function renderBudgetRow(major, sub, spent) {
 
 function renderBudgets(records) {
   const ym = els.summaryMonth.value || currentYearMonth();
-  const monthExpenses = records.filter((r) => r.type === 'expense' && recordYearMonth(r) === ym);
+  const monthExpenses = records.filter((r) => recordYearMonth(r) === ym);
 
-  els.budgetList.innerHTML = DEFAULT_CATEGORIES.expense.map((major) => {
+  els.budgetList.innerHTML = EXPENSE_CATEGORIES.map((major) => {
     const subs = CATEGORY_TREE[major] || [];
     const items = subs.length ? subs : [null];
 
@@ -280,15 +275,9 @@ function renderBudgets(records) {
 }
 
 function populateCategoryLists(records) {
-  const incomeCats = new Set(DEFAULT_CATEGORIES.income);
   historicalSubCategories = {};
 
   records.forEach((r) => {
-    if (r.type === 'income') {
-      const cat = String(r.category || '').trim();
-      if (cat) incomeCats.add(cat);
-      return;
-    }
     const major = String(r.category || '').trim();
     const sub = String(r.subCategory || '').trim();
     if (!major || !sub) return;
@@ -296,7 +285,6 @@ function populateCategoryLists(records) {
     historicalSubCategories[major].add(sub);
   });
 
-  els.incomeCategoryList.innerHTML = [...incomeCats].map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
   updateSubCategoryOptions();
 }
 
@@ -323,9 +311,7 @@ function renderRecords(records) {
   const remaining = sorted.length - visible.length;
 
   els.recordsList.innerHTML = visible.map((r) => {
-    const isIncome = r.type === 'income';
-    const sign = isIncome ? '+' : '-';
-    const categoryLabel = !isIncome && r.subCategory
+    const categoryLabel = r.subCategory
       ? `${r.category || '未分類'} / ${r.subCategory}`
       : (r.category || '未分類');
     return `
@@ -333,7 +319,7 @@ function renderRecords(records) {
       <span class="record-date">${formatDateShort(r.date)}</span>
       <span class="record-category">${escapeHtml(categoryLabel)}</span>
       <span class="record-memo">${escapeHtml(r.memo || '')}</span>
-      <span class="record-amount ${isIncome ? 'ink-income' : 'ink-expense'}">${sign}${formatCurrency(r.amount)}</span>
+      <span class="record-amount ink-expense">-${formatCurrency(r.amount)}</span>
       <span class="record-actions">
         <button type="button" class="icon-btn edit-btn" data-id="${escapeHtml(r.id)}">編集</button>
         <button type="button" class="icon-btn delete-btn" data-id="${escapeHtml(r.id)}">削除</button>
@@ -343,31 +329,14 @@ function renderRecords(records) {
   }).join('') + (remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : '');
 }
 
-function toggleCategoryFields(type) {
-  const isExpense = type !== 'income';
-  els.expenseCategoryField.hidden = !isExpense;
-  els.subCategoryField.hidden = !isExpense;
-  els.incomeCategoryField.hidden = isExpense;
-  if (isExpense) updateSubCategoryOptions();
-}
-
 function enterEditMode(record) {
   els.form.id.value = record.id;
   els.form.date.value = record.date || '';
   els.form.amount.value = record.amount || '';
   els.form.memo.value = record.memo || '';
-
-  const type = record.type || 'expense';
-  els.form.querySelectorAll('input[name="type"]').forEach((radio) => { radio.checked = radio.value === type; });
-  toggleCategoryFields(type);
-
-  if (type === 'income') {
-    els.incomeCategoryInput.value = record.category || '';
-  } else {
-    els.expenseCategorySelect.value = record.category || '';
-    updateSubCategoryOptions();
-    els.subCategoryInput.value = record.subCategory || '';
-  }
+  els.expenseCategorySelect.value = record.category || '';
+  updateSubCategoryOptions();
+  els.subCategoryInput.value = record.subCategory || '';
 
   els.formTitle.textContent = '記録を編集';
   els.submitBtn.textContent = '更新する';
@@ -381,7 +350,7 @@ function exitEditMode() {
   els.formTitle.textContent = '記帳する';
   els.submitBtn.textContent = '記帳する';
   els.cancelEdit.hidden = true;
-  toggleCategoryFields('expense');
+  updateSubCategoryOptions();
 }
 
 function onEdit(id) {
@@ -444,15 +413,12 @@ async function onSubmit(e) {
 
   const formData = new FormData(els.form);
   const id = formData.get('id');
-  const type = formData.get('type') || 'expense';
-  const isIncome = type === 'income';
   const payload = {
     action: id ? 'update' : 'add',
     id,
     date: formData.get('date'),
-    type,
-    category: isIncome ? formData.get('incomeCategory') : formData.get('expenseCategory'),
-    subCategory: isIncome ? '' : formData.get('subCategory'),
+    category: formData.get('expenseCategory'),
+    subCategory: formData.get('subCategory'),
     amount: formData.get('amount'),
     memo: formData.get('memo'),
   };
@@ -507,9 +473,6 @@ function init() {
 
   els.form.addEventListener('submit', onSubmit);
   els.cancelEdit.addEventListener('click', exitEditMode);
-  els.form.addEventListener('change', (e) => {
-    if (e.target.name === 'type') toggleCategoryFields(e.target.value);
-  });
   els.expenseCategorySelect.addEventListener('change', updateSubCategoryOptions);
 
   els.summaryMonth.addEventListener('change', () => {
