@@ -44,9 +44,11 @@ const els = {
   incomeCategoryInput: document.getElementById('incomeCategoryInput'),
   incomeCategoryList: document.getElementById('incomeCategoryList'),
   recordsList: document.getElementById('recordsList'),
+  budgetList: document.getElementById('budgetList'),
 };
 
 let currentRecords = [];
+let currentBudgets = {};
 
 const RECORDS_PAGE_SIZE = 15;
 let recordsLimit = RECORDS_PAGE_SIZE;
@@ -101,8 +103,13 @@ async function loadRecords() {
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const records = await res.json();
+    const data = await res.json();
+    const records = Array.isArray(data) ? data : (data.records || []);
     currentRecords = records;
+    currentBudgets = {};
+    (Array.isArray(data) ? [] : (data.budgets || [])).forEach((b) => {
+      currentBudgets[b.category] = Number(b.amount) || 0;
+    });
     renderAll(records);
     setStatus(`接続済み（${records.length}件の記録）`, 'ok');
   } catch (err) {
@@ -114,6 +121,7 @@ async function loadRecords() {
 function renderAll(records) {
   renderTopStats(records);
   renderMonthlySummary(records);
+  renderBudgets(records);
   populateCategoryLists(records);
   renderRecords(records);
 }
@@ -177,6 +185,63 @@ function renderBreakdown(el, records, type) {
         </div>
         <div class="breakdown-bar-track">
           <div class="breakdown-bar-fill ${type === 'expense' ? 'bar-expense' : 'bar-income'}" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderBudgets(records) {
+  const ym = els.summaryMonth.value || currentYearMonth();
+  const monthExpenses = records.filter((r) => r.type === 'expense' && recordYearMonth(r) === ym);
+
+  const spentByCategory = {};
+  monthExpenses.forEach((r) => {
+    const cat = (r.category || '').trim() || 'その他';
+    spentByCategory[cat] = (spentByCategory[cat] || 0) + Number(r.amount || 0);
+  });
+
+  els.budgetList.innerHTML = DEFAULT_CATEGORIES.expense.map((cat) => {
+    const spent = spentByCategory[cat] || 0;
+    const budget = Number(currentBudgets[cat] || 0);
+
+    if (!budget) {
+      return `
+        <div class="budget-row">
+          <div class="budget-row-head">
+            <span class="budget-cat">${escapeHtml(cat)}</span>
+            <div class="budget-set">
+              <span class="budget-set-label">予算</span>
+              <input type="number" class="budget-input" min="0" step="1000" placeholder="未設定" data-category="${escapeHtml(cat)}">
+              <span class="budget-unit">円</span>
+            </div>
+          </div>
+          <p class="budget-empty">予算を設定すると残量ゲージが表示されます（今月の支出: ${formatCurrency(spent)}）</p>
+        </div>
+      `;
+    }
+
+    const remaining = budget - spent;
+    const pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
+    const overspent = remaining < 0;
+    const warn = pct > 0 && pct <= 20;
+
+    return `
+      <div class="budget-row">
+        <div class="budget-row-head">
+          <span class="budget-cat">${escapeHtml(cat)}</span>
+          <div class="budget-set">
+            <span class="budget-set-label">予算</span>
+            <input type="number" class="budget-input" min="0" step="1000" value="${budget}" data-category="${escapeHtml(cat)}">
+            <span class="budget-unit">円</span>
+          </div>
+        </div>
+        <div class="budget-bar-track">
+          <div class="budget-bar-fill ${overspent || warn ? 'over' : ''}" style="width:${pct}%"></div>
+        </div>
+        <div class="budget-row-foot">
+          <span class="${overspent ? 'over-label' : ''}">${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}</span>
+          <span>${formatCurrency(spent)} / ${formatCurrency(budget)}</span>
         </div>
       </div>
     `;
@@ -316,6 +381,27 @@ async function onDelete(id) {
   }
 }
 
+async function onSaveBudget(category, amount) {
+  const url = getGasUrl();
+  if (!url) {
+    setStatus('先に接続設定を行ってください。', 'error');
+    return;
+  }
+
+  try {
+    // text/plain を使うことで CORS のプリフライトを回避する
+    await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveBudget', category, amount }),
+    });
+    setStatus('予算を更新しました。', 'ok');
+  } catch (err) {
+    setStatus('通信エラーが発生しましたが、保存されている可能性があります。', 'error');
+  } finally {
+    await loadRecords();
+  }
+}
+
 async function onSubmit(e) {
   e.preventDefault();
 
@@ -395,7 +481,16 @@ function init() {
   });
   els.expenseCategorySelect.addEventListener('change', updateSubCategoryOptions);
 
-  els.summaryMonth.addEventListener('change', () => renderMonthlySummary(currentRecords));
+  els.summaryMonth.addEventListener('change', () => {
+    renderMonthlySummary(currentRecords);
+    renderBudgets(currentRecords);
+  });
+
+  els.budgetList.addEventListener('change', (e) => {
+    const input = e.target.closest('.budget-input');
+    if (!input) return;
+    onSaveBudget(input.dataset.category, Number(input.value) || 0);
+  });
 
   els.recordsList.addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');

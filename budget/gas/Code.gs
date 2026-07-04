@@ -6,6 +6,45 @@ const HEADERS = ['id', 'date', 'type', 'category', 'subCategory', 'amount', 'mem
 // 読み込み時もYYYY-MM-DDへ復元する。
 const DATE_FIELDS = ['date'];
 
+const BUDGET_SHEET_NAME = 'budgets';
+const BUDGET_HEADERS = ['category', 'amount'];
+
+function getBudgetSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(BUDGET_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(BUDGET_SHEET_NAME);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(BUDGET_HEADERS);
+  }
+  return sheet;
+}
+
+function budgetsToRecords(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, 1, lastRow - 1, 2).getValues()
+    .filter((row) => row[0] !== '')
+    .map((row) => ({ category: row[0], amount: row[1] }));
+}
+
+function saveBudget(sheet, data) {
+  const category = data.category;
+  const amount = Number(data.amount) || 0;
+  const lastRow = sheet.getLastRow();
+  if (lastRow >= 2) {
+    const categories = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (let i = 0; i < categories.length; i++) {
+      if (String(categories[i][0]) === String(category)) {
+        sheet.getRange(i + 2, 2).setValue(amount);
+        return;
+      }
+    }
+  }
+  sheet.appendRow([category, amount]);
+}
+
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEET_NAME);
@@ -64,12 +103,20 @@ function doGet(e) {
     })
     .filter((record) => record.id !== '' && record.id !== undefined);
 
-  return ContentService.createTextOutput(JSON.stringify(records))
+  const budgets = budgetsToRecords(getBudgetSheet());
+
+  return ContentService.createTextOutput(JSON.stringify({ records, budgets }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
   const data = JSON.parse(e.postData.contents);
+
+  if (data.action === 'saveBudget') {
+    saveBudget(getBudgetSheet(), data);
+    return ContentService.createTextOutput(JSON.stringify({ result: 'ok' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 
   const sheet = getSheet();
 
