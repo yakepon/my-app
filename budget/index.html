@@ -99,14 +99,26 @@
           <label>金額
             <input type="number" name="amount" min="0" step="1" placeholder="例: 1200" required>
           </label>
-          <label class="category-field">カテゴリ
-            <input type="text" name="category" list="expenseCategoryList" id="categoryInput" placeholder="例: 食費">
+          <label class="category-field" id="expenseCategoryField">カテゴリ（大）
+            <select name="expenseCategory" id="expenseCategorySelect">
+              <option value="車">車</option>
+              <option value="遊び">遊び</option>
+              <option value="外食">外食</option>
+              <option value="美容">美容</option>
+              <option value="その他">その他</option>
+            </select>
+          </label>
+          <label class="category-field" id="subCategoryField">カテゴリ（中）
+            <input type="text" name="subCategory" list="subCategoryList" id="subCategoryInput" placeholder="例: ガソリン代">
+          </label>
+          <label class="category-field" id="incomeCategoryField" hidden>カテゴリ
+            <input type="text" name="incomeCategory" list="incomeCategoryList" id="incomeCategoryInput" placeholder="例: 給与">
           </label>
         </div>
         <label class="memo-field">メモ
           <textarea name="memo" rows="2" placeholder="購入先やメモ"></textarea>
         </label>
-        <datalist id="expenseCategoryList"></datalist>
+        <datalist id="subCategoryList"></datalist>
         <datalist id="incomeCategoryList"></datalist>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" id="submitBtn">記帳する</button>

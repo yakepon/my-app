@@ -20,6 +20,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -375,7 +379,7 @@ main {
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.3fr;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -391,7 +395,7 @@ label {
   font-family: var(--font-mono);
 }
 
-input, textarea {
+input, textarea, select {
   background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: 2px;
@@ -402,7 +406,7 @@ input, textarea {
   text-transform: none;
 }
 
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--orange);
   box-shadow: 0 0 0 3px var(--orange-soft);
@@ -476,7 +480,7 @@ textarea {
 
 .record-row {
   display: grid;
-  grid-template-columns: 70px 90px 1fr auto auto;
+  grid-template-columns: 70px 140px 1fr auto auto;
   align-items: center;
   gap: 14px;
   padding: 13px 0;
@@ -502,6 +506,10 @@ textarea {
 .record-category {
   font-weight: 700;
   color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-memo {

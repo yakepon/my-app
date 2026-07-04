@@ -1,9 +1,19 @@
 const STORAGE_KEY = 'budget_gas_url';
 
 const DEFAULT_CATEGORIES = {
-  expense: ['食費', '日用品', '住居費', '光熱費', '通信費', '交通費', '医療費', '娯楽費', '交際費', '衣服・美容', 'その他'],
+  expense: ['車', '遊び', '外食', '美容', 'その他'],
   income: ['給与', '賞与', '副業', 'その他'],
 };
+
+const CATEGORY_TREE = {
+  '車': ['月極', 'パーキング', '高速代', 'ガソリン代'],
+  '遊び': ['洋服代', '家電代', 'キャンプ関連', '釣り関連', '夜遊び'],
+  '外食': ['家族', '友達'],
+  '美容': ['美容院', '整髪料'],
+  'その他': [],
+};
+
+let historicalSubCategories = {};
 
 const els = {
   settings: document.getElementById('settings'),
@@ -25,8 +35,13 @@ const els = {
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitBtn'),
   cancelEdit: document.getElementById('cancelEdit'),
-  categoryInput: document.getElementById('categoryInput'),
-  expenseCategoryList: document.getElementById('expenseCategoryList'),
+  expenseCategoryField: document.getElementById('expenseCategoryField'),
+  expenseCategorySelect: document.getElementById('expenseCategorySelect'),
+  subCategoryField: document.getElementById('subCategoryField'),
+  subCategoryInput: document.getElementById('subCategoryInput'),
+  subCategoryList: document.getElementById('subCategoryList'),
+  incomeCategoryField: document.getElementById('incomeCategoryField'),
+  incomeCategoryInput: document.getElementById('incomeCategoryInput'),
   incomeCategoryList: document.getElementById('incomeCategoryList'),
   recordsList: document.getElementById('recordsList'),
 };
@@ -169,15 +184,32 @@ function renderBreakdown(el, records, type) {
 }
 
 function populateCategoryLists(records) {
-  const expenseCats = new Set(DEFAULT_CATEGORIES.expense);
   const incomeCats = new Set(DEFAULT_CATEGORIES.income);
+  historicalSubCategories = {};
+
   records.forEach((r) => {
-    const cat = String(r.category || '').trim();
-    if (!cat) return;
-    if (r.type === 'income') incomeCats.add(cat); else expenseCats.add(cat);
+    if (r.type === 'income') {
+      const cat = String(r.category || '').trim();
+      if (cat) incomeCats.add(cat);
+      return;
+    }
+    const major = String(r.category || '').trim();
+    const sub = String(r.subCategory || '').trim();
+    if (!major || !sub) return;
+    if (!historicalSubCategories[major]) historicalSubCategories[major] = new Set();
+    historicalSubCategories[major].add(sub);
   });
-  els.expenseCategoryList.innerHTML = [...expenseCats].map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
+
   els.incomeCategoryList.innerHTML = [...incomeCats].map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
+  updateSubCategoryOptions();
+}
+
+function updateSubCategoryOptions() {
+  const major = els.expenseCategorySelect.value;
+  const predefined = CATEGORY_TREE[major] || [];
+  const historical = historicalSubCategories[major] ? [...historicalSubCategories[major]] : [];
+  const combined = [...new Set([...predefined, ...historical])];
+  els.subCategoryList.innerHTML = combined.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
 }
 
 function renderRecords(records) {
@@ -197,10 +229,13 @@ function renderRecords(records) {
   els.recordsList.innerHTML = visible.map((r) => {
     const isIncome = r.type === 'income';
     const sign = isIncome ? '+' : '-';
+    const categoryLabel = !isIncome && r.subCategory
+      ? `${r.category || '未分類'} / ${r.subCategory}`
+      : (r.category || '未分類');
     return `
     <div class="record-row">
       <span class="record-date">${formatDateShort(r.date)}</span>
-      <span class="record-category">${escapeHtml(r.category || '未分類')}</span>
+      <span class="record-category">${escapeHtml(categoryLabel)}</span>
       <span class="record-memo">${escapeHtml(r.memo || '')}</span>
       <span class="record-amount ${isIncome ? 'ink-income' : 'ink-expense'}">${sign}${formatCurrency(r.amount)}</span>
       <span class="record-actions">
@@ -212,20 +247,31 @@ function renderRecords(records) {
   }).join('') + (remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : '');
 }
 
-function setCategoryDatalist(type) {
-  els.categoryInput.setAttribute('list', type === 'income' ? 'incomeCategoryList' : 'expenseCategoryList');
+function toggleCategoryFields(type) {
+  const isExpense = type !== 'income';
+  els.expenseCategoryField.hidden = !isExpense;
+  els.subCategoryField.hidden = !isExpense;
+  els.incomeCategoryField.hidden = isExpense;
+  if (isExpense) updateSubCategoryOptions();
 }
 
 function enterEditMode(record) {
   els.form.id.value = record.id;
   els.form.date.value = record.date || '';
   els.form.amount.value = record.amount || '';
-  els.form.category.value = record.category || '';
   els.form.memo.value = record.memo || '';
 
   const type = record.type || 'expense';
   els.form.querySelectorAll('input[name="type"]').forEach((radio) => { radio.checked = radio.value === type; });
-  setCategoryDatalist(type);
+  toggleCategoryFields(type);
+
+  if (type === 'income') {
+    els.incomeCategoryInput.value = record.category || '';
+  } else {
+    els.expenseCategorySelect.value = record.category || '';
+    updateSubCategoryOptions();
+    els.subCategoryInput.value = record.subCategory || '';
+  }
 
   els.formTitle.textContent = '記録を編集';
   els.submitBtn.textContent = '更新する';
@@ -239,7 +285,7 @@ function exitEditMode() {
   els.formTitle.textContent = '記帳する';
   els.submitBtn.textContent = '記帳する';
   els.cancelEdit.hidden = true;
-  setCategoryDatalist('expense');
+  toggleCategoryFields('expense');
 }
 
 function onEdit(id) {
@@ -281,12 +327,15 @@ async function onSubmit(e) {
 
   const formData = new FormData(els.form);
   const id = formData.get('id');
+  const type = formData.get('type') || 'expense';
+  const isIncome = type === 'income';
   const payload = {
     action: id ? 'update' : 'add',
     id,
     date: formData.get('date'),
-    type: formData.get('type') || 'expense',
-    category: formData.get('category'),
+    type,
+    category: isIncome ? formData.get('incomeCategory') : formData.get('expenseCategory'),
+    subCategory: isIncome ? '' : formData.get('subCategory'),
     amount: formData.get('amount'),
     memo: formData.get('memo'),
   };
@@ -316,6 +365,7 @@ function init() {
   els.gasUrl.value = url;
   els.summaryMonth.value = currentYearMonth();
   els.form.date.value = new Date().toISOString().slice(0, 10);
+  updateSubCategoryOptions();
 
   if (url) {
     els.settings.hidden = true;
@@ -341,8 +391,9 @@ function init() {
   els.form.addEventListener('submit', onSubmit);
   els.cancelEdit.addEventListener('click', exitEditMode);
   els.form.addEventListener('change', (e) => {
-    if (e.target.name === 'type') setCategoryDatalist(e.target.value);
+    if (e.target.name === 'type') toggleCategoryFields(e.target.value);
   });
+  els.expenseCategorySelect.addEventListener('change', updateSubCategoryOptions);
 
   els.summaryMonth.addEventListener('change', () => renderMonthlySummary(currentRecords));
 
