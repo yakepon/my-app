@@ -21,7 +21,7 @@ const els = {
   gasUrl: document.getElementById('gasUrl'),
   saveUrl: document.getElementById('saveUrl'),
   connStatus: document.getElementById('connStatus'),
-  statIncome: document.getElementById('statIncome'),
+  statBudget: document.getElementById('statBudget'),
   statExpense: document.getElementById('statExpense'),
   statBalance: document.getElementById('statBalance'),
   hankoStamp: document.getElementById('hankoStamp'),
@@ -94,6 +94,23 @@ function recordYearMonth(record) {
   return String(record.date || '').slice(0, 7);
 }
 
+function budgetKey(category, subCategory) {
+  return subCategory ? `${category}::${subCategory}` : category;
+}
+
+function getBudgetItems() {
+  const items = [];
+  DEFAULT_CATEGORIES.expense.forEach((major) => {
+    const subs = CATEGORY_TREE[major] || [];
+    if (subs.length === 0) {
+      items.push({ major, sub: null });
+    } else {
+      subs.forEach((sub) => items.push({ major, sub }));
+    }
+  });
+  return items;
+}
+
 async function loadRecords() {
   const url = getGasUrl();
   if (!url) return;
@@ -108,7 +125,7 @@ async function loadRecords() {
     currentRecords = records;
     currentBudgets = {};
     (Array.isArray(data) ? [] : (data.budgets || [])).forEach((b) => {
-      currentBudgets[b.category] = Number(b.amount) || 0;
+      currentBudgets[budgetKey(b.category, b.subCategory)] = Number(b.amount) || 0;
     });
     renderAll(records);
     setStatus(`接続済み（${records.length}件の記録）`, 'ok');
@@ -129,11 +146,11 @@ function renderAll(records) {
 function renderTopStats(records) {
   const ym = currentYearMonth();
   const monthRecords = records.filter((r) => recordYearMonth(r) === ym);
-  const income = monthRecords.filter((r) => r.type === 'income').reduce((sum, r) => sum + Number(r.amount || 0), 0);
   const expense = monthRecords.filter((r) => r.type === 'expense').reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const balance = income - expense;
+  const totalBudget = getBudgetItems().reduce((sum, { major, sub }) => sum + Number(currentBudgets[budgetKey(major, sub)] || 0), 0);
+  const balance = totalBudget - expense;
 
-  els.statIncome.textContent = formatCurrency(income);
+  els.statBudget.textContent = formatCurrency(totalBudget);
   els.statExpense.textContent = formatCurrency(expense);
   els.statBalance.textContent = formatCurrency(balance);
 
@@ -191,58 +208,72 @@ function renderBreakdown(el, records, type) {
   }).join('');
 }
 
+function renderBudgetRow(major, sub, spent) {
+  const key = budgetKey(major, sub);
+  const budget = Number(currentBudgets[key] || 0);
+  const label = sub || '全体';
+
+  if (!budget) {
+    return `
+      <div class="budget-row">
+        <div class="budget-row-head">
+          <span class="budget-cat">${escapeHtml(label)}</span>
+          <div class="budget-set">
+            <span class="budget-set-label">予算</span>
+            <input type="number" class="budget-input" min="0" step="1000" placeholder="未設定" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
+            <span class="budget-unit">円</span>
+          </div>
+        </div>
+        <p class="budget-empty">予算を設定すると残量ゲージが表示されます（今月の支出: ${formatCurrency(spent)}）</p>
+      </div>
+    `;
+  }
+
+  const remaining = budget - spent;
+  const pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
+  const overspent = remaining < 0;
+  const warn = pct > 0 && pct <= 20;
+
+  return `
+    <div class="budget-row">
+      <div class="budget-row-head">
+        <span class="budget-cat">${escapeHtml(label)}</span>
+        <div class="budget-set">
+          <span class="budget-set-label">予算</span>
+          <input type="number" class="budget-input" min="0" step="1000" value="${budget}" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
+          <span class="budget-unit">円</span>
+        </div>
+      </div>
+      <div class="budget-bar-track">
+        <div class="budget-bar-fill ${overspent || warn ? 'over' : ''}" style="width:${pct}%"></div>
+      </div>
+      <div class="budget-row-foot">
+        <span class="${overspent ? 'over-label' : ''}">${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}</span>
+        <span>${formatCurrency(spent)} / ${formatCurrency(budget)}</span>
+      </div>
+    </div>
+  `;
+}
+
 function renderBudgets(records) {
   const ym = els.summaryMonth.value || currentYearMonth();
   const monthExpenses = records.filter((r) => r.type === 'expense' && recordYearMonth(r) === ym);
 
-  const spentByCategory = {};
-  monthExpenses.forEach((r) => {
-    const cat = (r.category || '').trim() || 'その他';
-    spentByCategory[cat] = (spentByCategory[cat] || 0) + Number(r.amount || 0);
-  });
+  els.budgetList.innerHTML = DEFAULT_CATEGORIES.expense.map((major) => {
+    const subs = CATEGORY_TREE[major] || [];
+    const items = subs.length ? subs : [null];
 
-  els.budgetList.innerHTML = DEFAULT_CATEGORIES.expense.map((cat) => {
-    const spent = spentByCategory[cat] || 0;
-    const budget = Number(currentBudgets[cat] || 0);
-
-    if (!budget) {
-      return `
-        <div class="budget-row">
-          <div class="budget-row-head">
-            <span class="budget-cat">${escapeHtml(cat)}</span>
-            <div class="budget-set">
-              <span class="budget-set-label">予算</span>
-              <input type="number" class="budget-input" min="0" step="1000" placeholder="未設定" data-category="${escapeHtml(cat)}">
-              <span class="budget-unit">円</span>
-            </div>
-          </div>
-          <p class="budget-empty">予算を設定すると残量ゲージが表示されます（今月の支出: ${formatCurrency(spent)}）</p>
-        </div>
-      `;
-    }
-
-    const remaining = budget - spent;
-    const pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
-    const overspent = remaining < 0;
-    const warn = pct > 0 && pct <= 20;
+    const rows = items.map((sub) => {
+      const spent = monthExpenses
+        .filter((r) => (r.category || '').trim() === major && (sub ? (r.subCategory || '').trim() === sub : true))
+        .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      return renderBudgetRow(major, sub, spent);
+    }).join('');
 
     return `
-      <div class="budget-row">
-        <div class="budget-row-head">
-          <span class="budget-cat">${escapeHtml(cat)}</span>
-          <div class="budget-set">
-            <span class="budget-set-label">予算</span>
-            <input type="number" class="budget-input" min="0" step="1000" value="${budget}" data-category="${escapeHtml(cat)}">
-            <span class="budget-unit">円</span>
-          </div>
-        </div>
-        <div class="budget-bar-track">
-          <div class="budget-bar-fill ${overspent || warn ? 'over' : ''}" style="width:${pct}%"></div>
-        </div>
-        <div class="budget-row-foot">
-          <span class="${overspent ? 'over-label' : ''}">${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}</span>
-          <span>${formatCurrency(spent)} / ${formatCurrency(budget)}</span>
-        </div>
+      <div class="budget-group">
+        <h3 class="budget-group-title">${escapeHtml(major)}</h3>
+        ${rows}
       </div>
     `;
   }).join('');
@@ -381,7 +412,7 @@ async function onDelete(id) {
   }
 }
 
-async function onSaveBudget(category, amount) {
+async function onSaveBudget(category, subCategory, amount) {
   const url = getGasUrl();
   if (!url) {
     setStatus('先に接続設定を行ってください。', 'error');
@@ -392,7 +423,7 @@ async function onSaveBudget(category, amount) {
     // text/plain を使うことで CORS のプリフライトを回避する
     await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveBudget', category, amount }),
+      body: JSON.stringify({ action: 'saveBudget', category, subCategory, amount }),
     });
     setStatus('予算を更新しました。', 'ok');
   } catch (err) {
@@ -489,7 +520,7 @@ function init() {
   els.budgetList.addEventListener('change', (e) => {
     const input = e.target.closest('.budget-input');
     if (!input) return;
-    onSaveBudget(input.dataset.category, Number(input.value) || 0);
+    onSaveBudget(input.dataset.category, input.dataset.subcategory, Number(input.value) || 0);
   });
 
   els.recordsList.addEventListener('click', (e) => {

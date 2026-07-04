@@ -7,7 +7,7 @@ const HEADERS = ['id', 'date', 'type', 'category', 'subCategory', 'amount', 'mem
 const DATE_FIELDS = ['date'];
 
 const BUDGET_SHEET_NAME = 'budgets';
-const BUDGET_HEADERS = ['category', 'amount'];
+const BUDGET_HEADERS = ['category', 'subCategory', 'amount'];
 
 function getBudgetSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -24,25 +24,26 @@ function getBudgetSheet() {
 function budgetsToRecords(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  return sheet.getRange(2, 1, lastRow - 1, 2).getValues()
+  return sheet.getRange(2, 1, lastRow - 1, 3).getValues()
     .filter((row) => row[0] !== '')
-    .map((row) => ({ category: row[0], amount: row[1] }));
+    .map((row) => ({ category: row[0], subCategory: row[1], amount: row[2] }));
 }
 
 function saveBudget(sheet, data) {
   const category = data.category;
+  const subCategory = data.subCategory || '';
   const amount = Number(data.amount) || 0;
   const lastRow = sheet.getLastRow();
   if (lastRow >= 2) {
-    const categories = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-    for (let i = 0; i < categories.length; i++) {
-      if (String(categories[i][0]) === String(category)) {
-        sheet.getRange(i + 2, 2).setValue(amount);
+    const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    for (let i = 0; i < rows.length; i++) {
+      if (String(rows[i][0]) === String(category) && String(rows[i][1] || '') === String(subCategory)) {
+        sheet.getRange(i + 2, 3).setValue(amount);
         return;
       }
     }
   }
-  sheet.appendRow([category, amount]);
+  sheet.appendRow([category, subCategory, amount]);
 }
 
 function getSheet() {

@@ -331,6 +331,26 @@ main {
   flex-direction: column;
 }
 
+.budget-group {
+  margin-bottom: 26px;
+}
+
+.budget-group:last-child {
+  margin-bottom: 0;
+}
+
+.budget-group-title {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--orange);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
 .budget-row {
   padding: 18px 0;
   border-bottom: 1px solid var(--line);
