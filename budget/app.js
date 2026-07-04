@@ -131,7 +131,14 @@ function getBudgetItems() {
 
 function getBudgetAmount(ym, major, sub) {
   const monthBudgets = currentBudgets[ym] || {};
-  return Number(monthBudgets[budgetKey(major, sub)] || 0);
+  const entry = monthBudgets[budgetKey(major, sub)];
+  return Number((entry && entry.amount) || 0);
+}
+
+function getBudgetComment(ym, major, sub) {
+  const monthBudgets = currentBudgets[ym] || {};
+  const entry = monthBudgets[budgetKey(major, sub)];
+  return (entry && entry.comment) || '';
 }
 
 function totalBudgetAmount(ym) {
@@ -154,7 +161,10 @@ async function loadRecords() {
     (Array.isArray(data) ? [] : (data.budgets || [])).forEach((b) => {
       const ym = b.yearMonth;
       if (!currentBudgets[ym]) currentBudgets[ym] = {};
-      currentBudgets[ym][budgetKey(b.category, b.subCategory)] = Number(b.amount) || 0;
+      currentBudgets[ym][budgetKey(b.category, b.subCategory)] = {
+        amount: Number(b.amount) || 0,
+        comment: b.comment || '',
+      };
     });
     renderAll(records);
     setStatus(`接続済み（${records.length}件の記録）`, 'ok');
@@ -201,9 +211,14 @@ function renderTopStats(records) {
 
 function renderBudgetRow(ym, major, sub, spent) {
   const budget = getBudgetAmount(ym, major, sub);
+  const comment = getBudgetComment(ym, major, sub);
   const label = sub || '全体';
   const showForecast = ym === currentYearMonth();
   const forecast = showForecast ? projectedAmount(ym, spent) : null;
+
+  const commentField = `
+    <input type="text" class="budget-comment-input" placeholder="予算の根拠・メモ" value="${escapeHtml(comment)}" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
+  `;
 
   if (!budget) {
     const forecastLine = showForecast
@@ -219,6 +234,7 @@ function renderBudgetRow(ym, major, sub, spent) {
             <span class="budget-unit">円</span>
           </div>
         </div>
+        ${commentField}
         <p class="budget-empty">予算を設定すると残量ゲージが表示されます（今月の支出: ${formatCurrency(spent)}）</p>
         ${forecastLine}
       </div>
@@ -246,6 +262,7 @@ function renderBudgetRow(ym, major, sub, spent) {
           <span class="budget-unit">円</span>
         </div>
       </div>
+      ${commentField}
       <div class="budget-remaining ${overspent ? 'gauge-red' : gaugeClass}">
         ${overspent ? `${formatCurrency(Math.abs(remaining))} 超過` : `残り ${formatCurrency(remaining)}`}
       </div>
@@ -705,7 +722,7 @@ async function onDelete(id) {
   }
 }
 
-async function onSaveBudget(yearMonth, category, subCategory, amount) {
+async function onSaveBudget(yearMonth, category, subCategory, amount, comment) {
   const url = getGasUrl();
   if (!url) {
     setStatus('先に接続設定を行ってください。', 'error');
@@ -716,7 +733,7 @@ async function onSaveBudget(yearMonth, category, subCategory, amount) {
     // text/plain を使うことで CORS のプリフライトを回避する
     await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveBudget', yearMonth, category, subCategory, amount }),
+      body: JSON.stringify({ action: 'saveBudget', yearMonth, category, subCategory, amount, comment }),
     });
     setStatus('予算を更新しました。', 'ok');
   } catch (err) {
@@ -828,10 +845,19 @@ function init() {
   els.chartFilter.addEventListener('change', () => renderChart(currentRecords));
 
   els.budgetList.addEventListener('change', (e) => {
-    const input = e.target.closest('.budget-input');
-    if (!input) return;
+    const target = e.target.closest('.budget-input, .budget-comment-input');
+    if (!target) return;
+    const row = target.closest('.budget-row');
+    const amountInput = row.querySelector('.budget-input');
+    const commentInput = row.querySelector('.budget-comment-input');
     const ym = els.summaryMonth.value || currentYearMonth();
-    onSaveBudget(ym, input.dataset.category, input.dataset.subcategory, Number(input.value) || 0);
+    onSaveBudget(
+      ym,
+      target.dataset.category,
+      target.dataset.subcategory,
+      Number(amountInput.value) || 0,
+      commentInput ? commentInput.value : ''
+    );
   });
 
   els.recordsList.addEventListener('click', (e) => {

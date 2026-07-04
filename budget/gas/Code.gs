@@ -7,7 +7,7 @@ const HEADERS = ['id', 'date', 'category', 'subCategory', 'amount', 'memo'];
 const DATE_FIELDS = ['date'];
 
 const BUDGET_SHEET_NAME = 'budgets';
-const BUDGET_HEADERS = ['yearMonth', 'category', 'subCategory', 'amount'];
+const BUDGET_HEADERS = ['yearMonth', 'category', 'subCategory', 'amount', 'comment'];
 
 function getBudgetSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -56,11 +56,13 @@ function saveBudget(sheet, data) {
   const category = data.category;
   const subCategory = data.subCategory || '';
   const amount = Number(data.amount) || 0;
+  const comment = data.comment || '';
 
   const ymCol = headers.indexOf('yearMonth');
   const catCol = headers.indexOf('category');
   const subCol = headers.indexOf('subCategory');
   const amtCol = headers.indexOf('amount');
+  const commentCol = headers.indexOf('comment');
 
   const lastRow = sheet.getLastRow();
   if (lastRow >= 2) {
@@ -68,6 +70,7 @@ function saveBudget(sheet, data) {
     for (let i = 0; i < rows.length; i++) {
       if (String(rows[i][ymCol]) === String(yearMonth) && String(rows[i][catCol]) === String(category) && String(rows[i][subCol] || '') === String(subCategory)) {
         sheet.getRange(i + 2, amtCol + 1).setValue(amount);
+        if (commentCol > -1) sheet.getRange(i + 2, commentCol + 1).setValue(comment);
         return;
       }
     }
@@ -78,6 +81,7 @@ function saveBudget(sheet, data) {
     if (key === 'category') return category;
     if (key === 'subCategory') return subCategory;
     if (key === 'amount') return amount;
+    if (key === 'comment') return comment;
     return '';
   });
   sheet.appendRow(row);

@@ -451,6 +451,13 @@ main {
   color: var(--text-dim);
 }
 
+.budget-comment-input {
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 12px;
+  padding: 7px 10px;
+}
+
 .budget-remaining {
   font-family: var(--font-mono);
   font-weight: 700;
