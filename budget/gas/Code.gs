@@ -7,7 +7,7 @@ const HEADERS = ['id', 'date', 'category', 'subCategory', 'amount', 'memo'];
 const DATE_FIELDS = ['date'];
 
 const BUDGET_SHEET_NAME = 'budgets';
-const BUDGET_HEADERS = ['category', 'subCategory', 'amount'];
+const BUDGET_HEADERS = ['yearMonth', 'category', 'subCategory', 'amount'];
 
 function getBudgetSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -18,32 +18,35 @@ function getBudgetSheet() {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(BUDGET_HEADERS);
   }
+  // "2026-07" が日付として誤認識されるのを防ぐため、yearMonth列はプレーンテキスト固定にする
+  sheet.getRange(1, 1, sheet.getMaxRows(), 1).setNumberFormat('@');
   return sheet;
 }
 
 function budgetsToRecords(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  return sheet.getRange(2, 1, lastRow - 1, 3).getValues()
+  return sheet.getRange(2, 1, lastRow - 1, 4).getValues()
     .filter((row) => row[0] !== '')
-    .map((row) => ({ category: row[0], subCategory: row[1], amount: row[2] }));
+    .map((row) => ({ yearMonth: row[0], category: row[1], subCategory: row[2], amount: row[3] }));
 }
 
 function saveBudget(sheet, data) {
+  const yearMonth = data.yearMonth;
   const category = data.category;
   const subCategory = data.subCategory || '';
   const amount = Number(data.amount) || 0;
   const lastRow = sheet.getLastRow();
   if (lastRow >= 2) {
-    const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    const rows = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
     for (let i = 0; i < rows.length; i++) {
-      if (String(rows[i][0]) === String(category) && String(rows[i][1] || '') === String(subCategory)) {
-        sheet.getRange(i + 2, 3).setValue(amount);
+      if (String(rows[i][0]) === String(yearMonth) && String(rows[i][1]) === String(category) && String(rows[i][2] || '') === String(subCategory)) {
+        sheet.getRange(i + 2, 4).setValue(amount);
         return;
       }
     }
   }
-  sheet.appendRow([category, subCategory, amount]);
+  sheet.appendRow([yearMonth, category, subCategory, amount]);
 }
 
 function getSheet() {

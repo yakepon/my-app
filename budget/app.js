@@ -18,8 +18,11 @@ const els = {
   gasUrl: document.getElementById('gasUrl'),
   saveUrl: document.getElementById('saveUrl'),
   connStatus: document.getElementById('connStatus'),
+  statBudgetLabel: document.getElementById('statBudgetLabel'),
   statBudget: document.getElementById('statBudget'),
+  statExpenseLabel: document.getElementById('statExpenseLabel'),
   statExpense: document.getElementById('statExpense'),
+  statBalanceLabel: document.getElementById('statBalanceLabel'),
   statBalance: document.getElementById('statBalance'),
   hankoStamp: document.getElementById('hankoStamp'),
   summaryMonth: document.getElementById('summaryMonth'),
@@ -81,6 +84,12 @@ function recordYearMonth(record) {
   return String(record.date || '').slice(0, 7);
 }
 
+function periodLabel(ym) {
+  if (ym === currentYearMonth()) return '今月';
+  const [y, m] = ym.split('-');
+  return `${y}年${Number(m)}月`;
+}
+
 function budgetKey(category, subCategory) {
   return subCategory ? `${category}::${subCategory}` : category;
 }
@@ -98,8 +107,13 @@ function getBudgetItems() {
   return items;
 }
 
-function totalBudgetAmount() {
-  return getBudgetItems().reduce((sum, { major, sub }) => sum + Number(currentBudgets[budgetKey(major, sub)] || 0), 0);
+function getBudgetAmount(ym, major, sub) {
+  const monthBudgets = currentBudgets[ym] || {};
+  return Number(monthBudgets[budgetKey(major, sub)] || 0);
+}
+
+function totalBudgetAmount(ym) {
+  return getBudgetItems().reduce((sum, { major, sub }) => sum + getBudgetAmount(ym, major, sub), 0);
 }
 
 async function loadRecords() {
@@ -116,7 +130,9 @@ async function loadRecords() {
     currentRecords = records;
     currentBudgets = {};
     (Array.isArray(data) ? [] : (data.budgets || [])).forEach((b) => {
-      currentBudgets[budgetKey(b.category, b.subCategory)] = Number(b.amount) || 0;
+      const ym = b.yearMonth;
+      if (!currentBudgets[ym]) currentBudgets[ym] = {};
+      currentBudgets[ym][budgetKey(b.category, b.subCategory)] = Number(b.amount) || 0;
     });
     renderAll(records);
     setStatus(`接続済み（${records.length}件の記録）`, 'ok');
@@ -134,10 +150,15 @@ function renderAll(records) {
 }
 
 function renderTopStats(records) {
-  const ym = currentYearMonth();
+  const ym = els.summaryMonth.value || currentYearMonth();
   const expense = records.filter((r) => recordYearMonth(r) === ym).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const totalBudget = totalBudgetAmount();
+  const totalBudget = totalBudgetAmount(ym);
   const balance = totalBudget - expense;
+
+  const label = periodLabel(ym);
+  els.statBudgetLabel.textContent = `${label}の予算`;
+  els.statExpenseLabel.textContent = `${label}の支出`;
+  els.statBalanceLabel.textContent = `${label}の差引`;
 
   els.statBudget.textContent = formatCurrency(totalBudget);
   els.statExpense.textContent = formatCurrency(expense);
@@ -151,9 +172,8 @@ function renderTopStats(records) {
   els.hankoStamp.classList.add('hanko-stamped');
 }
 
-function renderBudgetRow(major, sub, spent) {
-  const key = budgetKey(major, sub);
-  const budget = Number(currentBudgets[key] || 0);
+function renderBudgetRow(ym, major, sub, spent) {
+  const budget = getBudgetAmount(ym, major, sub);
   const label = sub || '全体';
 
   if (!budget) {
@@ -214,7 +234,7 @@ function renderBudgets(records) {
       const spent = monthExpenses
         .filter((r) => (r.category || '').trim() === major && (sub ? (r.subCategory || '').trim() === sub : true))
         .reduce((sum, r) => sum + Number(r.amount || 0), 0);
-      return renderBudgetRow(major, sub, spent);
+      return renderBudgetRow(ym, major, sub, spent);
     }).join('');
 
     return `
@@ -248,25 +268,11 @@ function updateSubCategoryOptions() {
   els.subCategoryList.innerHTML = combined.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
 }
 
-function renderRecords(records) {
-  const sorted = [...records].sort((a, b) => {
-    const dateDiff = new Date(b.date) - new Date(a.date);
-    return dateDiff !== 0 ? dateDiff : String(b.id).localeCompare(String(a.id));
-  });
-
-  if (sorted.length === 0) {
-    els.recordsList.innerHTML = '<p class="empty">まだ記録がありません。最初の記帳をしましょう。</p>';
-    return;
-  }
-
-  const visible = sorted.slice(0, recordsLimit);
-  const remaining = sorted.length - visible.length;
-
-  els.recordsList.innerHTML = visible.map((r) => {
-    const categoryLabel = r.subCategory
-      ? `${r.category || '未分類'} / ${r.subCategory}`
-      : (r.category || '未分類');
-    return `
+function renderRecordRow(r) {
+  const categoryLabel = r.subCategory
+    ? `${r.category || '未分類'} / ${r.subCategory}`
+    : (r.category || '未分類');
+  return `
     <div class="record-row">
       <span class="record-date">${formatDateShort(r.date)}</span>
       <span class="record-category">${escapeHtml(categoryLabel)}</span>
@@ -278,7 +284,43 @@ function renderRecords(records) {
       </span>
     </div>
   `;
-  }).join('') + (remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : '');
+}
+
+function renderRecords(records) {
+  const sorted = [...records].sort((a, b) => {
+    const dateDiff = new Date(b.date) - new Date(a.date);
+    return dateDiff !== 0 ? dateDiff : String(b.id).localeCompare(String(a.id));
+  });
+
+  if (sorted.length === 0) {
+    els.recordsList.innerHTML = '<p class="empty">まだ記録がありません。最初の記帳をしましょう。</p>';
+    return;
+  }
+
+  const thisMonth = currentYearMonth();
+  const recent = sorted.filter((r) => recordYearMonth(r) === thisMonth);
+  const older = sorted.filter((r) => recordYearMonth(r) !== thisMonth);
+
+  const recentHtml = recent.length
+    ? recent.map(renderRecordRow).join('')
+    : '<p class="empty">今月の記録はまだありません。</p>';
+
+  let olderHtml = '';
+  if (older.length) {
+    const visibleOlder = older.slice(0, recordsLimit);
+    const remaining = older.length - visibleOlder.length;
+    olderHtml = `
+      <details class="older-records">
+        <summary>過去の記録（${older.length}件）</summary>
+        <div class="older-records-list">
+          ${visibleOlder.map(renderRecordRow).join('')}
+          ${remaining > 0 ? `<button type="button" class="btn load-more-btn" id="loadMoreBtn">もっと見る（残り${remaining}件）</button>` : ''}
+        </div>
+      </details>
+    `;
+  }
+
+  els.recordsList.innerHTML = recentHtml + olderHtml;
 }
 
 function enterEditMode(record) {
@@ -333,7 +375,7 @@ async function onDelete(id) {
   }
 }
 
-async function onSaveBudget(category, subCategory, amount) {
+async function onSaveBudget(yearMonth, category, subCategory, amount) {
   const url = getGasUrl();
   if (!url) {
     setStatus('先に接続設定を行ってください。', 'error');
@@ -344,7 +386,7 @@ async function onSaveBudget(category, subCategory, amount) {
     // text/plain を使うことで CORS のプリフライトを回避する
     await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveBudget', category, subCategory, amount }),
+      body: JSON.stringify({ action: 'saveBudget', yearMonth, category, subCategory, amount }),
     });
     setStatus('予算を更新しました。', 'ok');
   } catch (err) {
@@ -427,12 +469,16 @@ function init() {
   els.cancelEdit.addEventListener('click', exitEditMode);
   els.expenseCategorySelect.addEventListener('change', updateSubCategoryOptions);
 
-  els.summaryMonth.addEventListener('change', () => renderBudgets(currentRecords));
+  els.summaryMonth.addEventListener('change', () => {
+    renderTopStats(currentRecords);
+    renderBudgets(currentRecords);
+  });
 
   els.budgetList.addEventListener('change', (e) => {
     const input = e.target.closest('.budget-input');
     if (!input) return;
-    onSaveBudget(input.dataset.category, input.dataset.subcategory, Number(input.value) || 0);
+    const ym = els.summaryMonth.value || currentYearMonth();
+    onSaveBudget(ym, input.dataset.category, input.dataset.subcategory, Number(input.value) || 0);
   });
 
   els.recordsList.addEventListener('click', (e) => {

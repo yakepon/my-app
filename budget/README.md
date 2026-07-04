@@ -18,6 +18,6 @@
 
 ## 補足
 
-- スプレッドシートには初回アクセス時に自動で `records` シート（ヘッダー: `id, date, category, subCategory, amount, memo`）と `budgets` シート（ヘッダー: `category, subCategory, amount`）が作成されます。
+- スプレッドシートには初回アクセス時に自動で `records` シート（ヘッダー: `id, date, category, subCategory, amount, memo`）と `budgets` シート（ヘッダー: `yearMonth, category, subCategory, amount`）が作成されます。予算は月ごとに設定・保存されます。
 - 記録の編集・削除に対応しています。一覧の各行の「編集」「削除」ボタンから操作してください。
 - コードを変更した場合は、Apps Scriptの「デプロイを管理」から新しいバージョンを再デプロイしてください。

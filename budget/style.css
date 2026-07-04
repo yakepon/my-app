@@ -563,6 +563,44 @@ textarea {
   margin-top: 14px;
 }
 
+.older-records {
+  margin-top: 4px;
+}
+
+.older-records summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  list-style: none;
+  border-top: 1px solid var(--line);
+  transition: color 0.15s ease;
+}
+
+.older-records summary:hover {
+  color: var(--orange);
+}
+
+.older-records summary::-webkit-details-marker {
+  display: none;
+}
+
+.older-records summary::before {
+  content: "▸ ";
+  color: var(--orange);
+}
+
+.older-records[open] summary::before {
+  content: "▾ ";
+}
+
+.older-records-list {
+  display: flex;
+  flex-direction: column;
+}
+
 /* ===== Footer ===== */
 
 .footer {
