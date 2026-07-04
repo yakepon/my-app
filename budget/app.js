@@ -35,6 +35,10 @@ const els = {
   subCategoryList: document.getElementById('subCategoryList'),
   recordsList: document.getElementById('recordsList'),
   budgetList: document.getElementById('budgetList'),
+  chartFilter: document.getElementById('chartFilter'),
+  chartWrap: document.getElementById('chartWrap'),
+  chartLegend: document.getElementById('chartLegend'),
+  chartTable: document.getElementById('chartTable'),
 };
 
 let currentRecords = [];
@@ -145,6 +149,7 @@ async function loadRecords() {
 function renderAll(records) {
   renderTopStats(records);
   renderBudgets(records);
+  renderChart(records);
   populateCategoryLists(records);
   renderRecords(records);
 }
@@ -244,6 +249,223 @@ function renderBudgets(records) {
       </div>
     `;
   }).join('');
+}
+
+const CHART_MONTHS = 6;
+
+function trailingMonths(n) {
+  const now = new Date();
+  const months = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  return months;
+}
+
+function formatMonthShort(ym) {
+  return `${Number(ym.split('-')[1])}月`;
+}
+
+function formatYearMonthFull(ym) {
+  const [y, m] = ym.split('-');
+  return `${y}年${Number(m)}月`;
+}
+
+function formatCurrencyShort(value) {
+  const n = Math.round(Number(value) || 0);
+  if (Math.abs(n) >= 10000) {
+    return `¥${(n / 10000).toFixed(1).replace(/\.0$/, '')}万`;
+  }
+  return formatCurrency(n);
+}
+
+function niceCeil(value) {
+  if (value <= 0) return 1000;
+  const exp = Math.floor(Math.log10(value));
+  const base = Math.pow(10, exp);
+  const norm = value / base;
+  let niceNorm;
+  if (norm <= 1) niceNorm = 1;
+  else if (norm <= 2) niceNorm = 2;
+  else if (norm <= 5) niceNorm = 5;
+  else niceNorm = 10;
+  return niceNorm * base;
+}
+
+function monthActualBudget(ym, filter, records) {
+  if (filter === 'all') {
+    const actual = records.filter((r) => recordYearMonth(r) === ym).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    return { actual, budget: totalBudgetAmount(ym) };
+  }
+  const actual = records
+    .filter((r) => recordYearMonth(r) === ym && (r.category || '').trim() === filter)
+    .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+  const budget = getBudgetItems()
+    .filter((item) => item.major === filter)
+    .reduce((sum, { major, sub }) => sum + getBudgetAmount(ym, major, sub), 0);
+  return { actual, budget };
+}
+
+function barPath(x, yTop, width, height, radius) {
+  if (height <= 0) return '';
+  const r = Math.min(radius, width / 2, height);
+  const yBottom = yTop + height;
+  return `M${x},${yBottom} L${x},${yTop + r} Q${x},${yTop} ${x + r},${yTop} L${x + width - r},${yTop} Q${x + width},${yTop} ${x + width},${yTop + r} L${x + width},${yBottom} Z`;
+}
+
+function renderChart(records) {
+  const filter = els.chartFilter.value || 'all';
+  const months = trailingMonths(CHART_MONTHS);
+  const data = months.map((ym) => ({ ym, ...monthActualBudget(ym, filter, records) }));
+
+  const maxVal = niceCeil(Math.max(1, ...data.map((d) => Math.max(d.actual, d.budget))) * 1.15);
+
+  const W = 600;
+  const H = 220;
+  const marginLeft = 46;
+  const marginRight = 12;
+  const marginTop = 26;
+  const marginBottom = 26;
+  const plotWidth = W - marginLeft - marginRight;
+  const plotHeight = H - marginTop - marginBottom;
+  const slotWidth = plotWidth / data.length;
+  const barWidth = Math.min(24, slotWidth * 0.5);
+
+  const yScale = (v) => marginTop + plotHeight - (v / maxVal) * plotHeight;
+
+  const gridlines = [0, maxVal / 2, maxVal].map((t) => {
+    const y = yScale(t);
+    return `
+      <line class="chart-gridline" x1="${marginLeft}" y1="${y}" x2="${W - marginRight}" y2="${y}" />
+      <text class="chart-axis-label" x="${marginLeft - 8}" y="${y + 3}" text-anchor="end">${escapeHtml(formatCurrencyShort(t))}</text>
+    `;
+  }).join('');
+
+  const latestIndex = data.length - 1;
+
+  const bars = data.map((d, i) => {
+    const slotX = marginLeft + i * slotWidth;
+    const barX = slotX + (slotWidth - barWidth) / 2;
+    const barHeight = (d.actual / maxVal) * plotHeight;
+    const barYTop = marginTop + plotHeight - barHeight;
+    const path = barPath(barX, barYTop, barWidth, barHeight, 4);
+
+    let fillClass = 'chart-bar-fill-none';
+    if (d.budget > 0) fillClass = d.actual <= d.budget ? 'chart-bar-fill-ok' : 'chart-bar-fill-over';
+
+    const targetY = d.budget > 0 ? yScale(d.budget) : null;
+    const targetLine = targetY !== null
+      ? `<line class="chart-target-line" x1="${barX - 3}" y1="${targetY}" x2="${barX + barWidth + 3}" y2="${targetY}" />`
+      : '';
+
+    const valueLabel = i === latestIndex && d.actual > 0
+      ? `<text class="chart-value-label" x="${barX + barWidth / 2}" y="${barYTop - 8}">${escapeHtml(formatCurrencyShort(d.actual))}</text>`
+      : '';
+
+    const monthLabel = `<text class="chart-axis-label" x="${slotX + slotWidth / 2}" y="${H - 6}" text-anchor="middle">${escapeHtml(formatMonthShort(d.ym))}</text>`;
+
+    return `
+      <g class="chart-bar-group" tabindex="0" data-index="${i}">
+        <rect x="${slotX}" y="${marginTop}" width="${slotWidth}" height="${plotHeight}" fill="transparent" />
+        ${path ? `<path class="chart-bar ${fillClass}" d="${path}" />` : ''}
+        ${targetLine}
+        ${valueLabel}
+        ${monthLabel}
+      </g>
+    `;
+  }).join('');
+
+  els.chartWrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="月別の予算と実績の比較グラフ">
+      ${gridlines}
+      ${bars}
+    </svg>
+    <div class="chart-tooltip" id="chartTooltip"></div>
+  `;
+
+  attachChartTooltip(data);
+  renderChartLegend();
+  renderChartTable(data);
+}
+
+function attachChartTooltip(data) {
+  const tooltip = document.getElementById('chartTooltip');
+  const wrap = els.chartWrap;
+
+  function showTooltip(index, clientX, clientY) {
+    const d = data[index];
+    if (!d) return;
+    const diff = d.actual - d.budget;
+
+    let diffRow = '';
+    if (d.budget > 0) {
+      const label = diff > 0 ? '超過' : '残り';
+      diffRow = `<div class="chart-tooltip-row"><span class="tooltip-label">${label}</span><span class="tooltip-value">${formatCurrency(Math.abs(diff))}</span></div>`;
+    }
+
+    tooltip.innerHTML = `
+      <div class="chart-tooltip-month"></div>
+      <div class="chart-tooltip-row"><span class="tooltip-label">実績</span><span class="tooltip-value"></span></div>
+      <div class="chart-tooltip-row"><span class="tooltip-label">予算</span><span class="tooltip-value"></span></div>
+      ${diffRow}
+    `;
+    tooltip.querySelector('.chart-tooltip-month').textContent = formatYearMonthFull(d.ym);
+    tooltip.querySelectorAll('.tooltip-value')[0].textContent = formatCurrency(d.actual);
+    tooltip.querySelectorAll('.tooltip-value')[1].textContent = d.budget > 0 ? formatCurrency(d.budget) : '未設定';
+
+    const wrapRect = wrap.getBoundingClientRect();
+    tooltip.style.left = `${clientX - wrapRect.left}px`;
+    tooltip.style.top = `${clientY - wrapRect.top - 12}px`;
+    tooltip.classList.add('visible');
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+  }
+
+  wrap.querySelectorAll('.chart-bar-group').forEach((group) => {
+    const index = Number(group.dataset.index);
+    group.addEventListener('pointerenter', (e) => showTooltip(index, e.clientX, e.clientY));
+    group.addEventListener('pointermove', (e) => showTooltip(index, e.clientX, e.clientY));
+    group.addEventListener('pointerleave', hideTooltip);
+    group.addEventListener('focus', () => {
+      const rect = group.getBoundingClientRect();
+      showTooltip(index, rect.left + rect.width / 2, rect.top);
+    });
+    group.addEventListener('blur', hideTooltip);
+  });
+}
+
+function renderChartLegend() {
+  els.chartLegend.innerHTML = `
+    <span class="chart-legend-item"><span class="chart-legend-swatch legend-ok"></span>実績（予算内）</span>
+    <span class="chart-legend-item"><span class="chart-legend-swatch legend-over"></span>実績（予算超過）</span>
+    <span class="chart-legend-item"><span class="chart-legend-line"></span>予算</span>
+  `;
+}
+
+function renderChartTable(data) {
+  const rows = data.map((d) => {
+    const diff = d.actual - d.budget;
+    return `
+      <tr>
+        <td>${escapeHtml(formatYearMonthFull(d.ym))}</td>
+        <td>${formatCurrency(d.actual)}</td>
+        <td>${d.budget > 0 ? formatCurrency(d.budget) : '未設定'}</td>
+        <td>${d.budget > 0 ? formatCurrency(diff) : '—'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  els.chartTable.innerHTML = `
+    <table class="chart-table">
+      <thead>
+        <tr><th>月</th><th>実績</th><th>予算</th><th>差引</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 function populateCategoryLists(records) {
@@ -473,6 +695,8 @@ function init() {
     renderTopStats(currentRecords);
     renderBudgets(currentRecords);
   });
+
+  els.chartFilter.addEventListener('change', () => renderChart(currentRecords));
 
   els.budgetList.addEventListener('change', (e) => {
     const input = e.target.closest('.budget-input');
