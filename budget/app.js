@@ -773,13 +773,15 @@ function initMoneyRain() {
   const COUNT = 18;
   for (let i = 0; i < COUNT; i++) {
     const span = document.createElement('span');
-    span.textContent = '¥';
+    span.textContent = '💴';
     const duration = 10 + Math.random() * 10;
     span.style.left = `${Math.random() * 100}%`;
-    span.style.fontSize = `${14 + Math.random() * 18}px`;
-    span.style.opacity = String(0.08 + Math.random() * 0.14);
+    span.style.fontSize = `${18 + Math.random() * 16}px`;
+    span.style.opacity = String(0.12 + Math.random() * 0.16);
     span.style.animationDuration = `${duration}s`;
     span.style.animationDelay = `${-Math.random() * duration}s`;
+    const swaySign = Math.random() < 0.5 ? -1 : 1;
+    span.style.setProperty('--sway', `${swaySign * (18 + Math.random() * 26)}px`);
     container.appendChild(span);
   }
 }
