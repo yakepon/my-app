@@ -361,7 +361,7 @@ function getDailyTemp(area, dateStr) {
       const min    = parseFloat(cells[minIdx]);
       const windMax = parseFloat(cells[windMaxIdx]);
       const rawWeather = (cells[weatherIdx] || '').trim();
-      const weather = rawWeather && !['×', '///'].includes(rawWeather) ? rawWeather : null;
+      const weather = rawWeather && !['×', '///'].includes(rawWeather) && isNaN(parseFloat(rawWeather)) ? rawWeather : null;
       return {
         max:     isNaN(max)     ? null : max,
         min:     isNaN(min)     ? null : min,
