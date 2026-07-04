@@ -61,6 +61,20 @@ function setGasUrl(url) {
 function setStatus(message, state) {
   els.connStatus.textContent = message;
   els.connStatus.className = 'status' + (state ? ' ' + state : '');
+  showToast(message, state);
+}
+
+let toastTimer = null;
+
+function showToast(message, state) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = 'toast visible' + (state ? ' ' + state : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+  }, 3200);
 }
 
 function escapeHtml(str) {
@@ -728,13 +742,14 @@ async function onDelete(id) {
 
   try {
     // text/plain を使うことで CORS のプリフライトを回避する
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({ action: 'delete', id }),
     });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     setStatus('記録を削除しました。', 'ok');
   } catch (err) {
-    setStatus('通信エラーが発生しましたが、削除されている可能性があります。一覧を確認してください。', 'error');
+    setStatus('削除に失敗しました: ' + err.message, 'error');
   } finally {
     await loadRecords();
   }
@@ -749,13 +764,14 @@ async function onSaveBudget(yearMonth, category, subCategory, amount, comment) {
 
   try {
     // text/plain を使うことで CORS のプリフライトを回避する
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({ action: 'saveBudget', yearMonth, category, subCategory, amount, comment }),
     });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     setStatus('予算を更新しました。', 'ok');
   } catch (err) {
-    setStatus('通信エラーが発生しましたが、保存されている可能性があります。', 'error');
+    setStatus('予算の更新に失敗しました: ' + err.message, 'error');
   } finally {
     await loadRecords();
   }
@@ -788,13 +804,14 @@ async function onSubmit(e) {
 
   try {
     // text/plain を使うことで CORS のプリフライトを回避する
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     setStatus(id ? '記録を更新しました。' : '記帳しました。', 'ok');
   } catch (err) {
-    setStatus('通信エラーが発生しましたが、記録は保存されている可能性があります。一覧を確認してください。', 'error');
+    setStatus('保存に失敗しました: ' + err.message, 'error');
   } finally {
     exitEditMode();
     els.submitBtn.disabled = false;
