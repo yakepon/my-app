@@ -392,8 +392,8 @@ const BIKE_MAP_LAYOUTS = {
   '武蔵小杉': [
     { type: 'pods', totalCols: 10, leftCol: 1, rightCol: 8, left: [1, 2], right: [3, 4] },
     { type: 'row', bikes: [14, 13, 12, 11, 10, 9, 8, 7, 6, 5] },
+    { type: 'row', bikes: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
     { type: 'rows-with-entrance', rows: [
-      [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
       [35, 34, 33, 32, 31, 30, 29, 28, 27, 26],
       [36, 37, 38, 39, 40, null, 41, 42, 43, 44, 45],
     ] },
