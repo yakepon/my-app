@@ -261,6 +261,33 @@ main {
   white-space: pre-wrap;
 }
 
+.program-summary-card {
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.program-summary-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.program-summary-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--neon-cyan);
+  text-decoration: none;
+}
+
+.program-summary-link:hover {
+  text-decoration: underline;
+}
+
 .memo-list {
   display: flex;
   flex-direction: column;

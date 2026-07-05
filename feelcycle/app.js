@@ -488,6 +488,7 @@ function performSearch() {
     .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
   els.searchResult.innerHTML = `
+    ${category && program ? '<div class="search-block program-summary-block" id="programSummary"></div>' : ''}
     <p class="search-count">${matches.length}件の記録が見つかりました</p>
     <div class="search-block">
       <h3>過去のメモ</h3>
@@ -506,6 +507,40 @@ function performSearch() {
         : '<p class="empty">メモが記録されていません。</p>'}
     </div>
   `;
+
+  if (category && program) {
+    loadProgramSummary(category, program);
+  }
+}
+
+async function loadProgramSummary(category, program) {
+  const container = document.getElementById('programSummary');
+  const gasUrl = getGasUrl();
+  if (!container || !gasUrl) return;
+
+  container.innerHTML = '<p class="empty">プログラム情報を取得中...</p>';
+
+  const params = new URLSearchParams({ action: 'programInfo', category, program });
+  try {
+    const res = await fetch(`${gasUrl}?${params.toString()}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.found) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <h3>プログラム情報 (FEELCYCLIST)</h3>
+      <div class="program-summary-card">
+        <p class="program-summary-text">${escapeHtml(data.description)}</p>
+        <a class="program-summary-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener noreferrer">詳細を見る →</a>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = '';
+  }
 }
 
 function enterEditMode(record) {

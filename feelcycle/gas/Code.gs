@@ -30,6 +30,10 @@ function getHeaders(sheet) {
 }
 
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'programInfo') {
+    return getProgramInfo(e.parameter.category, e.parameter.program);
+  }
+
   const sheet = getSheet();
   const headers = getHeaders(sheet);
   const lastRow = sheet.getLastRow();
@@ -108,4 +112,46 @@ function deleteRecord(sheet, data) {
   const row = findRowById(sheet, headers, data.id);
   if (row === -1) return;
   sheet.deleteRow(row);
+}
+
+// FEELCYCLIST (https://feel.shirataki.me/) のプログラム解説ページから概要を取得する。
+// URLは「カテゴリ/カテゴリ+プログラム名（小文字・スペース除去）」の形式（例: bb2/bb2house3/）。
+function getProgramInfo(category, program) {
+  const categorySlug = String(category || '').trim().toLowerCase();
+  const programSlug = String(program || '').trim().toLowerCase().replace(/\s+/g, '');
+  const result = { found: false, url: '', title: '', description: '' };
+
+  if (!categorySlug || !programSlug) {
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const url = `https://feel.shirataki.me/${categorySlug}/${categorySlug}${programSlug}/`;
+  result.url = url;
+
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() === 200) {
+      const html = res.getContentText();
+      const titleMatch = html.match(/<title>([^<]*)<\/title>/);
+      const descMatch = html.match(/<meta name="description" content="([^"]*)"/);
+      if (descMatch) {
+        result.found = true;
+        result.title = titleMatch ? decodeHtmlEntities(titleMatch[1]).replace(/[|｜].*$/, '').trim() : '';
+        result.description = decodeHtmlEntities(descMatch[1]);
+      }
+    }
+  } catch (err) {
+    // ネットワークエラー等は found:false のまま返す
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function decodeHtmlEntities(text) {
+  return String(text)
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
 }
