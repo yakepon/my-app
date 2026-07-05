@@ -115,7 +115,9 @@ function deleteRecord(sheet, data) {
 }
 
 // FEELCYCLIST (https://feel.shirataki.me/) のプログラム解説ページから概要を取得する。
-// URLは「カテゴリ/カテゴリ+プログラム名（小文字・スペース除去）」の形式（例: bb2/bb2house3/）。
+// プログラム名には「BSL House 1」のようにカテゴリ名が含まれるのが通例なので、
+// スラッグ化した際に既にカテゴリ接頭辞を含んでいればそのまま、含んでいなければ補う
+// （例: カテゴリ bsl / プログラム BSL House 1 → bsl/bslhouse1/）。
 function getProgramInfo(category, program) {
   const categorySlug = String(category || '').trim().toLowerCase();
   const programSlug = String(program || '').trim().toLowerCase().replace(/\s+/g, '');
@@ -125,7 +127,8 @@ function getProgramInfo(category, program) {
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
   }
 
-  const url = `https://feel.shirataki.me/${categorySlug}/${categorySlug}${programSlug}/`;
+  const programPath = programSlug.startsWith(categorySlug) ? programSlug : `${categorySlug}${programSlug}`;
+  const url = `https://feel.shirataki.me/${categorySlug}/${programPath}/`;
   result.url = url;
 
   try {
