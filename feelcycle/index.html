@@ -20,33 +20,38 @@
 
   <main>
     <section class="panel search-panel">
-      <h2>プログラム検索</h2>
-      <div class="search-row">
-        <select id="searchCategory">
-          <option value="">カテゴリ (すべて)</option>
-          <option value="BB1">BB1</option>
-          <option value="BB2">BB2</option>
-          <option value="BB3">BB3</option>
-          <option value="BSB">BSB</option>
-          <option value="BSL">BSL</option>
-          <option value="BSW">BSW</option>
-          <option value="BSWi">BSWi</option>
-          <option value="FEEL">FEEL</option>
-          <option value="SKRILLEX">SKRILLEX</option>
-        </select>
-        <input type="text" id="searchProgram" list="programList" placeholder="プログラム名 (例: BSL45 Pops)">
-        <button type="button" id="searchBtn" class="btn btn-primary">検索</button>
+      <div class="search-tabs">
+        <button type="button" class="search-tab-btn active" id="programTabBtn" data-tab="program">プログラム検索</button>
+        <button type="button" class="search-tab-btn" id="instructorTabBtn" data-tab="instructor">インストラクター検索</button>
       </div>
-      <div class="search-result" id="searchResult"></div>
-    </section>
 
-    <section class="panel search-panel">
-      <h2>インストラクター検索</h2>
-      <div class="search-row">
-        <input type="text" id="searchInstructor" list="instructorList" placeholder="インストラクター名 (例: Yuki)">
-        <button type="button" id="searchInstructorBtn" class="btn btn-primary">検索</button>
+      <div class="search-tab-panel" id="programTabPanel">
+        <div class="search-row">
+          <select id="searchCategory">
+            <option value="">カテゴリ (すべて)</option>
+            <option value="BB1">BB1</option>
+            <option value="BB2">BB2</option>
+            <option value="BB3">BB3</option>
+            <option value="BSB">BSB</option>
+            <option value="BSL">BSL</option>
+            <option value="BSW">BSW</option>
+            <option value="BSWi">BSWi</option>
+            <option value="FEEL">FEEL</option>
+            <option value="SKRILLEX">SKRILLEX</option>
+          </select>
+          <input type="text" id="searchProgram" list="programList" placeholder="プログラム名 (例: BSL45 Pops)">
+          <button type="button" id="searchBtn" class="btn btn-primary">検索</button>
+        </div>
+        <div class="search-result" id="searchResult"></div>
       </div>
-      <div class="search-result" id="searchInstructorResult"></div>
+
+      <div class="search-tab-panel" id="instructorTabPanel" hidden>
+        <div class="search-row">
+          <input type="text" id="searchInstructor" list="instructorList" placeholder="インストラクター名 (例: Yuki)">
+          <button type="button" id="searchInstructorBtn" class="btn btn-primary">検索</button>
+        </div>
+        <div class="search-result" id="searchInstructorResult"></div>
+      </div>
     </section>
 
     <section class="panel settings" id="settings" hidden>

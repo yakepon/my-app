@@ -28,6 +28,9 @@ const els = {
   searchInstructor: document.getElementById('searchInstructor'),
   searchInstructorBtn: document.getElementById('searchInstructorBtn'),
   searchInstructorResult: document.getElementById('searchInstructorResult'),
+  searchTabBtns: document.querySelectorAll('.search-tab-btn'),
+  programTabPanel: document.getElementById('programTabPanel'),
+  instructorTabPanel: document.getElementById('instructorTabPanel'),
 };
 
 const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
@@ -467,6 +470,14 @@ function renderBikeMap(records) {
   els.bikeMap.innerHTML = `<div class="bike-map">${rowsHtml}</div>`;
 }
 
+function switchSearchTab(tab) {
+  els.searchTabBtns.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  els.programTabPanel.hidden = tab !== 'program';
+  els.instructorTabPanel.hidden = tab !== 'instructor';
+}
+
 function performSearch() {
   const category = els.searchCategory.value.trim();
   const program = els.searchProgram.value.trim();
@@ -772,6 +783,10 @@ function init() {
 
   els.searchBtn.addEventListener('click', performSearch);
   els.searchInstructorBtn.addEventListener('click', performInstructorSearch);
+
+  els.searchTabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => switchSearchTab(btn.dataset.tab));
+  });
 
   els.recordsList.addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');
