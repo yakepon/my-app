@@ -74,6 +74,14 @@ function formatDate(value) {
   });
 }
 
+function formatDateOnly(value) {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('ja-JP', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+}
+
 function toDatetimeInputValue(value) {
   const d = new Date(value);
   if (isNaN(d.getTime())) return '';
@@ -632,7 +640,7 @@ async function loadInstructorSummary(instructor) {
       <h3>インストラクター情報 (FEELCYCLE FAN)</h3>
       <div class="program-summary-card">
         <p class="program-summary-text">
-          ${data.debutDate ? `デビュー日: ${formatDate(data.debutDate)}<br>` : ''}
+          ${data.debutDate ? `初回レッスン日: ${formatDateOnly(data.debutDate)}<br>` : ''}
           担当プログラム数: ${data.totalPrograms}
         </p>
         ${topProgramsHtml ? `<p class="program-summary-text" style="margin-top:10px;">よく担当するプログラム</p>${topProgramsHtml}` : ''}
