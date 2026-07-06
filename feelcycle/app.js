@@ -601,30 +601,27 @@ async function loadProgramSummary(category, program) {
 }
 
 function buildInstructorMatchesHtml(instructor) {
-  const matches = currentRecords.filter((r) => String(r.instructor || '').toLowerCase().includes(instructor.toLowerCase()));
-
-  const memoRecords = [...matches]
+  const memoRecords = currentRecords
+    .filter((r) => String(r.instructor || '').toLowerCase().includes(instructor.toLowerCase()))
     .filter((r) => String(r.instructorMemo || '').trim())
     .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
-  return matches.length
+  return memoRecords.length
     ? `
-      <p class="search-count">${matches.length}件の記録が見つかりました</p>
+      <p class="search-count">${memoRecords.length}件の記録が見つかりました</p>
       <div class="search-block">
         <h3>過去のメモ</h3>
-        ${memoRecords.length
-          ? `<ul class="memo-list">${memoRecords.map((r) => `
-            <li class="memo-list-item">
-              <span class="memo-date">${formatDate(r.datetime)}</span>
-              <div class="memo-meta">
-                ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
-                ${r.program ? `<span class="badge instructor-badge">${escapeHtml(r.program)}</span>` : ''}
-                ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
-              </div>
-              <p class="memo-text">${escapeHtml(r.instructorMemo)}</p>
-            </li>
-          `).join('')}</ul>`
-          : '<p class="empty">メモが記録されていません。</p>'}
+        <ul class="memo-list">${memoRecords.map((r) => `
+          <li class="memo-list-item">
+            <span class="memo-date">${formatDate(r.datetime)}</span>
+            <div class="memo-meta">
+              ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
+              ${r.program ? `<span class="badge instructor-badge">${escapeHtml(r.program)}</span>` : ''}
+              ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
+            </div>
+            <p class="memo-text">${escapeHtml(r.instructorMemo)}</p>
+          </li>
+        `).join('')}</ul>
       </div>
     `
     : '<p class="empty">該当する記録が見つかりませんでした。</p>';
