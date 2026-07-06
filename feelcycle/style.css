@@ -280,6 +280,20 @@ main {
   gap: 8px;
 }
 
+.instructor-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.instructor-compare-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  color: var(--neon-cyan);
+  margin-bottom: 12px;
+}
+
 .badge.instructor-badge {
   background: rgba(0, 229, 255, 0.12);
   color: var(--neon-cyan);
@@ -872,6 +886,10 @@ textarea {
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .instructor-compare-grid {
     grid-template-columns: 1fr;
   }
 

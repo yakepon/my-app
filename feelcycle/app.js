@@ -82,6 +82,39 @@ function formatDateOnly(value) {
   });
 }
 
+function calcMonthsBetween(startValue, endValue) {
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+
+  let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  if (end.getDate() < start.getDate()) months--;
+  return Math.max(0, months);
+}
+
+function formatDuration(startValue, endValue) {
+  const months = calcMonthsBetween(startValue, endValue);
+  if (months === null) return '';
+
+  const years = Math.floor(months / 12);
+  const remMonths = months % 12;
+
+  if (years > 0 && remMonths > 0) return `${years}年${remMonths}ヶ月`;
+  if (years > 0) return `${years}年`;
+  if (remMonths > 0) return `${remMonths}ヶ月`;
+
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+  const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+  return `${days}日`;
+}
+
+function calcMonthlyLessonAverage(startValue, endValue, totalLessons) {
+  const months = calcMonthsBetween(startValue, endValue);
+  if (months === null) return null;
+  return (Number(totalLessons) / Math.max(months, 1)).toFixed(1);
+}
+
 function toDatetimeInputValue(value) {
   const d = new Date(value);
   if (isNaN(d.getTime())) return '';
@@ -567,21 +600,14 @@ async function loadProgramSummary(category, program) {
   }
 }
 
-function performInstructorSearch() {
-  const instructor = els.searchInstructor.value.trim();
-
-  if (!instructor) {
-    els.searchInstructorResult.innerHTML = '<p class="empty">インストラクター名を入力してください。</p>';
-    return;
-  }
-
+function buildInstructorMatchesHtml(instructor) {
   const matches = currentRecords.filter((r) => String(r.instructor || '').toLowerCase().includes(instructor.toLowerCase()));
 
   const memoRecords = [...matches]
     .filter((r) => String(r.instructorMemo || '').trim())
     .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
-  const recordsHtml = matches.length
+  return matches.length
     ? `
       <p class="search-count">${matches.length}件の記録が見つかりました</p>
       <div class="search-block">
@@ -602,17 +628,51 @@ function performInstructorSearch() {
       </div>
     `
     : '<p class="empty">該当する記録が見つかりませんでした。</p>';
-
-  els.searchInstructorResult.innerHTML = `
-    <div class="search-block instructor-summary-block" id="instructorSummary"></div>
-    ${recordsHtml}
-  `;
-
-  loadInstructorSummary(instructor);
 }
 
-async function loadInstructorSummary(instructor) {
-  const container = document.getElementById('instructorSummary');
+function performInstructorSearch() {
+  const raw = els.searchInstructor.value.trim();
+
+  if (!raw) {
+    els.searchInstructorResult.innerHTML = '<p class="empty">インストラクター名を入力してください。</p>';
+    return;
+  }
+
+  // 半角スペース区切りで2名入力された場合は比較表示にする
+  const names = raw.split(/\s+/).filter(Boolean);
+
+  if (names.length >= 2) {
+    const [nameA, nameB] = names;
+    els.searchInstructorResult.innerHTML = `
+      <div class="instructor-compare-grid">
+        <div class="instructor-compare-col">
+          <h3 class="instructor-compare-name">${escapeHtml(nameA)}</h3>
+          <div class="search-block instructor-summary-block" id="instructorSummary-0"></div>
+          ${buildInstructorMatchesHtml(nameA)}
+        </div>
+        <div class="instructor-compare-col">
+          <h3 class="instructor-compare-name">${escapeHtml(nameB)}</h3>
+          <div class="search-block instructor-summary-block" id="instructorSummary-1"></div>
+          ${buildInstructorMatchesHtml(nameB)}
+        </div>
+      </div>
+    `;
+    loadInstructorSummary(nameA, 'instructorSummary-0');
+    loadInstructorSummary(nameB, 'instructorSummary-1');
+    return;
+  }
+
+  const instructor = names[0];
+  els.searchInstructorResult.innerHTML = `
+    <div class="search-block instructor-summary-block" id="instructorSummary"></div>
+    ${buildInstructorMatchesHtml(instructor)}
+  `;
+
+  loadInstructorSummary(instructor, 'instructorSummary');
+}
+
+async function loadInstructorSummary(instructor, containerId = 'instructorSummary') {
+  const container = document.getElementById(containerId);
   const gasUrl = getGasUrl();
   if (!container || !gasUrl) return;
 
@@ -633,11 +693,13 @@ async function loadInstructorSummary(instructor) {
       <h3>インストラクター情報 (FEELCYCLE FAN)</h3>
       <div class="program-summary-card">
         <p class="program-summary-text">
+          ${data.debutDate && data.lastDate ? `在籍期間: ${formatDuration(data.debutDate, data.lastDate)}<br>` : ''}
           ${data.debutDate ? `初回レッスン日: ${formatDateOnly(data.debutDate)}<br>` : ''}
-          ${data.lastDate ? `最終日: ${formatDateOnly(data.lastDate)}<br>` : ''}
-          対応プログラム数: ${data.upcomingProgramCount}<br>
+          ${data.lastDate ? `最終レッスン日: ${formatDateOnly(data.lastDate)}<br>` : ''}
+          提供プログラム数: ${data.upcomingProgramCount}<br>
           実績プログラム数: ${data.totalPrograms}<br>
           実績レッスン数: ${data.totalLessons}
+          ${data.debutDate && data.lastDate ? `<br>月あたりレッスン数: ${calcMonthlyLessonAverage(data.debutDate, data.lastDate, data.totalLessons)}回` : ''}
         </p>
         <a class="program-summary-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener noreferrer">詳細を見る →</a>
       </div>
