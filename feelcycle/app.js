@@ -112,7 +112,7 @@ function formatDuration(startValue, endValue) {
 function calcMonthlyLessonAverage(startValue, endValue, totalLessons) {
   const months = calcMonthsBetween(startValue, endValue);
   if (months === null) return null;
-  return (Number(totalLessons) / Math.max(months, 1)).toFixed(1);
+  return Math.round(Number(totalLessons) / Math.max(months, 1));
 }
 
 function toDatetimeInputValue(value) {
@@ -697,7 +697,7 @@ async function loadInstructorSummary(instructor, containerId = 'instructorSummar
           提供プログラム数: ${data.upcomingProgramCount}<br>
           実績プログラム数: ${data.totalPrograms}<br>
           実績レッスン数: ${data.totalLessons}
-          ${data.debutDate && data.lastDate ? `<br>月あたりレッスン数: ${calcMonthlyLessonAverage(data.debutDate, data.lastDate, data.totalLessons)}回` : ''}
+          ${data.debutDate && data.lastDate ? `<br>月あたりレッスン数: ${calcMonthlyLessonAverage(data.debutDate, data.lastDate, data.totalLessons)}` : ''}
         </p>
         <a class="program-summary-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener noreferrer">詳細を見る →</a>
       </div>
@@ -737,7 +737,7 @@ async function loadInstructorComparisonTable(nameA, nameB, containerId) {
 
   const dateOrDash = (value) => (value ? formatDateOnly(value) : '-');
   const durationOrDash = (data) => (data.debutDate && data.lastDate ? formatDuration(data.debutDate, data.lastDate) : '-');
-  const monthlyAvgOrDash = (data) => (data.debutDate && data.lastDate ? `${calcMonthlyLessonAverage(data.debutDate, data.lastDate, data.totalLessons)}回` : '-');
+  const monthlyAvgOrDash = (data) => (data.debutDate && data.lastDate ? `${calcMonthlyLessonAverage(data.debutDate, data.lastDate, data.totalLessons)}` : '-');
   const valueOrDash = (data, key) => (data.found ? data[key] : '-');
 
   const row = (label, valueA, valueB) => `<tr><th>${escapeHtml(label)}</th><td>${valueA}</td><td>${valueB}</td></tr>`;
