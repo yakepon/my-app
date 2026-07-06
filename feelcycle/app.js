@@ -25,6 +25,9 @@ const els = {
   searchProgram: document.getElementById('searchProgram'),
   searchBtn: document.getElementById('searchBtn'),
   searchResult: document.getElementById('searchResult'),
+  searchInstructor: document.getElementById('searchInstructor'),
+  searchInstructorBtn: document.getElementById('searchInstructorBtn'),
+  searchInstructorResult: document.getElementById('searchInstructorResult'),
 };
 
 const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
@@ -141,7 +144,8 @@ function renderRecords(records) {
           ${r.bikeNo ? `<span class="meta-item">No.${escapeHtml(r.bikeNo)}</span>` : ''}
           ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
         </div>
-        ${r.memo ? `<p class="record-memo">${escapeHtml(r.memo)}</p>` : ''}
+        ${r.memo ? `<p class="record-memo"><span class="memo-label">プログラム:</span> ${escapeHtml(r.memo)}</p>` : ''}
+        ${r.instructorMemo ? `<p class="record-memo"><span class="memo-label">インストラクター:</span> ${escapeHtml(r.instructorMemo)}</p>` : ''}
       </div>
       ${!isCancel ? `
       <div class="record-calories">
@@ -478,34 +482,35 @@ function performSearch() {
     return catMatch && progMatch;
   });
 
-  if (!matches.length) {
-    els.searchResult.innerHTML = '<p class="empty">該当する記録が見つかりませんでした。</p>';
-    return;
-  }
-
   const memoRecords = [...matches]
     .filter((r) => String(r.memo || '').trim())
     .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
+  const recordsHtml = matches.length
+    ? `
+      <p class="search-count">${matches.length}件の記録が見つかりました</p>
+      <div class="search-block">
+        <h3>過去のメモ</h3>
+        ${memoRecords.length
+          ? `<ul class="memo-list">${memoRecords.map((r) => `
+            <li class="memo-list-item">
+              <span class="memo-date">${formatDate(r.datetime)}</span>
+              <div class="memo-meta">
+                ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
+                ${r.program ? `<span class="badge instructor-badge">${escapeHtml(r.program)}</span>` : ''}
+                ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
+              </div>
+              <p class="memo-text">${escapeHtml(r.memo)}</p>
+            </li>
+          `).join('')}</ul>`
+          : '<p class="empty">メモが記録されていません。</p>'}
+      </div>
+    `
+    : '<p class="empty">該当する記録が見つかりませんでした。</p>';
+
   els.searchResult.innerHTML = `
     ${category && program ? '<div class="search-block program-summary-block" id="programSummary"></div>' : ''}
-    <p class="search-count">${matches.length}件の記録が見つかりました</p>
-    <div class="search-block">
-      <h3>過去のメモ</h3>
-      ${memoRecords.length
-        ? `<ul class="memo-list">${memoRecords.map((r) => `
-          <li class="memo-list-item">
-            <span class="memo-date">${formatDate(r.datetime)}</span>
-            <div class="memo-meta">
-              ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
-              ${r.program ? `<span class="badge instructor-badge">${escapeHtml(r.program)}</span>` : ''}
-              ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
-            </div>
-            <p class="memo-text">${escapeHtml(r.memo)}</p>
-          </li>
-        `).join('')}</ul>`
-        : '<p class="empty">メモが記録されていません。</p>'}
-    </div>
+    ${recordsHtml}
   `;
 
   if (category && program) {
@@ -543,6 +548,92 @@ async function loadProgramSummary(category, program) {
   }
 }
 
+function performInstructorSearch() {
+  const instructor = els.searchInstructor.value.trim();
+
+  if (!instructor) {
+    els.searchInstructorResult.innerHTML = '<p class="empty">インストラクター名を入力してください。</p>';
+    return;
+  }
+
+  const matches = currentRecords.filter((r) => String(r.instructor || '').toLowerCase().includes(instructor.toLowerCase()));
+
+  const memoRecords = [...matches]
+    .filter((r) => String(r.instructorMemo || '').trim())
+    .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+  const recordsHtml = matches.length
+    ? `
+      <p class="search-count">${matches.length}件の記録が見つかりました</p>
+      <div class="search-block">
+        <h3>過去のメモ</h3>
+        ${memoRecords.length
+          ? `<ul class="memo-list">${memoRecords.map((r) => `
+            <li class="memo-list-item">
+              <span class="memo-date">${formatDate(r.datetime)}</span>
+              <div class="memo-meta">
+                ${r.category ? `<span class="badge">${escapeHtml(r.category)}</span>` : ''}
+                ${r.program ? `<span class="badge instructor-badge">${escapeHtml(r.program)}</span>` : ''}
+                ${r.instructor ? `<span class="meta-item">${escapeHtml(r.instructor)}</span>` : ''}
+              </div>
+              <p class="memo-text">${escapeHtml(r.instructorMemo)}</p>
+            </li>
+          `).join('')}</ul>`
+          : '<p class="empty">メモが記録されていません。</p>'}
+      </div>
+    `
+    : '<p class="empty">該当する記録が見つかりませんでした。</p>';
+
+  els.searchInstructorResult.innerHTML = `
+    <div class="search-block instructor-summary-block" id="instructorSummary"></div>
+    ${recordsHtml}
+  `;
+
+  loadInstructorSummary(instructor);
+}
+
+async function loadInstructorSummary(instructor) {
+  const container = document.getElementById('instructorSummary');
+  const gasUrl = getGasUrl();
+  if (!container || !gasUrl) return;
+
+  container.innerHTML = '<p class="empty">インストラクター情報を取得中...</p>';
+
+  const params = new URLSearchParams({ action: 'instructorInfo', name: instructor });
+  try {
+    const res = await fetch(`${gasUrl}?${params.toString()}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.found) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const topProgramsHtml = data.topPrograms && data.topPrograms.length
+      ? `<div class="search-instructors">${data.topPrograms.map((p) => `<span class="badge instructor-badge">${escapeHtml(p.name)} (${p.lessonCount}回)</span>`).join('')}</div>`
+      : '';
+    const topStudiosHtml = data.topStudios && data.topStudios.length
+      ? `<div class="search-instructors">${data.topStudios.map((s) => `<span class="badge">${escapeHtml(s.name)} (${s.lessonCount}回)</span>`).join('')}</div>`
+      : '';
+
+    container.innerHTML = `
+      <h3>インストラクター情報 (FEELCYCLE FAN)</h3>
+      <div class="program-summary-card">
+        <p class="program-summary-text">
+          ${data.debutDate ? `デビュー日: ${formatDate(data.debutDate)}<br>` : ''}
+          担当プログラム数: ${data.totalPrograms}
+        </p>
+        ${topProgramsHtml ? `<p class="program-summary-text" style="margin-top:10px;">よく担当するプログラム</p>${topProgramsHtml}` : ''}
+        ${topStudiosHtml ? `<p class="program-summary-text" style="margin-top:10px;">よく担当するスタジオ</p>${topStudiosHtml}` : ''}
+        <a class="program-summary-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener noreferrer">詳細を見る →</a>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = '';
+  }
+}
+
 function enterEditMode(record) {
   els.form.id.value = record.id;
   els.form.datetime.value = toDatetimeInputValue(record.datetime);
@@ -553,6 +644,7 @@ function enterEditMode(record) {
   els.form.instructor.value = record.instructor || '';
   els.form.calories.value = record.calories || '';
   els.form.memo.value = record.memo || '';
+  els.form.instructorMemo.value = record.instructorMemo || '';
 
   const type = record.type || 'ride';
   els.form.querySelectorAll('input[name="type"]').forEach((radio) => { radio.checked = radio.value === type; });
@@ -623,6 +715,7 @@ async function onSubmit(e) {
     instructor: formData.get('instructor'),
     calories: formData.get('calories'),
     memo: formData.get('memo'),
+    instructorMemo: formData.get('instructorMemo'),
     type: formData.get('type') || 'ride',
   };
 
@@ -678,6 +771,7 @@ function init() {
   });
 
   els.searchBtn.addEventListener('click', performSearch);
+  els.searchInstructorBtn.addEventListener('click', performInstructorSearch);
 
   els.recordsList.addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');

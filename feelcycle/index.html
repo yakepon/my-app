@@ -29,6 +29,15 @@
       <div class="search-result" id="searchResult"></div>
     </section>
 
+    <section class="panel search-panel">
+      <h2>インストラクター検索</h2>
+      <div class="search-row">
+        <input type="text" id="searchInstructor" list="instructorList" placeholder="インストラクター名 (例: Yuki)">
+        <button type="button" id="searchInstructorBtn" class="btn btn-primary">検索</button>
+      </div>
+      <div class="search-result" id="searchInstructorResult"></div>
+    </section>
+
     <section class="panel settings" id="settings" hidden>
       <h2>接続設定</h2>
       <p class="hint">
@@ -131,8 +140,11 @@
             </label>
           </div>
         </div>
-        <label class="memo-field">メモ
-          <textarea name="memo" rows="2" placeholder="感想やフリーメモ"></textarea>
+        <label class="memo-field">プログラムメモ
+          <textarea name="memo" rows="2" placeholder="プログラムの感想やフリーメモ"></textarea>
+        </label>
+        <label class="memo-field">インストラクターメモ
+          <textarea name="instructorMemo" rows="2" placeholder="インストラクターの感想やフリーメモ"></textarea>
         </label>
         <datalist id="studioList"></datalist>
         <datalist id="bikeNoList"></datalist>
