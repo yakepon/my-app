@@ -644,21 +644,19 @@ function performInstructorSearch() {
   if (names.length >= 2) {
     const [nameA, nameB] = names;
     els.searchInstructorResult.innerHTML = `
+      <div class="search-block instructor-summary-block" id="instructorCompareTable"></div>
       <div class="instructor-compare-grid">
         <div class="instructor-compare-col">
           <h3 class="instructor-compare-name">${escapeHtml(nameA)}</h3>
-          <div class="search-block instructor-summary-block" id="instructorSummary-0"></div>
           ${buildInstructorMatchesHtml(nameA)}
         </div>
         <div class="instructor-compare-col">
           <h3 class="instructor-compare-name">${escapeHtml(nameB)}</h3>
-          <div class="search-block instructor-summary-block" id="instructorSummary-1"></div>
           ${buildInstructorMatchesHtml(nameB)}
         </div>
       </div>
     `;
-    loadInstructorSummary(nameA, 'instructorSummary-0');
-    loadInstructorSummary(nameB, 'instructorSummary-1');
+    loadInstructorComparisonTable(nameA, nameB, 'instructorCompareTable');
     return;
   }
 
@@ -707,6 +705,66 @@ async function loadInstructorSummary(instructor, containerId = 'instructorSummar
   } catch (err) {
     container.innerHTML = '';
   }
+}
+
+async function fetchInstructorInfo(instructor) {
+  const gasUrl = getGasUrl();
+  if (!gasUrl) return { found: false };
+
+  const params = new URLSearchParams({ action: 'instructorInfo', name: instructor });
+  try {
+    const res = await fetch(`${gasUrl}?${params.toString()}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    return { found: false };
+  }
+}
+
+async function loadInstructorComparisonTable(nameA, nameB, containerId) {
+  const container = document.getElementById(containerId);
+  const gasUrl = getGasUrl();
+  if (!container || !gasUrl) return;
+
+  container.innerHTML = '<p class="empty">インストラクター情報を取得中...</p>';
+
+  const [dataA, dataB] = await Promise.all([fetchInstructorInfo(nameA), fetchInstructorInfo(nameB)]);
+
+  if (!dataA.found && !dataB.found) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const dateOrDash = (value) => (value ? formatDateOnly(value) : '-');
+  const durationOrDash = (data) => (data.debutDate && data.lastDate ? formatDuration(data.debutDate, data.lastDate) : '-');
+  const monthlyAvgOrDash = (data) => (data.debutDate && data.lastDate ? `${calcMonthlyLessonAverage(data.debutDate, data.lastDate, data.totalLessons)}回` : '-');
+  const valueOrDash = (data, key) => (data.found ? data[key] : '-');
+
+  const row = (label, valueA, valueB) => `<tr><th>${escapeHtml(label)}</th><td>${valueA}</td><td>${valueB}</td></tr>`;
+
+  container.innerHTML = `
+    <h3>インストラクター比較 (FEELCYCLE FAN)</h3>
+    <div class="instructor-compare-table-wrap">
+      <table class="instructor-compare-table">
+        <thead>
+          <tr><th></th><th>${escapeHtml(dataA.name || nameA)}</th><th>${escapeHtml(dataB.name || nameB)}</th></tr>
+        </thead>
+        <tbody>
+          ${row('在籍期間', durationOrDash(dataA), durationOrDash(dataB))}
+          ${row('初回レッスン日', dateOrDash(dataA.debutDate), dateOrDash(dataB.debutDate))}
+          ${row('最終レッスン日', dateOrDash(dataA.lastDate), dateOrDash(dataB.lastDate))}
+          ${row('提供プログラム数', valueOrDash(dataA, 'upcomingProgramCount'), valueOrDash(dataB, 'upcomingProgramCount'))}
+          ${row('実績プログラム数', valueOrDash(dataA, 'totalPrograms'), valueOrDash(dataB, 'totalPrograms'))}
+          ${row('実績レッスン数', valueOrDash(dataA, 'totalLessons'), valueOrDash(dataB, 'totalLessons'))}
+          ${row('月あたりレッスン数', monthlyAvgOrDash(dataA), monthlyAvgOrDash(dataB))}
+        </tbody>
+      </table>
+    </div>
+    <div class="instructor-compare-links">
+      ${dataA.found ? `<a class="program-summary-link" href="${escapeHtml(dataA.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(dataA.name)}の詳細 →</a>` : ''}
+      ${dataB.found ? `<a class="program-summary-link" href="${escapeHtml(dataB.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(dataB.name)}の詳細 →</a>` : ''}
+    </div>
+  `;
 }
 
 function enterEditMode(record) {
