@@ -193,7 +193,11 @@ function decodeHtmlEntities(text) {
 // 担当プログラム・スタジオの実績を取得する。
 function getInstructorInfo(name) {
   const instructorName = String(name || '').trim();
-  const result = { found: false, url: '', name: '', debutDate: '', totalPrograms: 0, topPrograms: [], topStudios: [] };
+  const result = {
+    found: false, url: '', name: '',
+    debutDate: '', lastDate: '',
+    totalPrograms: 0, totalLessons: 0, upcomingProgramCount: 0,
+  };
 
   if (!instructorName) {
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -208,22 +212,15 @@ function getInstructorInfo(name) {
       const detail = extractInstructorDetail(res.getContentText());
       if (detail && detail.name) {
         const pastPrograms = Array.isArray(detail.pastProgramInfo) ? detail.pastProgramInfo : [];
-        const studios = Array.isArray(detail.studioInfo) ? detail.studioInfo : [];
+        const upcomingPrograms = Array.isArray(detail.programInfo) ? detail.programInfo : [];
 
         result.found = true;
         result.name = detail.name;
         result.debutDate = detail.startDate || '';
+        result.lastDate = detail.endDate || '';
         result.totalPrograms = pastPrograms.length;
-        result.topPrograms = pastPrograms
-          .slice()
-          .sort((a, b) => (Number(b.lessonCount) || 0) - (Number(a.lessonCount) || 0))
-          .slice(0, 5)
-          .map((p) => ({ name: p.name, category: p.category, lessonCount: p.lessonCount }));
-        result.topStudios = studios
-          .slice()
-          .sort((a, b) => (Number(b.lessonCount) || 0) - (Number(a.lessonCount) || 0))
-          .slice(0, 3)
-          .map((s) => ({ name: s.name, lessonCount: s.lessonCount }));
+        result.totalLessons = pastPrograms.reduce((sum, p) => sum + (Number(p.lessonCount) || 0), 0);
+        result.upcomingProgramCount = upcomingPrograms.length;
       }
     }
   } catch (err) {

@@ -629,22 +629,16 @@ async function loadInstructorSummary(instructor) {
       return;
     }
 
-    const topProgramsHtml = data.topPrograms && data.topPrograms.length
-      ? `<div class="search-instructors">${data.topPrograms.map((p) => `<span class="badge instructor-badge">${escapeHtml(p.name)} (${p.lessonCount}回)</span>`).join('')}</div>`
-      : '';
-    const topStudiosHtml = data.topStudios && data.topStudios.length
-      ? `<div class="search-instructors">${data.topStudios.map((s) => `<span class="badge">${escapeHtml(s.name)} (${s.lessonCount}回)</span>`).join('')}</div>`
-      : '';
-
     container.innerHTML = `
       <h3>インストラクター情報 (FEELCYCLE FAN)</h3>
       <div class="program-summary-card">
         <p class="program-summary-text">
           ${data.debutDate ? `初回レッスン日: ${formatDateOnly(data.debutDate)}<br>` : ''}
-          担当プログラム数: ${data.totalPrograms}
+          ${data.lastDate ? `最終日: ${formatDateOnly(data.lastDate)}<br>` : ''}
+          対応プログラム数: ${data.upcomingProgramCount}<br>
+          実績プログラム数: ${data.totalPrograms}<br>
+          実績レッスン数: ${data.totalLessons}
         </p>
-        ${topProgramsHtml ? `<p class="program-summary-text" style="margin-top:10px;">よく担当するプログラム</p>${topProgramsHtml}` : ''}
-        ${topStudiosHtml ? `<p class="program-summary-text" style="margin-top:10px;">よく担当するスタジオ</p>${topStudiosHtml}` : ''}
         <a class="program-summary-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener noreferrer">詳細を見る →</a>
       </div>
     `;
