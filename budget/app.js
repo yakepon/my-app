@@ -22,6 +22,8 @@ const els = {
   statBudget: document.getElementById('statBudget'),
   statExpenseLabel: document.getElementById('statExpenseLabel'),
   statExpense: document.getElementById('statExpense'),
+  statWasteLabel: document.getElementById('statWasteLabel'),
+  statWaste: document.getElementById('statWaste'),
   statBalanceLabel: document.getElementById('statBalanceLabel'),
   statBalance: document.getElementById('statBalance'),
   statForecastLabel: document.getElementById('statForecastLabel'),
@@ -198,6 +200,9 @@ function renderAll(records) {
 function renderTopStats(records) {
   const ym = els.summaryMonth.value || currentYearMonth();
   const expense = records.filter((r) => recordYearMonth(r) === ym).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+  const waste = records
+    .filter((r) => recordYearMonth(r) === ym && (r.category || '').trim() === 'その他' && (r.subCategory || '').trim() === '無駄遣い')
+    .reduce((sum, r) => sum + Number(r.amount || 0), 0);
   const totalBudget = totalBudgetAmount(ym);
   const balance = totalBudget - expense;
   const forecast = projectedAmount(ym, expense);
@@ -206,10 +211,12 @@ function renderTopStats(records) {
   els.statBudgetLabel.textContent = `${label}の予算`;
   els.statForecastLabel.textContent = `${label}の着地見込み`;
   els.statExpenseLabel.textContent = `${label}の支出`;
+  els.statWasteLabel.textContent = `${label}の無駄遣い`;
   els.statBalanceLabel.textContent = `${label}の残りの予算`;
 
   els.statBudget.textContent = formatCurrency(totalBudget);
   els.statExpense.textContent = formatCurrency(expense);
+  els.statWaste.textContent = formatCurrency(waste);
   els.statBalance.textContent = formatCurrency(balance);
   els.statForecast.textContent = formatCurrency(forecast);
   els.statForecast.className = 'stat-value ' + (totalBudget > 0 && forecast > totalBudget ? 'ink-expense' : '');

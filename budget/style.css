@@ -208,6 +208,7 @@ main {
 }
 
 .stat-expense .stat-value { color: var(--orange); }
+.stat-waste .stat-value { color: var(--gauge-red); }
 
 /* 黒字／赤字ステータスバッジ */
 .hanko {
