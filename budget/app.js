@@ -226,12 +226,15 @@ function renderBudgetRow(ym, major, sub, spent) {
   const budget = getBudgetAmount(ym, major, sub);
   const comment = getBudgetComment(ym, major, sub);
   const label = sub || '全体';
+  // 「その他」は予算を組む対象ではなく、使った時点で全額が想定外の支出になるカテゴリなので、
+  // 予算未設定でも0円予算として扱い、支出があれば他カテゴリ同様に「超過」表示にする
+  const isUnplanned = major === 'その他';
 
   const commentField = `
     <input type="text" class="budget-comment-input" placeholder="予算の根拠・メモ" value="${escapeHtml(comment)}" data-category="${escapeHtml(major)}" data-subcategory="${escapeHtml(sub || '')}">
   `;
 
-  if (!budget) {
+  if (!budget && !isUnplanned) {
     return `
       <div class="budget-row">
         <div class="budget-row-head">
@@ -249,11 +252,17 @@ function renderBudgetRow(ym, major, sub, spent) {
   }
 
   const remaining = budget - spent;
-  const pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
   const overspent = remaining < 0;
+  let pct = 100;
   let gaugeClass = 'gauge-green';
-  if (pct <= 10) gaugeClass = 'gauge-red';
-  else if (pct <= 50) gaugeClass = 'gauge-yellow';
+  if (budget > 0) {
+    pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
+    if (pct <= 10) gaugeClass = 'gauge-red';
+    else if (pct <= 50) gaugeClass = 'gauge-yellow';
+  } else if (spent > 0) {
+    pct = 0;
+    gaugeClass = 'gauge-red';
+  }
 
   return `
     <div class="budget-row">
