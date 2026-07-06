@@ -362,6 +362,12 @@ main {
   white-space: pre-wrap;
 }
 
+.stat-list-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
 .program-summary-link {
   display: inline-block;
   margin-top: 10px;

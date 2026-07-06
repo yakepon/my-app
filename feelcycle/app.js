@@ -690,7 +690,7 @@ async function loadInstructorSummary(instructor, containerId = 'instructorSummar
     container.innerHTML = `
       <h3>インストラクター情報 (FEELCYCLE FAN)</h3>
       <div class="program-summary-card">
-        <p class="program-summary-text">
+        <p class="stat-list-text">
           ${data.debutDate && data.lastDate ? `在籍期間: ${formatDuration(data.debutDate, data.lastDate)}<br>` : ''}
           ${data.debutDate ? `初回レッスン日: ${formatDateOnly(data.debutDate)}<br>` : ''}
           ${data.lastDate ? `最終レッスン日: ${formatDateOnly(data.lastDate)}<br>` : ''}
