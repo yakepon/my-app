@@ -228,3 +228,21 @@ function deleteRecord(sheet, data) {
   if (row === -1) return;
   sheet.deleteRow(row);
 }
+
+// 一回限りの移行用スクリプト。GASエディタからこの関数を選択して実行する。
+// 「その他」カテゴリの既存レコードは中カテゴリ未設定だったため、すべて「計画外」に設定する。
+function migrateOtherCategoryToPlanOut() {
+  const sheet = getSheet();
+  const headers = getHeaders(sheet);
+  const catCol = headers.indexOf('category');
+  const subCol = headers.indexOf('subCategory');
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  rows.forEach((row, i) => {
+    if (String(row[catCol]) === 'その他') {
+      sheet.getRange(i + 2, subCol + 1).setValue('計画外');
+    }
+  });
+}
