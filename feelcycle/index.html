@@ -22,7 +22,18 @@
     <section class="panel search-panel">
       <h2>プログラム検索</h2>
       <div class="search-row">
-        <input type="text" id="searchCategory" list="categoryList" placeholder="カテゴリ (例: BSL)">
+        <select id="searchCategory">
+          <option value="">カテゴリ (すべて)</option>
+          <option value="BB1">BB1</option>
+          <option value="BB2">BB2</option>
+          <option value="BB3">BB3</option>
+          <option value="BSB">BSB</option>
+          <option value="BSL">BSL</option>
+          <option value="BSW">BSW</option>
+          <option value="BSWi">BSWi</option>
+          <option value="FEEL">FEEL</option>
+          <option value="SKRILLEX">SKRILLEX</option>
+        </select>
         <input type="text" id="searchProgram" list="programList" placeholder="プログラム名 (例: BSL45 Pops)">
         <button type="button" id="searchBtn" class="btn btn-primary">検索</button>
       </div>

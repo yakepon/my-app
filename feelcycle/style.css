@@ -208,7 +208,8 @@ main {
   margin-bottom: 16px;
 }
 
-.search-row input {
+.search-row input,
+.search-row select {
   flex: 1;
   min-width: 0;
 }
@@ -570,7 +571,7 @@ label {
   letter-spacing: 0.05em;
 }
 
-input, textarea {
+input, textarea, select {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -580,7 +581,7 @@ input, textarea {
   font-size: 14px;
 }
 
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--neon-cyan);
   box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
