@@ -1000,8 +1000,12 @@ async function loadEventWeather(ev) {
   if (!data) return;
   const slots = document.querySelectorAll(`.ec-weather-slot[data-id="${cssEscape(ev.id)}"]`);
   slots.forEach(slot => {
-    const weatherBadge   = data.weather
-      ? `<span class="badge badge-outline">${escapeHtml(data.weather)}</span>` : '';
+    // 天気概況はテキスト（例:「曇後晴」）のはず。GAS側の列ズレで数値（例:7.5）や
+    // 欠測記号（×, ///）が混入することがあるため、クライアント側でも弾く（多層防御）。
+    const weatherText    = (data.weather != null && !['×', '///'].includes(String(data.weather).trim())
+      && isNaN(parseFloat(data.weather))) ? data.weather : '';
+    const weatherBadge   = weatherText
+      ? `<span class="badge badge-outline">${escapeHtml(weatherText)}</span>` : '';
     const tempBadge      = (data.max != null || data.min != null)
       ? `<span class="badge badge-outline"><svg class="icon icon-inline"><use href="#icon-temp"/></svg>${data.max != null ? data.max + '℃' : '--'} / ${data.min != null ? data.min + '℃' : '--'}</span>` : '';
     const windBadge      = data.windMax != null
