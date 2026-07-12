@@ -972,11 +972,29 @@ async function fetchDailyTemp(area, dateStr) {
   }
 }
 
+// 気象庁の過去データは当日分が未確定で、翌日以降に確定する。
+// 直近数日の日付は「確定待ち」の可能性があるため、取得失敗（null）をキャッシュせず
+// 一覧を再描画するたびに再取得を試みる（古い日付やエリア不一致は従来通りキャッシュして無駄打ちを防ぐ）。
+const WEATHER_RETRY_DAYS = 3;
+function isWeatherPending(dateStr) {
+  if (!dateStr) return false;
+  const target = new Date(dateStr + 'T00:00:00');
+  const today  = new Date(todayStr() + 'T00:00:00');
+  if (isNaN(target.getTime())) return false;
+  const diffDays = (today - target) / 86400000;
+  // 未来日（<0）〜 直近WEATHER_RETRY_DAYS日以内は確定待ちとみなす
+  return diffDays <= WEATHER_RETRY_DAYS;
+}
+
 async function loadEventWeather(ev) {
   const dateStr = normDateStr(ev.date);
   const key = `${ev.area || ''}|${dateStr}`;
   if (!(key in weatherCache)) {
-    weatherCache[key] = await fetchDailyTemp(ev.area, dateStr);
+    const result = await fetchDailyTemp(ev.area, dateStr);
+    // 直近日付で取得できなかった場合はキャッシュせず、次回の再描画で再取得させる
+    if (result != null || !isWeatherPending(dateStr)) {
+      weatherCache[key] = result;
+    }
   }
   const data = weatherCache[key];
   if (!data) return;
