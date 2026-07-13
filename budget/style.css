@@ -1026,9 +1026,13 @@ textarea {
     text-align: center;
   }
 
+  /* month入力の値はシャドウ要素のためtext-alignでは中央にできない。
+     display:flex + justify-content:center で値を中央寄せし、上のボタンにそろえる。 */
   .budget-head-controls input[type="month"] {
     grid-column: 1 / -1;
     width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   .record-row {
