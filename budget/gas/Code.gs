@@ -246,3 +246,25 @@ function migrateOtherCategoryToPlanOut() {
     }
   });
 }
+
+// 一回限りの移行用スクリプト。GASエディタからこの関数を選択して実行する。
+// 中カテゴリ「整髪料」を「美容・健康」にリネームする（records / budgets 両シート）。
+function migrateSeihatsuryoToBiyoKenko() {
+  const OLD_SUB = '整髪料';
+  const NEW_SUB = '美容・健康';
+
+  [getSheet(), getBudgetSheet()].forEach((sheet) => {
+    const headers = getHeaders(sheet);
+    const subCol = headers.indexOf('subCategory');
+    if (subCol === -1) return;
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+
+    const values = sheet.getRange(2, subCol + 1, lastRow - 1, 1).getValues();
+    values.forEach((row, i) => {
+      if (String(row[0]) === OLD_SUB) {
+        sheet.getRange(i + 2, subCol + 1).setValue(NEW_SUB);
+      }
+    });
+  });
+}
