@@ -303,6 +303,7 @@ main {
 .btn-sm {
   padding: 7px 14px;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .ink-expense { color: var(--orange); }
@@ -1010,6 +1011,24 @@ textarea {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  /* 狭い画面では操作ボタンが折り返して文字が縦積みになるのを防ぐ。
+     gridで2つのボタンを均等幅で横並びにし、月選択は下段に全幅で置く。 */
+  .budget-head-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .budget-head-controls .btn-sm {
+    text-align: center;
+  }
+
+  .budget-head-controls input[type="month"] {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .record-row {
