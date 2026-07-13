@@ -38,6 +38,8 @@ const els = {
   subCategoryInput: document.getElementById('subCategoryInput'),
   recordsList: document.getElementById('recordsList'),
   budgetList: document.getElementById('budgetList'),
+  copyPrevBudget: document.getElementById('copyPrevBudget'),
+  resetBudget: document.getElementById('resetBudget'),
   budgetPanel: document.getElementById('budgetPanel'),
   budgetTooltip: document.getElementById('budgetTooltip'),
   chartFilter: document.getElementById('chartFilter'),
@@ -101,6 +103,13 @@ function formatDateShort(value) {
 function currentYearMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// "2026-08" の前月 "2026-07" を返す（年跨ぎも考慮）
+function prevYearMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function daysInMonth(ym) {
@@ -771,6 +780,16 @@ async function onDelete(id) {
   }
 }
 
+// 1件分の予算をGASへ保存する（再読み込みはしない。呼び出し側でまとめて行う）
+async function postSaveBudget(url, yearMonth, category, subCategory, amount, comment) {
+  // text/plain を使うことで CORS のプリフライトを回避する
+  const res = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'saveBudget', yearMonth, category, subCategory, amount, comment }),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+}
+
 async function onSaveBudget(yearMonth, category, subCategory, amount, comment) {
   const url = getGasUrl();
   if (!url) {
@@ -779,16 +798,102 @@ async function onSaveBudget(yearMonth, category, subCategory, amount, comment) {
   }
 
   try {
-    // text/plain を使うことで CORS のプリフライトを回避する
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'saveBudget', yearMonth, category, subCategory, amount, comment }),
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    await postSaveBudget(url, yearMonth, category, subCategory, amount, comment);
     setStatus('予算を更新しました。', 'ok');
   } catch (err) {
     setStatus('予算の更新に失敗しました: ' + err.message, 'error');
   } finally {
+    await loadRecords();
+  }
+}
+
+// 選択中の月に、前月の予算（金額・コメント）をコピーする
+async function onCopyPrevBudget() {
+  const url = getGasUrl();
+  if (!url) {
+    setStatus('先に接続設定を行ってください。', 'error');
+    return;
+  }
+
+  const ym = els.summaryMonth.value || currentYearMonth();
+  const prevYm = prevYearMonth(ym);
+
+  // 前月に設定された予算項目（金額 or コメントがあるもの）を集める
+  const items = getBudgetItems()
+    .map(({ major, sub }) => ({
+      major,
+      sub,
+      amount: getBudgetAmount(prevYm, major, sub),
+      comment: getBudgetComment(prevYm, major, sub),
+    }))
+    .filter((it) => it.amount > 0 || it.comment);
+
+  if (!items.length) {
+    setStatus(`${formatYearMonthFull(prevYm)}の予算が未設定のためコピーできません。`, 'error');
+    return;
+  }
+
+  // コピーは必ず確認する。コピー先に既存の予算がある場合は上書きになる旨も明示する。
+  const hasExisting = getBudgetItems().some(
+    ({ major, sub }) => getBudgetAmount(ym, major, sub) > 0 || getBudgetComment(ym, major, sub)
+  );
+  const confirmMsg = hasExisting
+    ? `${formatYearMonthFull(ym)}には既に予算があります。${formatYearMonthFull(prevYm)}の内容で上書きしますか？`
+    : `${formatYearMonthFull(prevYm)}の予算を${formatYearMonthFull(ym)}にコピーします。よろしいですか？`;
+  if (!confirm(confirmMsg)) {
+    return;
+  }
+
+  els.copyPrevBudget.disabled = true;
+  setStatus(`${formatYearMonthFull(prevYm)}の予算をコピー中...`, '');
+  try {
+    for (const it of items) {
+      await postSaveBudget(url, ym, it.major, it.sub || '', it.amount, it.comment);
+    }
+    setStatus(`${formatYearMonthFull(prevYm)}の予算を${formatYearMonthFull(ym)}にコピーしました。`, 'ok');
+  } catch (err) {
+    setStatus('コピーに失敗しました: ' + err.message, 'error');
+  } finally {
+    els.copyPrevBudget.disabled = false;
+    await loadRecords();
+  }
+}
+
+// 選択中の月の予算を初期値（全項目0円・コメントなし）に戻す
+async function onResetBudget() {
+  const url = getGasUrl();
+  if (!url) {
+    setStatus('先に接続設定を行ってください。', 'error');
+    return;
+  }
+
+  const ym = els.summaryMonth.value || currentYearMonth();
+
+  // 現在この月に設定されている項目（金額 or コメントがあるもの）だけをクリア対象にする
+  const items = getBudgetItems().filter(
+    ({ major, sub }) => getBudgetAmount(ym, major, sub) > 0 || getBudgetComment(ym, major, sub)
+  );
+
+  if (!items.length) {
+    setStatus(`${formatYearMonthFull(ym)}の予算はすでに未設定です。`, '');
+    return;
+  }
+
+  if (!confirm(`${formatYearMonthFull(ym)}の予算をすべてクリア（初期値に戻す）します。よろしいですか？`)) {
+    return;
+  }
+
+  els.resetBudget.disabled = true;
+  setStatus(`${formatYearMonthFull(ym)}の予算をクリア中...`, '');
+  try {
+    for (const { major, sub } of items) {
+      await postSaveBudget(url, ym, major, sub || '', 0, '');
+    }
+    setStatus(`${formatYearMonthFull(ym)}の予算を初期値に戻しました。`, 'ok');
+  } catch (err) {
+    setStatus('初期化に失敗しました: ' + err.message, 'error');
+  } finally {
+    els.resetBudget.disabled = false;
     await loadRecords();
   }
 }
@@ -892,6 +997,9 @@ function init() {
     renderTopStats(currentRecords);
     renderBudgets(currentRecords);
   });
+
+  els.copyPrevBudget.addEventListener('click', onCopyPrevBudget);
+  els.resetBudget.addEventListener('click', onResetBudget);
 
   els.chartFilter.addEventListener('change', () => renderChart(currentRecords));
 

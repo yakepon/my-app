@@ -93,7 +93,11 @@
     <section class="panel budget-panel" id="budgetPanel">
       <div class="summary-head">
         <h2>予算/実績</h2>
-        <input type="month" id="summaryMonth">
+        <div class="budget-head-controls">
+          <button type="button" class="btn btn-sm" id="copyPrevBudget">前月からコピー</button>
+          <button type="button" class="btn btn-sm" id="resetBudget">初期値に戻す</button>
+          <input type="month" id="summaryMonth">
+        </div>
       </div>
       <div class="budget-list" id="budgetList"></div>
       <div class="budget-tooltip" id="budgetTooltip"></div>

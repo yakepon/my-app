@@ -294,6 +294,17 @@ main {
   width: auto;
 }
 
+.budget-head-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-sm {
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
 .ink-expense { color: var(--orange); }
 
 /* ===== Budgets ===== */
