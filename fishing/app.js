@@ -986,6 +986,14 @@ function isWeatherPending(dateStr) {
   return diffDays <= WEATHER_RETRY_DAYS;
 }
 
+// 釣行の編集→更新時に、その釣行の気象キャッシュを破棄して次回描画で再取得させる。
+// 過去日で一度取得に失敗（null）してキャッシュされたままだと、天候・気温・風速が
+// 空欄のまま埋まらないため、更新操作を「取り直しトリガー」として扱う。
+function invalidateEventWeather(area, date) {
+  const key = `${area || ''}|${normDateStr(date)}`;
+  delete weatherCache[key];
+}
+
 async function loadEventWeather(ev) {
   const dateStr = normDateStr(ev.date);
   const key = `${ev.area || ''}|${dateStr}`;
@@ -2341,6 +2349,9 @@ async function onEventSubmit(e) {
   const ok = await sendAction(payload);
   if (ok) {
     for (const photoId of oldPhotoIdsToDelete) await deleteDrivePhoto(photoId);
+    // 更新（既存釣行）の場合は、その日付・エリアの気象キャッシュを破棄し、
+    // 未取得の天候・気温・風速を再描画時に必ず取りにいくようにする。
+    if (payload.action === 'updateEvent') invalidateEventWeather(payload.area, payload.date);
     setStatus(fd.get('id') ? '釣行を更新しました。' : '釣行を登録しました。', 'ok');
     exitEventEditMode();
     toggleEventForm(false);
