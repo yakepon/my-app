@@ -247,12 +247,8 @@ function migrateOtherCategoryToPlanOut() {
   });
 }
 
-// 一回限りの移行用スクリプト。GASエディタからこの関数を選択して実行する。
-// 中カテゴリ「整髪料」を「美容・健康」にリネームする（records / budgets 両シート）。
-function migrateSeihatsuryoToBiyoKenko() {
-  const OLD_SUB = '整髪料';
-  const NEW_SUB = '美容・健康';
-
+// records / budgets 両シートの中カテゴリ名を一括リネームする共通処理。
+function renameSubCategory(oldSub, newSub) {
   [getSheet(), getBudgetSheet()].forEach((sheet) => {
     const headers = getHeaders(sheet);
     const subCol = headers.indexOf('subCategory');
@@ -262,9 +258,21 @@ function migrateSeihatsuryoToBiyoKenko() {
 
     const values = sheet.getRange(2, subCol + 1, lastRow - 1, 1).getValues();
     values.forEach((row, i) => {
-      if (String(row[0]) === OLD_SUB) {
-        sheet.getRange(i + 2, subCol + 1).setValue(NEW_SUB);
+      if (String(row[0]) === oldSub) {
+        sheet.getRange(i + 2, subCol + 1).setValue(newSub);
       }
     });
   });
+}
+
+// 一回限りの移行用スクリプト。GASエディタからこの関数を選択して実行する。
+// 中カテゴリ「整髪料」を「美容・健康」にリネームする（records / budgets 両シート）。
+function migrateSeihatsuryoToBiyoKenko() {
+  renameSubCategory('整髪料', '美容・健康');
+}
+
+// 一回限りの移行用スクリプト。GASエディタからこの関数を選択して実行する。
+// 中カテゴリ「夜遊び」を「スポーツ関連」にリネームする（records / budgets 両シート）。
+function migrateYoasobiToSports() {
+  renameSubCategory('夜遊び', 'スポーツ関連');
 }
