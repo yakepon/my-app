@@ -1646,6 +1646,47 @@ form > textarea { margin-bottom: 0.6rem; }
 }
 .lightbox-btn:hover { background: var(--danger); transform: scale(1.08); }
 
+/* 左右送りボタン（複数写真時のみ表示） */
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 101;
+  background: rgba(26, 26, 26, 0.7);
+  border: none;
+  color: #fff;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.15s var(--ease);
+}
+.lightbox-nav:hover { background: var(--accent); transform: translateY(-50%) scale(1.08); }
+.lightbox-prev { left: 1.2rem; }
+.lightbox-next { right: 1.2rem; }
+.lightbox-counter {
+  position: absolute;
+  bottom: 1.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 101;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.7);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+@media (max-width: 480px) {
+  .lightbox-prev { left: 0.5rem; }
+  .lightbox-next { right: 0.5rem; }
+}
+
 /* ── Settings ──────────────────────────────────────────────── */
 .settings { max-width: 860px; margin: 0 auto 1.2rem; }
 

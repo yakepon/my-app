@@ -116,6 +116,9 @@ const els = {
   photoLightboxClose:   document.getElementById('photoLightboxClose'),
   photoLightboxDelete:  document.getElementById('photoLightboxDelete'),
   photoLightboxBackdrop: document.getElementById('photoLightboxBackdrop'),
+  photoLightboxPrev:    document.getElementById('photoLightboxPrev'),
+  photoLightboxNext:    document.getElementById('photoLightboxNext'),
+  photoLightboxCounter: document.getElementById('photoLightboxCounter'),
   lineInfoBtn:      document.getElementById('lineInfoBtn'),
   lineInfoModal:    document.getElementById('lineInfoModal'),
   lineInfoClose:    document.getElementById('lineInfoClose'),
@@ -3978,17 +3981,59 @@ function closeLineLeaderInfoModal() {
   document.body.style.overflow = '';
 }
 
-let lightboxTarget = null; // { type: 'catch' | 'event', id, photoField }
+let lightboxTarget = null;  // { type: 'catch' | 'event' | 'gear', id, photoField }
+let lightboxPhotos = [];    // 同一レコードの写真スロット配列 [{ field, url }]
+let lightboxIndex  = 0;
+
+// レコードが持つ全写真スロットを取得する（釣行・タックルは最大3枚、釣果は1枚）。
+function lightboxPhotoSlots(type, id) {
+  if (type === 'event') {
+    const ev = currentEvents.find(r => r.id === id);
+    return ev ? eventPhotoSlots(ev) : [];
+  }
+  if (type === 'gear') {
+    const g = currentGears.find(r => r.id === id);
+    return g ? gearPhotoSlots(g) : [];
+  }
+  const c = currentCatches.find(r => r.id === id);
+  return c && c.photo ? [{ field: 'photo', url: c.photo }] : [];
+}
 
 function openPhotoLightbox(src, type, id, photoField = 'photo') {
   lightboxTarget = { type, id, photoField };
-  els.photoLightboxImg.src = src;
+  lightboxPhotos = lightboxPhotoSlots(type, id);
+  lightboxIndex = Math.max(0, lightboxPhotos.findIndex(p => p.field === photoField));
+  // スロットが取れない場合でも単体表示は成立させる
+  if (!lightboxPhotos.length) lightboxPhotos = [{ field: photoField, url: src }];
   els.photoLightbox.hidden = false;
   document.body.style.overflow = 'hidden';
+  renderLightboxPhoto();
+}
+
+// 現在のindexの写真を表示し、左右送りボタン・枚数カウンタを更新する。
+function renderLightboxPhoto() {
+  const slot = lightboxPhotos[lightboxIndex];
+  if (!slot) return;
+  els.photoLightboxImg.src = slot.url;
+  if (lightboxTarget) lightboxTarget.photoField = slot.field;
+  const multi = lightboxPhotos.length > 1;
+  els.photoLightboxPrev.hidden = !multi;
+  els.photoLightboxNext.hidden = !multi;
+  els.photoLightboxCounter.hidden = !multi;
+  if (multi) els.photoLightboxCounter.textContent = `${lightboxIndex + 1} / ${lightboxPhotos.length}`;
+}
+
+// 写真を左右に送る（端はループする）。dir: -1=前 / +1=次
+function stepLightboxPhoto(dir) {
+  if (lightboxPhotos.length <= 1) return;
+  lightboxIndex = (lightboxIndex + dir + lightboxPhotos.length) % lightboxPhotos.length;
+  renderLightboxPhoto();
 }
 
 function closePhotoLightbox() {
   lightboxTarget = null;
+  lightboxPhotos = [];
+  lightboxIndex = 0;
   els.photoLightbox.hidden = true;
   els.photoLightboxImg.src = '';
   document.body.style.overflow = '';
@@ -4563,6 +4608,28 @@ function init() {
   els.photoLightboxClose.addEventListener('click', closePhotoLightbox);
   els.photoLightboxBackdrop.addEventListener('click', closePhotoLightbox);
   els.photoLightboxDelete.addEventListener('click', deleteLightboxPhoto);
+  els.photoLightboxPrev.addEventListener('click', () => stepLightboxPhoto(-1));
+  els.photoLightboxNext.addEventListener('click', () => stepLightboxPhoto(1));
+
+  // キーボード: ←→で送り、Escで閉じる（ライトボックス表示中のみ）
+  document.addEventListener('keydown', e => {
+    if (els.photoLightbox.hidden) return;
+    if (e.key === 'ArrowLeft')  stepLightboxPhoto(-1);
+    else if (e.key === 'ArrowRight') stepLightboxPhoto(1);
+    else if (e.key === 'Escape') closePhotoLightbox();
+  });
+
+  // スワイプ（左右のスクロール）で送る
+  let touchStartX = null;
+  els.photoLightbox.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, { passive: true });
+  els.photoLightbox.addEventListener('touchend', e => {
+    if (touchStartX == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) stepLightboxPhoto(dx < 0 ? 1 : -1);
+    touchStartX = null;
+  }, { passive: true });
 
   els.heatmap.addEventListener('change', e => {
     if (e.target.matches('.hm-species-select')) {
