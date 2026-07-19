@@ -1671,7 +1671,17 @@ function renderEventCatches() {
 
   const catches = currentCatches
     .filter(c => c.eventId === activeEvent.id)
-    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    // 時刻は数値化して比較する。文字列のlocaleCompareだと、スプレッドシート由来の
+    // ゼロ埋めなし("9:30")やISO日時が混じった際に辞書順で誤った並びになるため。
+    // 時刻なし(null)は末尾へ回す。
+    .sort((a, b) => {
+      const ha = parseHourFraction(a.time);
+      const hb = parseHourFraction(b.time);
+      if (ha == null && hb == null) return 0;
+      if (ha == null) return 1;
+      if (hb == null) return -1;
+      return ha - hb;
+    });
 
   if (!catches.length) {
     els.catchesList.innerHTML = '<p class="empty-catches">まだ釣果がありません。上から記録してみましょう。</p>';
