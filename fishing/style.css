@@ -1188,6 +1188,61 @@ form > textarea { margin-bottom: 0.6rem; }
 .cr-memo { font-size: 0.72rem; color: var(--ink-muted); font-style: italic; flex: 1; }
 .cr-actions { display: flex; gap: 0.3rem; margin-left: auto; }
 
+/* ── Personal best (魚種別 過去最大サイズ) ─────────────────────── */
+.pb-list { display: flex; flex-direction: column; }
+.pb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.15rem;
+  border-bottom: 1px solid var(--border);
+}
+.pb-row:last-child { border-bottom: none; }
+
+.pb-thumb { width: 52px; height: 52px; }
+.pb-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.pb-thumb-empty .icon { width: 22px; height: 22px; }
+
+.pb-main { flex: 1; min-width: 0; }
+.pb-head { display: flex; align-items: baseline; gap: 0.55rem; }
+.pb-species { font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+.pb-size {
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-2);
+  line-height: 1;
+  margin-left: auto;
+}
+.pb-unit { font-size: 0.7rem; font-weight: 700; margin-left: 0.1rem; }
+
+.pb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.7rem;
+  margin-top: 0.28rem;
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+}
+.pb-meta .icon-inline { vertical-align: -1px; margin-right: 0.12rem; }
+.pb-spot { display: inline-flex; align-items: center; }
+.pb-weight { font-family: var(--font-body); font-weight: 700; }
+.pb-lure {
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
 /* ── Gear (竿・リール) list ───────────────────────────────────── */
 .gear-row {
   display: flex;

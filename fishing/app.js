@@ -205,6 +205,7 @@ const els = {
   analysisTabCatch:   document.getElementById('analysisTabCatch'),
   analysisTripPanel:  document.getElementById('analysisTripPanel'),
   analysisCatchPanel: document.getElementById('analysisCatchPanel'),
+  personalBest:       document.getElementById('personalBest'),
 };
 
 // ── State ─────────────────────────────────────────────────────
@@ -745,6 +746,7 @@ function renderAll() {
   renderGlobalFilterSummary();
   renderEventsList();
   renderStats();
+  renderPersonalBest();
   renderCharts();
   renderHeatmap();
   renderAreaMap();
@@ -1739,6 +1741,60 @@ function renderStats() {
   els.statFishValue.innerHTML   = statValueHtml(totalValue ? totalValue.toLocaleString() : '--', '円');
   els.statTotalTrips.innerHTML  = statValueHtml(totalTrips, '回');
   els.statAvgPerTrip.innerHTML  = statValueHtml(avgPerTrip != null ? avgPerTrip.toFixed(1) : '--', '匹');
+}
+
+// 魚種ごとの過去最大サイズ（自己ベスト）を、その釣果の写真・釣行日・釣り場等と一覧表示する。
+function renderPersonalBest() {
+  if (!els.personalBest) return;
+  const events    = filteredEvents();
+  const catches   = filteredCatches(events);
+  const eventById = new Map(events.map(ev => [ev.id, ev]));
+
+  // 魚種ごとに最大サイズの釣果を選ぶ（sizeが数値のもののみ対象。
+  // 同サイズが並んだ場合は重量が大きい方、それも同じなら先勝ち）。
+  const bestBySpecies = new Map();
+  catches.forEach(c => {
+    const size = parseFloat(c.size);
+    if (!c.species || isNaN(size)) return;
+    const cur = bestBySpecies.get(c.species);
+    const weight = Number(c.weight) || 0;
+    if (!cur || size > cur.size || (size === cur.size && weight > cur.weight)) {
+      bestBySpecies.set(c.species, { size, weight, rec: c });
+    }
+  });
+
+  const rows = [...bestBySpecies.values()].sort((a, b) => b.size - a.size);
+
+  if (!rows.length) {
+    els.personalBest.innerHTML = '<p class="empty" style="margin-top:0.4rem">サイズが記録された釣果がまだありません。</p>';
+    return;
+  }
+
+  els.personalBest.innerHTML = rows.map(({ size, rec }) => {
+    const ev        = eventById.get(rec.eventId);
+    const dateLabel = ev ? formatDateLabel(ev.date) : '記録日不明';
+    const spot      = ev && ev.spot ? escapeHtml(ev.spot) : '';
+    const thumb = rec.photo
+      ? `<img src="${escapeHtml(rec.photo)}" class="catch-thumb pb-thumb" data-catch-id="${escapeHtml(rec.id)}" alt="${escapeHtml(rec.species)}の釣果写真">`
+      : `<div class="pb-thumb pb-thumb-empty"><svg class="icon"><use href="#icon-fish"/></svg></div>`;
+    const metaParts = [
+      `<span class="pb-date">${escapeHtml(dateLabel)}</span>`,
+      spot ? `<span class="pb-spot"><svg class="icon icon-inline"><use href="#icon-map-pin"/></svg>${spot}</span>` : '',
+      rec.weight ? `<span class="pb-weight">${escapeHtml(String(rec.weight))} g</span>` : '',
+      rec.lure ? `<span class="pb-lure">${escapeHtml(rec.lure)}</span>` : '',
+    ].filter(Boolean).join('');
+    return `
+      <div class="pb-row">
+        ${thumb}
+        <div class="pb-main">
+          <div class="pb-head">
+            <span class="pb-species">${escapeHtml(rec.species)}</span>
+            <span class="pb-size">${size}<span class="pb-unit">cm</span></span>
+          </div>
+          <div class="pb-meta">${metaParts}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function renderCharts() {
