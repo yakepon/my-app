@@ -4552,6 +4552,10 @@ function init() {
     const thumb = e.target.closest('.catch-thumb');
     if (thumb) openPhotoLightbox(thumb.src, 'catch', thumb.dataset.catchId);
   });
+  els.personalBest.addEventListener('click', e => {
+    const thumb = e.target.closest('.catch-thumb');
+    if (thumb) openPhotoLightbox(thumb.src, 'catch', thumb.dataset.catchId);
+  });
   els.eventsList.addEventListener('click', e => {
     const thumb = e.target.closest('.ec-thumb');
     if (thumb) openPhotoLightbox(thumb.src, 'event', thumb.dataset.eventId, thumb.dataset.photoField);
