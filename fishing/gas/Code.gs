@@ -218,66 +218,7 @@ function getTide(area, dateStr) {
   }
 }
 
-// 「エリア」欄の地名から、気象庁「過去の気象データ」の観測地点コードを引く。
-// 神奈川県内のみ対応（type: 's1'=主要観測所/daily_s1.php, 'a1'=アメダスのみ/daily_a1.php）。
-const WEATHER_STATIONS = {
-  // 神奈川県（観測点はprec_no=46）
-  '横浜':   { prec: '46', code: '47670', type: 's1' },
-  '川崎':   { prec: '46', code: '1006',  type: 'a1' }, // 日吉（最寄り）
-  '本牧':   { prec: '46', code: '47670', type: 's1' }, // 横浜と同じ
-  '横須賀': { prec: '46', code: '0392',  type: 'a1' }, // 三浦（最寄り）
-  '三浦':   { prec: '46', code: '0392',  type: 'a1' },
-  '湘南港': { prec: '46', code: '0391',  type: 'a1' }, // 江ノ島
-  '茅ヶ崎': { prec: '46', code: '1443',  type: 'a1' }, // 辻堂（最寄り）
-  '藤沢':   { prec: '46', code: '1443',  type: 'a1' }, // 辻堂
-  '江の島': { prec: '46', code: '0391',  type: 'a1' },
-  '小田原': { prec: '46', code: '1008',  type: 'a1' },
-  // 千葉県（観測点はprec_no=45）
-  '銚子':   { prec: '45', code: '47648', type: 's1' },
-  '勝浦':   { prec: '45', code: '47674', type: 's1' },
-  '御宿':   { prec: '45', code: '47674', type: 's1' }, // 勝浦と同じ
-  '大原':   { prec: '45', code: '47674', type: 's1' }, // 勝浦と同じ
-  '鴨川':   { prec: '45', code: '0384',  type: 'a1' },
-  '南房総': { prec: '45', code: '47672', type: 's1' }, // 館山と同じ
-  '館山':   { prec: '45', code: '47672', type: 's1' },
-  '富津':   { prec: '45', code: '0382',  type: 'a1' }, // 木更津と同じ
-  '金谷':   { prec: '45', code: '0382',  type: 'a1' }, // 木更津と同じ
-  '保田':   { prec: '45', code: '0383',  type: 'a1' }, // 鋸南
-  '鋸南':   { prec: '45', code: '0383',  type: 'a1' },
-  '木更津': { prec: '45', code: '0382',  type: 'a1' },
-  '市原':   { prec: '45', code: '47682', type: 's1' }, // 千葉と同じ
-  '千葉':   { prec: '45', code: '47682', type: 's1' },
-  '船橋':   { prec: '45', code: '47682', type: 's1' }, // 千葉と同じ
-  // 静岡県（観測点はprec_no=50）
-  '熱海':   { prec: '50', code: '1673',  type: 'a1' }, // 熱海伊豆山
-  '伊東':   { prec: '50', code: '1673',  type: 'a1' }, // 熱海伊豆山（最寄り）
-  '下田':   { prec: '50', code: '47666', type: 's1' }, // 石廊崎（最寄り）
-  '南伊豆': { prec: '50', code: '47666', type: 's1' }, // 石廊崎
-  '石廊崎': { prec: '50', code: '47666', type: 's1' },
-  '松崎':   { prec: '50', code: '0456',  type: 'a1' },
-  '土肥':   { prec: '50', code: '0987',  type: 'a1' },
-  '西伊豆': { prec: '50', code: '0987',  type: 'a1' }, // 土肥
-  '沼津':   { prec: '50', code: '47657', type: 's1' }, // 三島（最寄り）
-  '三島':   { prec: '50', code: '47657', type: 's1' },
-  '内浦':   { prec: '50', code: '47657', type: 's1' }, // 三島
-  '清水':   { prec: '50', code: '47656', type: 's1' }, // 静岡
-  '静岡':   { prec: '50', code: '47656', type: 's1' },
-  '焼津':   { prec: '50', code: '47656', type: 's1' }, // 静岡
-  '御前崎': { prec: '50', code: '47655', type: 's1' },
-  '浜松':   { prec: '50', code: '47654', type: 's1' },
-  '舞阪':   { prec: '50', code: '47654', type: 's1' }, // 浜松
-  '浜名湖': { prec: '50', code: '47654', type: 's1' }, // 浜松
-};
-
-function resolveWeatherStation(area) {
-  if (!area) return null;
-  for (const name in WEATHER_STATIONS) {
-    if (area.indexOf(name) !== -1) return WEATHER_STATIONS[name];
-  }
-  return null;
-}
-
-// 水温取得用の緯度経度（Open-Meteo Marine API で使用）
+// 気象取得用の緯度経度（Open-Meteo の水温・気温・風速・天気で共用）
 const AREA_COORDS_GAS = {
   // 神奈川県
   '横浜':   { lat: 35.45, lon: 139.65 }, '川崎':   { lat: 35.51, lon: 139.71 },
@@ -320,58 +261,62 @@ function getWaterTemp(area, dateStr) {
   }
 }
 
-// 気象庁「過去の気象データ検索」の日別ページ(HTML)から、指定日の最高・最低気温(℃)を抜き出す。
-// 観測所の種別によって列の並びが異なる（s1=主要観測所は気圧列がある分ずれる）。
-function getDailyTemp(area, dateStr) {
-  const station = resolveWeatherStation(area);
-  if (!station || !dateStr) return { max: null, min: null };
+// WMO天気コード（Open-Meteo weather_code）を日本語の天気概況に変換する。
+// https://open-meteo.com/en/docs のWMO Weather interpretation codesに準拠。
+function weatherCodeToText(code) {
+  if (code == null) return null;
+  const map = {
+    0: '快晴', 1: '晴れ', 2: '晴れ時々曇り', 3: '曇り',
+    45: '霧', 48: '霧氷',
+    51: '霧雨', 53: '霧雨', 55: '霧雨',
+    56: '着氷性の霧雨', 57: '着氷性の霧雨',
+    61: '弱い雨', 63: '雨', 65: '強い雨',
+    66: '着氷性の雨', 67: '着氷性の雨',
+    71: '弱い雪', 73: '雪', 75: '強い雪', 77: '霧雪',
+    80: 'にわか雨', 81: 'にわか雨', 82: '激しいにわか雨',
+    85: 'にわか雪', 86: '強いにわか雪',
+    95: '雷雨', 96: '雷雨（雹）', 99: '雷雨（雹）',
+  };
+  return map[code] || null;
+}
 
-  const d = new Date(dateStr + 'T00:00:00');
-  if (isNaN(d.getTime())) return { max: null, min: null };
+// Open-Meteo で指定日の最高・最低気温(℃)、最大風速(m/s)、天気概況を取得する。
+// 座標ベースなので観測所の有無に依存せず、どの釣り場でも安定して埋まる。
+// 気象庁の過去データ(ERA5)は約5日遅れのため、直近5日以内・未来日は予報API、
+// それ以前は再解析(archive)APIを使い分ける。
+function getDailyWeather(area, dateStr) {
+  const empty = { max: null, min: null, windMax: null, weather: null };
+  const coords = resolveAreaCoordsGas(area);
+  if (!coords || !dateStr) return empty;
 
-  const year  = d.getFullYear();
-  const month = d.getMonth() + 1;
-  const day   = d.getDate();
-  const path  = station.type === 's1' ? 'daily_s1.php' : 'daily_a1.php';
-  const url   = `https://www.data.jma.go.jp/stats/etrn/view/${path}?prec_no=${station.prec}&block_no=${station.code}&year=${year}&month=${month}&day=&view=p1`;
+  const target = new Date(dateStr + 'T00:00:00');
+  if (isNaN(target.getTime())) return empty;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = (today - target) / 86400000;
+  const base = diffDays > 5
+    ? 'https://archive-api.open-meteo.com/v1/archive'
+    : 'https://api.open-meteo.com/v1/forecast';
+  const url = `${base}?latitude=${coords.lat}&longitude=${coords.lon}`
+    + '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,weather_code'
+    + `&wind_speed_unit=ms&timezone=Asia%2FTokyo&start_date=${dateStr}&end_date=${dateStr}`;
 
   try {
     const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-    if (res.getResponseCode() !== 200) return { max: null, min: null };
-
-    const html = res.getContentText();
-    const rowRe = /<tr class="mtx" style="text-align:right;">([\s\S]*?)<\/tr>/g;
-    let m;
-    while ((m = rowRe.exec(html))) {
-      const row = m[1];
-      const dayMatch = row.match(/day=(\d+)&view[^>]*>(\d+)</);
-      if (!dayMatch || parseInt(dayMatch[2], 10) !== day) continue;
-
-      const cells = [];
-      const cellRe = /<td[^>]*>([\s\S]*?)<\/td>/g;
-      let cm;
-      while ((cm = cellRe.exec(row))) {
-        cells.push(cm[1].replace(/<[^>]+>/g, '').trim());
-      }
-      const maxIdx     = station.type === 's1' ? 7  : 5;
-      const minIdx     = station.type === 's1' ? 8  : 6;
-      const windMaxIdx = station.type === 's1' ? 12 : 9;
-      const weatherIdx = station.type === 's1' ? 19 : 12;
-      const max    = parseFloat(cells[maxIdx]);
-      const min    = parseFloat(cells[minIdx]);
-      const windMax = parseFloat(cells[windMaxIdx]);
-      const rawWeather = (cells[weatherIdx] || '').trim();
-      const weather = rawWeather && !['×', '///'].includes(rawWeather) && isNaN(parseFloat(rawWeather)) ? rawWeather : null;
-      return {
-        max:     isNaN(max)     ? null : max,
-        min:     isNaN(min)     ? null : min,
-        windMax: isNaN(windMax) ? null : windMax,
-        weather,
-      };
-    }
-    return { max: null, min: null };
+    if (res.getResponseCode() !== 200) return empty;
+    const data = JSON.parse(res.getContentText());
+    const d = (data && data.daily) || {};
+    const first = (arr) => (arr && arr[0] != null && !isNaN(Number(arr[0]))) ? Number(arr[0]) : null;
+    const round1 = (v) => v == null ? null : Math.round(v * 10) / 10;
+    const code = first(d.weather_code);
+    return {
+      max:     round1(first(d.temperature_2m_max)),
+      min:     round1(first(d.temperature_2m_min)),
+      windMax: round1(first(d.wind_speed_10m_max)),
+      weather: weatherCodeToText(code),
+    };
   } catch (err) {
-    return { max: null, min: null, error: String(err) };
+    return { max: null, min: null, windMax: null, weather: null, error: String(err) };
   }
 }
 
@@ -381,7 +326,7 @@ function doGet(e) {
     return jsonOutput(getTide(params.area, params.date));
   }
   if (params.action === 'weather') {
-    const result = getDailyTemp(params.area, params.date);
+    const result = getDailyWeather(params.area, params.date);
     result.waterTemp = getWaterTemp(params.area, params.date);
     return jsonOutput(result);
   }
