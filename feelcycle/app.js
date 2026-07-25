@@ -33,9 +33,6 @@ const els = {
   instructorTabPanel: document.getElementById('instructorTabPanel'),
 };
 
-// アクセントのピンクを先頭に、以降はモノトーン（濃淡の異なるグレー）で系列を区別する
-const CHART_PALETTE = ['#ff2e7e', '#e6e6ea', '#b4b4bb', '#83838c', '#c9c9cf', '#9a9aa2', '#6a6a72', '#d8d8dd'];
-
 let trendChart = null;
 let categoryChart = null;
 let instructorChart = null;
@@ -338,7 +335,7 @@ function renderCategoryChart(records) {
       datasets: [{
         label: '受講回数',
         data: labels.map((key) => counts[key]),
-        backgroundColor: labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]),
+        backgroundColor: '#f4f4f5',
         borderRadius: 6,
         maxBarThickness: 40,
       }],
@@ -370,7 +367,7 @@ function renderInstructorChart(records) {
       datasets: [{
         label: '受講回数',
         data: labels.map((key) => counts[key]),
-        backgroundColor: labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]),
+        backgroundColor: '#f4f4f5',
         borderRadius: 6,
         maxBarThickness: 40,
       }],
