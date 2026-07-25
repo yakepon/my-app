@@ -164,8 +164,8 @@ main {
 }
 
 .stat-card:nth-child(1) .stat-value {
-  color: var(--neon-pink);
-  text-shadow: 0 0 18px rgba(255, 46, 126, 0.5);
+  color: var(--text);
+  text-shadow: 0 0 18px rgba(244, 244, 245, 0.18);
 }
 
 .stat-card:nth-child(2) .stat-value {

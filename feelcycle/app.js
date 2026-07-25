@@ -422,7 +422,7 @@ function renderHeatmap(records) {
       const count = counts[dayIndex][bandIndex];
       const intensity = count / max;
       const style = count
-        ? `style="background: rgba(255, 255, 255, ${(0.12 + intensity * 0.6).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(255, 255, 255, ${(intensity * 0.4).toFixed(2)})"`
+        ? `style="background: rgba(255, 46, 126, ${(0.15 + intensity * 0.65).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(255, 46, 126, ${(intensity * 0.6).toFixed(2)})"`
         : '';
       return `<span class="heatmap-cell heatmap-value" ${style} title="${day} ${rangeStart}-${rangeEnd}時: ${count}回">${count || ''}</span>`;
     }).join('');
