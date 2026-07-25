@@ -88,6 +88,63 @@
       </div>
     </section>
 
+    <section class="panel form-panel">
+      <h2 id="formTitle">記録を追加</h2>
+      <form id="recordForm">
+        <input type="hidden" name="id">
+        <div class="type-toggle">
+          <label class="type-opt">
+            <input type="radio" name="type" value="ride" checked>
+            <span class="type-label">ライド</span>
+          </label>
+          <label class="type-opt cancel-opt">
+            <input type="radio" name="type" value="cancel">
+            <span class="type-label">無断キャンセル</span>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>日時
+            <input type="datetime-local" name="datetime" required>
+          </label>
+          <label>スタジオ
+            <input type="text" name="studio" list="studioList" value="武蔵小杉" placeholder="例: 渋谷">
+          </label>
+          <label>自転車No
+            <input type="number" name="bikeNo" list="bikeNoList" min="0" placeholder="例: 12">
+          </label>
+          <label>カテゴリ
+            <input type="text" name="category" list="categoryList" placeholder="例: BB2 / BB3 / BSL / BSW">
+          </label>
+          <label>プログラム名
+            <input type="text" name="program" list="programList" placeholder="例: 10s1 / Hiphop1 / NOW3">
+          </label>
+          <label>インストラクター
+            <input type="text" name="instructor" list="instructorList" placeholder="例: Yuki">
+          </label>
+          <div id="caloriesField">
+            <label>消費カロリー
+              <input type="number" name="calories" min="0" placeholder="例: 450">
+            </label>
+          </div>
+        </div>
+        <label class="memo-field">プログラムメモ
+          <textarea name="memo" rows="2" placeholder="プログラムの感想やフリーメモ"></textarea>
+        </label>
+        <label class="memo-field">インストラクターメモ
+          <textarea name="instructorMemo" rows="2" placeholder="インストラクターの感想やフリーメモ"></textarea>
+        </label>
+        <datalist id="studioList"></datalist>
+        <datalist id="bikeNoList"></datalist>
+        <datalist id="categoryList"></datalist>
+        <datalist id="programList"></datalist>
+        <datalist id="instructorList"></datalist>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submitBtn">記録する</button>
+          <button type="button" class="btn" id="cancelEdit" hidden>キャンセル</button>
+        </div>
+      </form>
+    </section>
+
     <section class="panel chart-panel">
       <h2>受講トレンド</h2>
       <div class="chart-wrap">
@@ -117,63 +174,6 @@
     <section class="panel chart-panel">
       <h2>バイク別 乗車回数</h2>
       <div class="bike-map-wrap" id="bikeMap"></div>
-    </section>
-
-    <section class="panel form-panel">
-      <h2 id="formTitle">記録を追加</h2>
-      <form id="recordForm">
-        <input type="hidden" name="id">
-        <div class="type-toggle">
-          <label class="type-opt">
-            <input type="radio" name="type" value="ride" checked>
-            <span class="type-label">ライド</span>
-          </label>
-          <label class="type-opt cancel-opt">
-            <input type="radio" name="type" value="cancel">
-            <span class="type-label">無断キャンセル</span>
-          </label>
-        </div>
-        <div class="form-grid">
-          <label>日時
-            <input type="datetime-local" name="datetime" required>
-          </label>
-          <label>スタジオ
-            <input type="text" name="studio" list="studioList" value="武蔵小杉" placeholder="例: 渋谷">
-          </label>
-          <label>自転車No
-            <input type="number" name="bikeNo" list="bikeNoList" min="0" placeholder="例: 12">
-          </label>
-          <label>カテゴリ
-            <input type="text" name="category" list="categoryList" placeholder="例: BSL / POP / ROC">
-          </label>
-          <label>プログラム名
-            <input type="text" name="program" list="programList" placeholder="例: BSL45 Pops">
-          </label>
-          <label>インストラクター
-            <input type="text" name="instructor" list="instructorList" placeholder="例: Yuki">
-          </label>
-          <div id="caloriesField">
-            <label>消費カロリー
-              <input type="number" name="calories" min="0" placeholder="例: 450">
-            </label>
-          </div>
-        </div>
-        <label class="memo-field">プログラムメモ
-          <textarea name="memo" rows="2" placeholder="プログラムの感想やフリーメモ"></textarea>
-        </label>
-        <label class="memo-field">インストラクターメモ
-          <textarea name="instructorMemo" rows="2" placeholder="インストラクターの感想やフリーメモ"></textarea>
-        </label>
-        <datalist id="studioList"></datalist>
-        <datalist id="bikeNoList"></datalist>
-        <datalist id="categoryList"></datalist>
-        <datalist id="programList"></datalist>
-        <datalist id="instructorList"></datalist>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" id="submitBtn">記録する</button>
-          <button type="button" class="btn" id="cancelEdit" hidden>キャンセル</button>
-        </div>
-      </form>
     </section>
 
     <section class="panel records-panel">
