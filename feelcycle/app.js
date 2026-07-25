@@ -33,7 +33,8 @@ const els = {
   instructorTabPanel: document.getElementById('instructorTabPanel'),
 };
 
-const CHART_PALETTE = ['#ff2e7e', '#00e5ff', '#ffe156', '#7c5cff', '#4ade80', '#ff7849', '#38bdf8', '#f472b6'];
+// アクセントのピンクを先頭に、以降はモノトーン（濃淡の異なるグレー）で系列を区別する
+const CHART_PALETTE = ['#ff2e7e', '#e6e6ea', '#b4b4bb', '#83838c', '#c9c9cf', '#9a9aa2', '#6a6a72', '#d8d8dd'];
 
 let trendChart = null;
 let categoryChart = null;
@@ -208,13 +209,13 @@ function renderRecords(records) {
 function chartAxisOptions() {
   return {
     x: {
-      ticks: { color: '#8a8aa3', font: { family: 'JetBrains Mono', size: 11 } },
-      grid: { color: '#262638' },
+      ticks: { color: '#909096', font: { family: 'JetBrains Mono', size: 11 } },
+      grid: { color: '#2b2b2e' },
     },
     y: {
       beginAtZero: true,
-      ticks: { color: '#8a8aa3', precision: 0, stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } },
-      grid: { color: '#262638' },
+      ticks: { color: '#909096', precision: 0, stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } },
+      grid: { color: '#2b2b2e' },
     },
   };
 }
@@ -277,10 +278,10 @@ function renderTrendChart(records) {
           type: 'line',
           label: '受講',
           data: months.map((key) => rideCounts[key] || 0),
-          borderColor: '#00e5ff',
-          backgroundColor: 'rgba(0, 229, 255, 0.15)',
-          pointBackgroundColor: '#00e5ff',
-          pointBorderColor: '#00e5ff',
+          borderColor: '#d8d8dd',
+          backgroundColor: 'rgba(255, 255, 255, 0.12)',
+          pointBackgroundColor: '#d8d8dd',
+          pointBorderColor: '#d8d8dd',
           tension: 0.35,
           fill: true,
           pointRadius: 3,
@@ -306,7 +307,7 @@ function renderTrendChart(records) {
         legend: {
           display: true,
           labels: {
-            color: '#8a8aa3',
+            color: '#909096',
             font: { family: 'JetBrains Mono', size: 11 },
             usePointStyle: true,
             boxWidth: 12,
@@ -421,7 +422,7 @@ function renderHeatmap(records) {
       const count = counts[dayIndex][bandIndex];
       const intensity = count / max;
       const style = count
-        ? `style="background: rgba(0, 229, 255, ${(0.15 + intensity * 0.65).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(0, 229, 255, ${(intensity * 0.6).toFixed(2)})"`
+        ? `style="background: rgba(255, 255, 255, ${(0.12 + intensity * 0.6).toFixed(2)}); box-shadow: 0 0 ${Math.round(4 + intensity * 12)}px rgba(255, 255, 255, ${(intensity * 0.4).toFixed(2)})"`
         : '';
       return `<span class="heatmap-cell heatmap-value" ${style} title="${day} ${rangeStart}-${rangeEnd}時: ${count}回">${count || ''}</span>`;
     }).join('');
