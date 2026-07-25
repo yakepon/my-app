@@ -210,12 +210,13 @@ function getInstructorInfo(name) {
     const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
     if (res.getResponseCode() === 200) {
       const detail = extractInstructorDetail(res.getContentText());
-      if (detail && detail.name) {
+      const hasPrograms = detail && Array.isArray(detail.pastProgramInfo) && detail.pastProgramInfo.length;
+      if (detail && (detail.name || hasPrograms)) {
         const pastPrograms = Array.isArray(detail.pastProgramInfo) ? detail.pastProgramInfo : [];
         const upcomingPrograms = Array.isArray(detail.programInfo) ? detail.programInfo : [];
 
         result.found = true;
-        result.name = detail.name;
+        result.name = detail.name || instructorName;
         result.debutDate = detail.startDate || '';
         result.lastDate = detail.endDate || '';
         result.totalPrograms = pastPrograms.length;
@@ -230,46 +231,62 @@ function getInstructorInfo(name) {
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Nuxt SSRページに埋め込まれた window.__NUXT__ から instructor.detail を取り出す。
-// このページの状態は重複値を関数の引数として括り出す形式（devalue系シリアライズ）で
-// 埋め込まれているため、eval等は使わず、仮引数名と実引数を対応付けて手動で置換した上で
-// JSON化して読み取る。
+// feelcycle.fun は Next.js(App Router)製で、ページデータは self.__next_f.push([1,"..."])
+// のRSCストリームにJS文字列としてエスケープ埋め込みされている（旧Nuxtの __NUXT__ は廃止）。
+// 各チャンクを復号して連結し、そこから programInfo 配列を出現順に取り出す。
+// 1つ目=今後の担当予定、2つ目=過去の担当実績。講師名は {"name":..,"id":数値} から得る。
+// 呼び出し元(getInstructorInfo)が期待する旧フィールド名に合わせて返す。
 function extractInstructorDetail(html) {
-  const startMarker = '__NUXT__=(function(';
-  const startIdx = html.indexOf(startMarker);
-  if (startIdx === -1) return null;
-
-  const paramsStart = startIdx + startMarker.length;
-  const paramsEnd = html.indexOf('){', paramsStart);
-  if (paramsEnd === -1) return null;
-  const paramNames = html.slice(paramsStart, paramsEnd).split(',').map((s) => s.trim()).filter(Boolean);
-
-  const bodyStart = paramsEnd + 1; // 関数本体の "{"
-  const bodyEnd = findMatchingBracket(html, bodyStart, '{', '}');
-  if (bodyEnd === -1) return null;
-
-  // "{return {STATE}}" から外側の {} を剥がし、先頭の "return" を取り除く
-  let objectText = html.slice(bodyStart + 1, bodyEnd).trim();
-  objectText = objectText.replace(/^return\s*/, '');
-
-  // 即時実行の実引数 "}(arg0,arg1,...))" を取り出す（呼び出しは関数式のすぐ後ろにある）
-  const argsOpenIdx = bodyEnd + 1; // 関数本体の直後がそのまま呼び出しの "(" になる
-  if (html[argsOpenIdx] !== '(') return null;
-  const argsCloseIdx = findMatchingBracket(html, argsOpenIdx, '(', ')');
-  if (argsCloseIdx === -1) return null;
-  const argTokens = splitTopLevel(html.slice(argsOpenIdx + 1, argsCloseIdx));
-
-  const varMap = {};
-  paramNames.forEach((p, i) => { varMap[p] = argTokens[i]; });
-
-  const jsonText = rewriteNuxtStateToJson(objectText, varMap);
-
-  try {
-    const state = JSON.parse(jsonText).state;
-    return state && state.instructor && state.instructor.detail;
-  } catch (err) {
-    return null;
+  // 1) __next_f のチャンク文字列を復号して連結し、Flightペイロードを復元する
+  const re = /self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)/g;
+  let payload = '';
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    try { payload += JSON.parse(m[1]); } catch (e) { /* 壊れたチャンクは無視 */ }
   }
+  if (!payload) return null;
+
+  // 2) "programInfo":[ ... ] を出現順にすべて取り出す（配列内の文字列は findMatchingBracket が無視）
+  const arrays = [];
+  const key = '"programInfo":[';
+  let from = 0;
+  while (true) {
+    const p = payload.indexOf(key, from);
+    if (p === -1) break;
+    const openIdx = p + key.length - 1; // '[' の位置
+    const closeIdx = findMatchingBracket(payload, openIdx, '[', ']');
+    if (closeIdx === -1) break;
+    try {
+      arrays.push(JSON.parse(payload.slice(openIdx, closeIdx + 1)));
+    } catch (e) {
+      arrays.push([]);
+    }
+    from = closeIdx + 1;
+  }
+  if (!arrays.length) return null;
+
+  // 1つ目=今後の担当予定、2つ目=過去の実績。配列が1つだけなら実績とみなす。
+  const upcoming = arrays.length >= 2 ? (arrays[0] || []) : [];
+  const past = arrays.length >= 2 ? (arrays[1] || []) : (arrays[0] || []);
+
+  // 3) 講師名（プログラムは {name,category,...}、講師は {name,id:数値} なので id で区別）
+  let name = '';
+  const nm = payload.match(/"name":"((?:[^"\\]|\\.)*)","id":\d+/);
+  if (nm) {
+    try { name = JSON.parse('"' + nm[1] + '"'); } catch (e) { name = nm[1]; }
+  }
+
+  // 4) 在籍期間は過去実績の first/last レッスン日時の最小・最大から算出
+  const firsts = past.map((x) => x.firstLessonDatetime).filter(Boolean).sort();
+  const lasts = past.map((x) => x.lastLessonDatetime).filter(Boolean).sort();
+
+  return {
+    name: name,
+    startDate: firsts.length ? firsts[0] : '',
+    endDate: lasts.length ? lasts[lasts.length - 1] : '',
+    pastProgramInfo: past,
+    programInfo: upcoming,
+  };
 }
 
 // 開き括弧のインデックスから対応する閉じ括弧のインデックスを探す（文字列リテラル内は無視する）
