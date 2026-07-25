@@ -335,7 +335,7 @@ function renderCategoryChart(records) {
       datasets: [{
         label: '受講回数',
         data: labels.map((key) => counts[key]),
-        backgroundColor: '#f4f4f5',
+        backgroundColor: '#9a9aa3',
         borderRadius: 6,
         maxBarThickness: 40,
       }],
@@ -367,7 +367,7 @@ function renderInstructorChart(records) {
       datasets: [{
         label: '受講回数',
         data: labels.map((key) => counts[key]),
-        backgroundColor: '#f4f4f5',
+        backgroundColor: '#9a9aa3',
         borderRadius: 6,
         maxBarThickness: 40,
       }],
