@@ -273,11 +273,16 @@ function renderBudgetRow(ym, major, sub, spent) {
   let gaugeClass = 'gauge-green';
   if (budget > 0) {
     pct = Math.max(0, Math.min(100, (remaining / budget) * 100));
-    if (pct <= 10) gaugeClass = 'gauge-red';
+    if (pct <= 10) gaugeClass = 'gauge-orange';
     else if (pct <= 50) gaugeClass = 'gauge-yellow';
   } else if (spent > 0) {
+    // 予算0で支出あり（その他カテゴリ）＝全額が想定外なので赤
     pct = 0;
     gaugeClass = 'gauge-red';
+  } else {
+    // 予算0で支出もなし（その他カテゴリ）＝残りわずか扱いのオレンジ
+    pct = 0;
+    gaugeClass = 'gauge-orange';
   }
 
   return `

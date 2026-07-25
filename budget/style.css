@@ -12,6 +12,7 @@
   --orange-gradient: linear-gradient(135deg, #FF9A4D 0%, #FF5B1F 55%, #D6470F 100%);
   --gauge-green: #34C759;
   --gauge-yellow: #FFD60A;
+  --gauge-orange: #FF9500;
   --gauge-red: #FF3B30;
   --font-display: "Oswald", sans-serif;
   --font-body: "Noto Sans JP", sans-serif;
@@ -487,6 +488,7 @@ main {
 
 .budget-remaining.gauge-green { color: var(--gauge-green); }
 .budget-remaining.gauge-yellow { color: var(--gauge-yellow); }
+.budget-remaining.gauge-orange { color: var(--gauge-orange); }
 .budget-remaining.gauge-red { color: var(--gauge-red); }
 
 .budget-bar-track {
@@ -503,6 +505,7 @@ main {
 
 .budget-bar-fill.gauge-green { background: var(--gauge-green); }
 .budget-bar-fill.gauge-yellow { background: var(--gauge-yellow); }
+.budget-bar-fill.gauge-orange { background: var(--gauge-orange); }
 .budget-bar-fill.gauge-red { background: var(--gauge-red); }
 
 .budget-row-foot {
